@@ -7,11 +7,13 @@
 
 package org.frc5010.common.drive.swerve.akit;
 
+import static edu.wpi.first.units.Units.Amps;
 import static org.frc5010.common.drive.swerve.akit.DriveConstants.*;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import org.frc5010.common.drive.swerve.AkitSwerveConfig;
@@ -61,14 +63,18 @@ public class Module {
   }
 
   /** Runs the module with the specified setpoint state. Mutates the state to optimize it. */
-  public void runSetpoint(SwerveModuleState state) {
+  public void runSetpoint(SwerveModuleState state, Current torqueCurrent) {
     // Optimize velocity setpoint
     state.optimize(getAngle());
     state.cosineScale(inputs.turnAbsolutePosition);
 
     // Apply setpoints
-    io.setDriveVelocity(state.speedMetersPerSecond / wheelRadiusMeters);
+    io.setDriveVelocity(state.speedMetersPerSecond / wheelRadiusMeters, torqueCurrent);
     io.setTurnPosition(state.angle);
+  }
+
+  public void runSetpoint(SwerveModuleState state) {
+    runSetpoint(state, Amps.zero());
   }
 
   /** Runs the module with the specified output while controlling to rotation angles. */

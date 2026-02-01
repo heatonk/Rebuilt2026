@@ -7,6 +7,7 @@
 
 package org.frc5010.common.drive.swerve.akit;
 
+import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
@@ -31,6 +32,7 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Force;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
@@ -190,7 +192,7 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
    *
    * @param speeds Speeds in meters/sec
    */
-  public void runVelocity(ChassisSpeeds speeds) {
+  public void runVelocity(ChassisSpeeds speeds, Current[] torqueCurrents) {
     // Calculate module setpoints
     ChassisSpeeds discreteSpeeds = ChassisSpeeds.discretize(speeds, 0.02);
     SwerveModuleState[] setpointStates = kinematics.toSwerveModuleStates(discreteSpeeds);
@@ -202,11 +204,15 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
 
     // Send setpoints to modules
     for (int i = 0; i < 4; i++) {
-      modules[i].runSetpoint(setpointStates[i]);
+      modules[i].runSetpoint(setpointStates[i], torqueCurrents[i]);
     }
 
     // Log optimized setpoints (runSetpoint mutates each state)
     Logger.recordOutput("SwerveStates/SetpointsOptimized", setpointStates);
+  }
+
+  public void runVelocity(ChassisSpeeds speeds) {
+    runVelocity(speeds, new Current[] {Amps.zero(), Amps.zero(), Amps.zero(), Amps.zero()});
   }
 
   /** Runs the drive in a straight line with the specified drive output. */
@@ -370,7 +376,7 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
 
   @Override
   public void drive(ChassisSpeeds velocity, DriveFeedforwards feedforwards) {
-    runVelocity(velocity);
+    runVelocity(velocity, feedforwards.torqueCurrents());
   }
 
   @Override
