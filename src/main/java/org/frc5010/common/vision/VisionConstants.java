@@ -10,8 +10,8 @@ public class VisionConstants {
   public static String SBTabVisionDisplay = "Vision";
 
   // Basic filtering thresholds
-  public static double maxAmbiguity = 0.3;
-  public static double maxZError = 10;
+  public static double maxAmbiguity = 0.15;
+  public static double maxZError = 1;
 
   // Standard deviation baselines, for 1 meter distance and 1 tag
   // (Adjusted automatically based on distance and # of tags)

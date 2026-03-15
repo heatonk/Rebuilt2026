@@ -1,0 +1,94 @@
+{
+  "motorSetup": {
+    "name": "hopper",
+    "controllerType": "talonfx",
+    "motorType": "KrakenX44",
+    "canId": 14,
+    "logLevel": "LOW",
+    "inverted": false,
+    "currentLimit": {
+      "val": 60,
+      "uom": "amps"
+    },
+    "followers": [
+      {
+        "canId": 15,
+        "inverted": true
+      }
+    ]
+  },
+  "controlAlgorithm": "SIMPLE",
+  "motorSystemId": {
+    "feedBack": {
+      "p": 4,
+      "i": 0.0,
+      "d": 0.0
+    },
+    "feedForward": {
+      "s": 0.0,
+      "v": 0.0,
+      "a": 0.0
+    },
+    "maxVelocity": {
+      "val": 180,
+      "uom": "deg/s"
+    },
+    "maxAcceleration": {
+      "val": 90,
+      "uom": "deg/s^2"
+    }
+  },
+  "simSystemId": {
+    "feedBack": {
+      "p": 6.28,
+      "i": 0.62,
+      "d": 2.01
+    },
+    "feedForward": {
+      "s": 0.0,
+      "v": 0.0,
+      "a": 0.0
+    },
+    "maxVelocity": {
+      "val": 180,
+      "uom": "deg/s"
+    },
+    "maxAcceleration": {
+      "val": 90,
+      "uom": "deg/s^2"
+    }
+  },
+  "length": {
+    "val": 0.234,
+    "uom": "m"
+  },
+  "lowerHardLimit": {
+    "val": -180,
+    "uom": "deg"
+  },
+  "upperHardLimit": {
+    "val": 120,
+    "uom": "deg"
+  },
+  "startingAngle": {
+    "val": 0,
+    "uom": "deg"
+  },
+  "lowerSoftLimit": {
+    "val": -180,
+    "uom": "deg"
+  },
+  "upperSoftLimit": {
+    "val": 120,
+    "uom": "deg"
+  },
+  "gearStages": "23:1",
+  "mass": {
+    "val": 1,
+    "uom": "lbs"
+  },
+  "horizontalZero": {
+    "val": 0,
+    "uom": "deg"
+  }
+}

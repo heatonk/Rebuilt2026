@@ -114,6 +114,7 @@ public class AkitSwerveConfig extends SwerveDriveConfig {
       driveInertia = UnitsParser.parseMomentOfInertia(constants.driveInertia);
       steerInertia = UnitsParser.parseMomentOfInertia(constants.steerInertia);
       canbus = Constants.CURRENT_MODE == Constants.SIM_MODE ? "" : constants.canbus;
+      wheelDiameter = UnitsParser.parseDistance(constants.wheelDiameter);
       driveGearRatio =
           new MechanismGearing(GearBox.fromStages(constants.driveGearRatio))
               .getRotorToMechanismRatio();

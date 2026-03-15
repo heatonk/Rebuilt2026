@@ -95,11 +95,6 @@
           "open": true
         }
       },
-      "Talon FX (v6)[8]": {
-        "header": {
-          "open": true
-        }
-      },
       "Talon FX[50]": {
         "header": {
           "open": true
@@ -119,6 +114,9 @@
         "header": {
           "open": true
         }
+      },
+      "window": {
+        "visible": false
       }
     }
   },
@@ -147,16 +145,39 @@
       "/SmartDashboard/Climb/mechanism": "Mechanism2d",
       "/SmartDashboard/Drive Visual": "Mechanism2d",
       "/SmartDashboard/DrivePoseEstimator/Pose Field": "Field2d",
+      "/SmartDashboard/DrivePoseEstimator/values/Pose Field": "Field2d",
       "/SmartDashboard/Elevator/mechanism": "Mechanism2d",
       "/SmartDashboard/Encoders": "Alerts",
       "/SmartDashboard/ExampleRobot/Auto Modes": "String Chooser",
       "/SmartDashboard/Field": "Field2d",
+      "/SmartDashboard/Hood/mechanism": "Mechanism2d",
       "/SmartDashboard/IMU": "Alerts",
       "/SmartDashboard/JSON": "Alerts",
+      "/SmartDashboard/Mechanisms/Commands/Climb/Live Tuning": "Command",
       "/SmartDashboard/Mechanisms/Commands/ElevatorMotor/Down": "Command",
       "/SmartDashboard/Mechanisms/Commands/ElevatorMotor/Up": "Command",
       "/SmartDashboard/Mechanisms/Commands/ElevatorMotor/ZeroEncoder": "Command",
+      "/SmartDashboard/Mechanisms/Commands/Intake/Live Tuning": "Command",
+      "/SmartDashboard/Mechanisms/Commands/Launcher/Live Tuning": "Command",
       "/SmartDashboard/Mechanisms/Commands/climb.json/Live Tuning": "Command",
+      "/SmartDashboard/Mechanisms/Commands/flywheelMotor/Down": "Command",
+      "/SmartDashboard/Mechanisms/Commands/flywheelMotor/Up": "Command",
+      "/SmartDashboard/Mechanisms/Commands/flywheelMotor/ZeroEncoder": "Command",
+      "/SmartDashboard/Mechanisms/Commands/hoodMotor/Down": "Command",
+      "/SmartDashboard/Mechanisms/Commands/hoodMotor/Up": "Command",
+      "/SmartDashboard/Mechanisms/Commands/hoodMotor/ZeroEncoder": "Command",
+      "/SmartDashboard/Mechanisms/Commands/hopperMotor/Down": "Command",
+      "/SmartDashboard/Mechanisms/Commands/hopperMotor/Up": "Command",
+      "/SmartDashboard/Mechanisms/Commands/hopperMotor/ZeroEncoder": "Command",
+      "/SmartDashboard/Mechanisms/Commands/lifterMotor/Down": "Command",
+      "/SmartDashboard/Mechanisms/Commands/lifterMotor/Up": "Command",
+      "/SmartDashboard/Mechanisms/Commands/lifterMotor/ZeroEncoder": "Command",
+      "/SmartDashboard/Mechanisms/Commands/spintakeMotor/Down": "Command",
+      "/SmartDashboard/Mechanisms/Commands/spintakeMotor/Up": "Command",
+      "/SmartDashboard/Mechanisms/Commands/spintakeMotor/ZeroEncoder": "Command",
+      "/SmartDashboard/Mechanisms/Commands/turretMotor/Down": "Command",
+      "/SmartDashboard/Mechanisms/Commands/turretMotor/Up": "Command",
+      "/SmartDashboard/Mechanisms/Commands/turretMotor/ZeroEncoder": "Command",
       "/SmartDashboard/Mechanisms/Shooter/ShooterMotor/Commands/Down": "Command",
       "/SmartDashboard/Mechanisms/Shooter/ShooterMotor/Commands/LiveTuning": "Command",
       "/SmartDashboard/Mechanisms/Shooter/ShooterMotor/Commands/Up": "Command",
@@ -179,306 +200,256 @@
       "/SmartDashboard/flywheel/mechanism": "Mechanism2d",
       "/SmartDashboard/hood/mechanism": "Mechanism2d",
       "/SmartDashboard/hoodmotor/mechanism": "Mechanism2d",
+      "/SmartDashboard/hopper/mechanism": "Mechanism2d",
       "/SmartDashboard/lifter/mechanism": "Mechanism2d",
       "/SmartDashboard/lowershootermotor/mechanism": "Mechanism2d",
       "/SmartDashboard/navX-Sensor[1]": "Gyro",
       "/SmartDashboard/navX-Sensor[4]": "Gyro",
       "/SmartDashboard/pinion/mechanism": "Mechanism2d",
       "/SmartDashboard/spintake/mechanism": "Mechanism2d",
+      "/SmartDashboard/transfer/mechanism": "Mechanism2d",
       "/SmartDashboard/turret/mechanism": "Mechanism2d",
       "/SmartDashboard/turretmotor/mechanism": "Mechanism2d",
       "/SmartDashboard/uppershootermotor/mechanism": "Mechanism2d",
       "/SmartDashboard/winch_motor/mechanism": "Mechanism2d"
     },
     "windows": {
-      "/SmartDashboard/Drive Visual": {
+      "/AdvantageKit/RealOutputs/PathPlanner": {
+        "window": {
+          "visible": true
+        }
+      },
+      "/SmartDashboard/Auto Modes": {
         "window": {
           "visible": true
         }
       },
       "/SmartDashboard/DrivePoseEstimator/Pose Field": {
         "CARPET0": {
-          "image": ".\\pictures\\carpet.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "CARPET1": {
-          "image": ".\\pictures\\carpet.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "CARPET10": {
-          "image": ".\\pictures\\carpet.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "CARPET11": {
-          "image": ".\\pictures\\carpet.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "CARPET12": {
-          "image": ".\\pictures\\carpet.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "CARPET13": {
-          "image": ".\\pictures\\carpet.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "CARPET14": {
-          "image": ".\\pictures\\carpet.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "CARPET15": {
-          "image": ".\\pictures\\carpet.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "CARPET16": {
-          "image": ".\\pictures\\carpet.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "CARPET17": {
-          "image": ".\\pictures\\carpet.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "CARPET18": {
-          "image": ".\\pictures\\carpet.png",
           "length": 0.4000000059604645,
           "width": 0.4000000059604645
         },
         "CARPET19": {
-          "image": ".\\pictures\\carpet.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "CARPET2": {
-          "image": ".\\pictures\\carpet.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "CARPET20": {
-          "image": ".\\pictures\\carpet.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "CARPET21": {
-          "image": ".\\pictures\\carpet.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "CARPET22": {
-          "image": ".\\pictures\\carpet.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "CARPET23": {
-          "image": ".\\pictures\\carpet.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "CARPET24": {
-          "image": ".\\pictures\\carpet.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "CARPET3": {
-          "image": ".\\pictures\\carpet.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "CARPET4": {
-          "image": ".\\pictures\\carpet.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "CARPET5": {
-          "image": ".\\pictures\\carpet.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "CARPET6": {
-          "image": ".\\pictures\\carpet.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "CARPET7": {
-          "image": ".\\pictures\\carpet.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "CARPET8": {
-          "image": ".\\pictures\\carpet.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "CARPET9": {
-          "image": ".\\pictures\\carpet.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 1": {
-          "image": ".\\pictures\\AT1.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 10": {
-          "image": ".\\pictures\\AT10.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 11": {
-          "image": ".\\pictures\\AT11.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 12": {
-          "image": ".\\pictures\\AT12.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 13": {
-          "image": ".\\pictures\\AT13.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 14": {
-          "image": ".\\pictures\\AT14.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 15": {
-          "image": ".\\pictures\\AT15.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 16": {
-          "image": ".\\pictures\\AT16.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 17": {
-          "image": ".\\pictures\\AT17.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 18": {
-          "image": ".\\pictures\\AT18.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 19": {
-          "image": ".\\pictures\\AT19.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 2": {
-          "image": ".\\pictures\\AT2.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 20": {
-          "image": ".\\pictures\\AT20.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 21": {
-          "image": ".\\pictures\\AT21.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 22": {
-          "image": ".\\pictures\\AT22.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 23": {
-          "image": ".\\pictures\\AT23.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 24": {
-          "image": ".\\pictures\\AT24.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 25": {
-          "image": ".\\pictures\\AT25.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 26": {
-          "image": ".\\pictures\\AT26.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 27": {
-          "image": ".\\pictures\\AT27.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 28": {
-          "image": ".\\pictures\\AT28.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 29": {
-          "image": ".\\pictures\\AT29.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 3": {
-          "image": ".\\pictures\\AT3.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 30": {
-          "image": ".\\pictures\\AT30.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 31": {
-          "image": ".\\pictures\\AT31.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 32": {
-          "image": ".\\pictures\\AT32.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 4": {
-          "image": ".\\pictures\\AT4.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 5": {
-          "image": ".\\pictures\\AT5.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 6": {
-          "image": ".\\pictures\\AT6.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 7": {
-          "image": ".\\pictures\\AT7.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 8": {
-          "image": ".\\pictures\\AT8.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
         "Field Tag 9": {
-          "image": ".\\pictures\\AT9.png",
           "length": 0.44999998807907104,
           "width": 0.44999998807907104
         },
@@ -717,7 +688,102 @@
           "length": 0.15000000596046448,
           "width": 0.15000000596046448
         },
+        "GPA51": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA52": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA53": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA54": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA55": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA56": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA57": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA58": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA59": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
         "GPA6": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA60": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA61": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA62": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA63": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA64": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA65": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA66": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA67": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA68": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA69": {
           "image": ".\\pictures\\gpa.png",
           "length": 0.15000000596046448,
           "width": 0.15000000596046448
@@ -727,12 +793,162 @@
           "length": 0.15000000596046448,
           "width": 0.15000000596046448
         },
+        "GPA70": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA71": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA72": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA73": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA74": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA75": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA76": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA77": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA78": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA79": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
         "GPA8": {
           "image": ".\\pictures\\gpa.png",
           "length": 0.15000000596046448,
           "width": 0.15000000596046448
         },
+        "GPA80": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA81": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA82": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA83": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA84": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA85": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA86": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA87": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA88": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA89": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
         "GPA9": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA90": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA91": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA92": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA93": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA94": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA95": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA96": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA97": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA98": {
+          "image": ".\\pictures\\gpa.png",
+          "length": 0.15000000596046448,
+          "width": 0.15000000596046448
+        },
+        "GPA99": {
           "image": ".\\pictures\\gpa.png",
           "length": 0.15000000596046448,
           "width": 0.15000000596046448
@@ -852,7 +1068,6 @@
           ]
         },
         "Robot": {
-          "image": ".\\pictures\\robot.png",
           "length": 0.8669999837875366,
           "width": 0.8669999837875366
         },
@@ -907,11 +1122,6 @@
           "visible": true
         }
       },
-      "/SmartDashboard/Robot Visual": {
-        "window": {
-          "visible": true
-        }
-      },
       "/SmartDashboard/VisionSystemSim-main/Sim Field": {
         "bottom": 1914,
         "height": 8.069275856018066,
@@ -933,17 +1143,7 @@
           "visible": true
         }
       },
-      "/SmartDashboard/lifter/mechanism": {
-        "window": {
-          "visible": true
-        }
-      },
-      "/SmartDashboard/pinion/mechanism": {
-        "window": {
-          "visible": true
-        }
-      },
-      "/SmartDashboard/spintake/mechanism": {
+      "/SmartDashboard/hopper/mechanism": {
         "window": {
           "visible": true
         }
@@ -978,7 +1178,19 @@
     "transitory": {
       "AdvantageKit": {
         "Drive": {
-          "Module0": {
+          "open": true
+        },
+        "Indexer": {
+          "open": true
+        },
+        "Intake": {
+          "open": true
+        },
+        "Launcher": {
+          "open": true
+        },
+        "Vision": {
+          "Camera left": {
             "open": true
           }
         },
@@ -997,6 +1209,11 @@
           },
           "open": true
         },
+        "Hood": {
+          "HoodMotor": {
+            "open": true
+          }
+        },
         "Shooter": {
           "ShooterMotor": {
             "mechanism": {
@@ -1006,6 +1223,14 @@
             "rotor": {
               "open": true
             }
+          }
+        },
+        "flywheel": {
+          "open": true
+        },
+        "hopper": {
+          "hopperMotor": {
+            "open": true
           },
           "open": true
         },
@@ -1024,8 +1249,7 @@
           "Camera shooter": {
             "open": true
           }
-        },
-        "open": true
+        }
       },
       "SmartDashboard": {
         "Characterization": {
@@ -1049,15 +1273,35 @@
           }
         },
         "ExampleRobot": {
-          "open": true,
           "values": {
             "open": true
           }
         },
-        "Shooter": {
-          "open": true
+        "Indexer": {
+          "open": true,
+          "spindexer": {
+            "open": true
+          },
+          "transfer_back": {
+            "open": true
+          },
+          "transfer_front": {
+            "open": true
+          }
         },
         "Wheel Radius Characterization": {
+          "open": true
+        },
+        "hood": {
+          "open": true
+        },
+        "hopper": {
+          "mechanism": {
+            "hopperRoot": {
+              "open": true
+            },
+            "open": true
+          },
           "open": true
         },
         "open": true
@@ -1089,6 +1333,13 @@
     }
   },
   "NetworkTables Info": {
-    "visible": true
+    "Connections": {
+      "open": true
+    },
+    "Server": {
+      "Subscribers": {
+        "open": true
+      }
+    }
   }
 }

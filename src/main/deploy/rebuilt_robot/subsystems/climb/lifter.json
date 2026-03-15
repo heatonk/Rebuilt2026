@@ -3,7 +3,8 @@
     "name": "lifter",
     "controllerType": "talonfx",
     "motorType": "KrakenX60",
-    "canId": 19,
+    "canId": 20,
+    "logLevel": "HIGH",
     "robotToMotor": {
       "x": {
         "val": -10.7,
@@ -23,6 +24,7 @@
       }
     }
   },
+  "controlAlgorithm": "SIMPLE",
   "motorSystemId": {
     "feedBack": {
       "p": 2.7739E-10,

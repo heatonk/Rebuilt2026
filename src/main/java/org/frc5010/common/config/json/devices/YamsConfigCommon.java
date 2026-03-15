@@ -9,6 +9,7 @@ import edu.wpi.first.math.trajectory.ExponentialProfile;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.units.measure.Voltage;
+import frc.robot.Robot;
 import java.util.Optional;
 import org.frc5010.common.config.ConfigConstants.ControlAlgorithm;
 import org.frc5010.common.config.UnitsParser;
@@ -36,11 +37,16 @@ public class YamsConfigCommon {
         UnitValueJson voltageCompensation,
         UnitValueJson mass,
         UnitValueJson length,
-        double[] gearing) {
+        double[] gearing,
+        String gearStages) {
       this.voltageCompensation = UnitsParser.parseVolts(voltageCompensation);
       this.mass = UnitsParser.parseMass(mass);
       this.length = UnitsParser.parseDistance(length);
-      this.gearing = new MechanismGearing(GearBox.fromReductionStages(gearing));
+      if (!gearStages.isEmpty()) {
+        this.gearing = new MechanismGearing(GearBox.fromStages(gearStages));
+      } else { // gearStages is empty, so use gearing array
+        this.gearing = new MechanismGearing(GearBox.fromReductionStages(gearing));
+      }
     }
   }
 
@@ -59,6 +65,9 @@ public class YamsConfigCommon {
             motorSetup.controllerType, motorSetup.canId, motorSetup.canBus);
     DCMotor motorSim = DeviceConfigReader.getSimulatedMotor(motorSetup.motorType, numberOfMotors);
 
+    if (Robot.isSimulation() && !ControlAlgorithm.SIMPLE.equals(controlAlgorithm)) {
+      controlAlgorithm = ControlAlgorithm.SIMPLE;
+    }
     switch (controlAlgorithm) {
       case PROFILED:
         {

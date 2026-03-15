@@ -135,7 +135,7 @@ public abstract class GenericRobot extends GenericMechanism implements GenericDe
         .schedule(
             Commands.run(
                     () -> {
-                      allianceDisplay.setValue(determineAlliance());
+                      determineAlliance();
                       LEDStrip.changeSegmentPattern(
                           ConfigConstants.ALL_LEDS, LEDStrip.getSolidPattern(allianceWpiColor));
                     })
@@ -289,6 +289,7 @@ public abstract class GenericRobot extends GenericMechanism implements GenericDe
   public String determineAlliance() {
     Optional<Alliance> color = DriverStation.getAlliance();
     alliance = color.orElse(Alliance.Blue);
+    allianceDisplay.setValue(alliance.name());
     allianceColor5010 =
         color.map(it -> it == Alliance.Red ? Color.RED : Color.BLUE).orElse(Color.ORANGE);
     allianceWpiColor =

@@ -3,10 +3,16 @@
     "name": "flywheel",
     "controllerType": "talonfx",
     "motorType": "KrakenX60",
-    "canId": 15,
+    "canId": 16,
+    "inverted": true,
+    "logLevel": "HIGH",
+    "currentLimit": {
+      "val": 80,
+      "uom": "amps"
+    },
     "followers": [
       {
-        "canId": 16,
+        "canId": 17,
         "inverted": true
       }
     ],
@@ -31,14 +37,22 @@
   },
   "motorSystemId": {
     "feedBack": {
-      "p": 4,
+      "p": 5,
       "i": 0.0,
       "d": 0.0
     },
+    "closedLoopRamp": {
+      "val": 0,
+      "uom": "s"
+    },
+    "openLoopRamp": {
+      "val": 0,
+      "uom": "s"
+    },
     "feedForward": {
-      "s": 0.0,
-      "v": 0.0,
-      "a": 0.0
+      "s": 0.066854,
+      "v": 2.1,
+      "a": 0.38848
     },
     "maxVelocity": {
       "val": 180,
@@ -51,14 +65,14 @@
   },
   "simSystemId": {
     "feedBack": {
-      "p": 4,
+      "p": 2,
       "i": 0.0,
       "d": 0.0
     },
     "feedForward": {
-      "s": 0.0,
-      "v": 0.0,
-      "a": 0.0
+      "s": 0.066854,
+      "v": 2.1962,
+      "a": 0.38848
     },
     "maxVelocity": {
       "val": 180,
@@ -77,16 +91,13 @@
     "val": 5000,
     "uom": "rpm"
   },
-  "gearing": [
-    3,
-    4
-  ],
+  "gearStages": "18:1",
   "mass": {
-    "val": 2,
-    "uom": "kg"
+    "val": 5.1,
+    "uom": "lbs"
   },
   "radius": {
-    "val": 0.05,
-    "uom": "m"
+    "val": 1.975,
+    "uom": "in"
   }
 }

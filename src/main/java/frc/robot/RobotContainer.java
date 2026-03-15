@@ -43,6 +43,7 @@ public class RobotContainer implements WpiHelperInterface {
 
   // Just sets up defalt commands (setUpDeftCom)
   public void setupDefaults() {
+    robot.determineAlliance();
     robot.setupDefaultCommands();
   }
 

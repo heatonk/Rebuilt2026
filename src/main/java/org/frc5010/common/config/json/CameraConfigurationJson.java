@@ -22,7 +22,7 @@ import org.frc5010.common.sensors.camera.PhotonVisionCamera;
 import org.frc5010.common.sensors.camera.PhotonVisionFiducialTargetCamera;
 import org.frc5010.common.sensors.camera.PhotonVisionPoseCamera;
 import org.frc5010.common.sensors.camera.PhotonVisionVisualTargetCamera;
-import org.frc5010.common.sensors.camera.QuestNav;
+import org.frc5010.common.sensors.camera.QuestNavInterface;
 import org.frc5010.common.sensors.camera.SimulatedCamera;
 import org.frc5010.common.sensors.camera.SimulatedFiducialTargetCamera;
 import org.frc5010.common.sensors.camera.SimulatedVisualTargetCamera;
@@ -330,8 +330,8 @@ public class CameraConfigurationJson {
         }
       case "quest":
         {
-          QuestNav questNav = new QuestNav(robotToCamera);
-          questNav.resetPose();
+          QuestNavInterface questNav = new QuestNavInterface(robotToCamera);
+
           if (drivetrain != null) {
             // FIX: Undo this
             questNav.withRobotSpeedSupplier(

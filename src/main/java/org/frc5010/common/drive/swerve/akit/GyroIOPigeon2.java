@@ -37,15 +37,12 @@ public class GyroIOPigeon2 implements GyroIO {
     yawVelocity.setUpdateFrequency(50.0);
     pigeon.optimizeBusUtilization();
     yawTimestampQueue = TalonFXOdometryThread.getInstance().makeTimestampQueue();
-    var yawClone = yaw.clone(); // Status signals are not thread-safe
-    yawPositionQueue =
-        TalonFXOdometryThread.getInstance()
-            .registerSignal(() -> yawClone.refresh().getValueAsDouble());
+    yawPositionQueue = TalonFXOdometryThread.getInstance().registerSignal(yaw.clone());
   }
 
   @Override
   public void updateInputs(GyroIOInputs inputs) {
-    inputs.connected = BaseStatusSignal.refreshAll(yaw, yawVelocity).equals(StatusCode.OK);
+    inputs.connected = BaseStatusSignal.refreshAll(yawVelocity).equals(StatusCode.OK);
     inputs.yawPosition = Rotation2d.fromDegrees(yaw.getValueAsDouble());
     inputs.yawVelocityRadPerSec = Units.degreesToRadians(yawVelocity.getValueAsDouble());
 

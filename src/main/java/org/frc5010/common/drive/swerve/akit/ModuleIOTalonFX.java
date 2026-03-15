@@ -25,6 +25,7 @@ import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
@@ -54,6 +55,7 @@ public abstract class ModuleIOTalonFX implements ModuleIO {
   // Inputs from drive motor
   protected final StatusSignal<Angle> drivePosition;
   protected final StatusSignal<AngularVelocity> driveVelocity;
+  protected final StatusSignal<AngularAcceleration> driveAcceleration;
   protected final StatusSignal<Voltage> driveAppliedVolts;
   protected final StatusSignal<Current> driveCurrent;
   protected final StatusSignal<Boolean> driveIsProLicensed;
@@ -84,6 +86,7 @@ public abstract class ModuleIOTalonFX implements ModuleIO {
     var driveConfig = constants.DriveMotorInitialConfigs;
     driveConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     driveConfig.Slot0 = constants.DriveMotorGains;
+    driveConfig.Feedback.SensorToMechanismRatio = constants.DriveMotorGearRatio;
     driveConfig.TorqueCurrent.PeakForwardTorqueCurrent = constants.SlipCurrent;
     driveConfig.TorqueCurrent.PeakReverseTorqueCurrent = -constants.SlipCurrent;
     driveConfig.CurrentLimits.StatorCurrentLimit = constants.SlipCurrent;
@@ -137,6 +140,7 @@ public abstract class ModuleIOTalonFX implements ModuleIO {
     // Create drive status signals
     drivePosition = driveTalon.getPosition();
     driveVelocity = driveTalon.getVelocity();
+    driveAcceleration = driveTalon.getAcceleration();
     driveAppliedVolts = driveTalon.getMotorVoltage();
     driveCurrent = driveTalon.getStatorCurrent();
     driveIsProLicensed = driveTalon.getIsProLicensed();
@@ -150,10 +154,11 @@ public abstract class ModuleIOTalonFX implements ModuleIO {
 
     // Configure periodic frames
     BaseStatusSignal.setUpdateFrequencyForAll(
-        config.ODOMETRY_FREQUENCY, turnPosition, drivePosition);
+        config.ODOMETRY_FREQUENCY, turnPosition, drivePosition, turnAbsolutePosition);
     BaseStatusSignal.setUpdateFrequencyForAll(
         50.0,
         driveVelocity,
+        driveAcceleration,
         driveAppliedVolts,
         driveCurrent,
         driveIsProLicensed,
@@ -161,29 +166,34 @@ public abstract class ModuleIOTalonFX implements ModuleIO {
         turnVelocity,
         turnAppliedVolts,
         turnCurrent);
-    ParentDevice.optimizeBusUtilizationForAll(driveTalon, turnTalon);
+    ParentDevice.optimizeBusUtilizationForAll(driveTalon, turnTalon, cancoder);
   }
 
   @Override
   public void updateInputs(ModuleIOInputs inputs) {
     // Refresh all signals
     var driveStatus =
-        BaseStatusSignal.refreshAll(drivePosition, driveVelocity, driveAppliedVolts, driveCurrent);
+        BaseStatusSignal.refreshAll(
+            driveVelocity, driveAcceleration, driveAppliedVolts, driveCurrent);
+    // Refresh turnAbsolutePosition alongside turn motor signals so it is always up-to-date.
+    // In simulation the odometry thread does not run, so signals registered only there would
+    // stay permanently at 0 — causing tank-drive behavior and stuck module angles in sim.
     var turnStatus =
-        BaseStatusSignal.refreshAll(turnPosition, turnVelocity, turnAppliedVolts, turnCurrent);
-    var turnEncoderStatus = BaseStatusSignal.refreshAll(turnAbsolutePosition);
+        BaseStatusSignal.refreshAll(
+            turnAbsolutePosition, turnVelocity, turnAppliedVolts, turnCurrent);
+    var turnEncoderStatus = turnStatus; // turnAbsolutePosition already refreshed above
 
     // Update drive inputs
     inputs.driveConnected = driveConnectedDebounce.calculate(driveStatus.isOK());
-    inputs.drivePositionRad =
-        Units.rotationsToRadians(drivePosition.getValueAsDouble()) / constants.DriveMotorGearRatio;
-    inputs.driveVelocityRadPerSec =
-        Units.rotationsToRadians(driveVelocity.getValueAsDouble()) / constants.DriveMotorGearRatio;
+    inputs.drivePositionRad = Units.rotationsToRadians(drivePosition.getValueAsDouble());
+    inputs.driveVelocityRadPerSec = Units.rotationsToRadians(driveVelocity.getValueAsDouble());
+    inputs.driveAccelerationRadPerSecSquared =
+        Units.rotationsToRadians(driveAcceleration.getValueAsDouble());
     inputs.driveAppliedVolts = driveAppliedVolts.getValueAsDouble();
     inputs.driveCurrentAmps = driveCurrent.getValueAsDouble();
 
     // Update turn inputs
-    inputs.turnPosition = Rotation2d.fromRotations(turnPosition.getValueAsDouble());
+    inputs.turnPosition = Rotation2d.fromRotations(turnAbsolutePosition.getValueAsDouble());
     inputs.turnConnected = turnConnectedDebounce.calculate(turnStatus.isOK());
     inputs.turnEncoderConnected = turnEncoderConnectedDebounce.calculate(turnEncoderStatus.isOK());
     inputs.turnAbsolutePosition = Rotation2d.fromRotations(turnAbsolutePosition.getValueAsDouble());

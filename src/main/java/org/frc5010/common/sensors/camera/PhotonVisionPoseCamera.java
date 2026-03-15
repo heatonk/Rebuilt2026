@@ -4,6 +4,7 @@
 
 package org.frc5010.common.sensors.camera;
 
+import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
@@ -12,6 +13,7 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -67,9 +69,15 @@ public class PhotonVisionPoseCamera extends PhotonVisionCamera implements Fiduci
     super(name, colIndex, cameraToRobot);
     this.poseSupplier = poseSupplier;
     this.fieldLayout = fieldLayout;
+
     this.fiducialIds = fiducialIds;
     visionLayout.addDouble("Observations", () -> input.poseObservations.length);
-    poseEstimator = new PhotonPoseEstimator(fieldLayout, cameraToRobot);
+    List<AprilTag> filteredTags =
+        fieldLayout.getTags().stream().filter(tag -> fiducialIds.contains(tag.ID)).toList();
+    AprilTagFieldLayout filteredLayout =
+        new AprilTagFieldLayout(
+            filteredTags, fieldLayout.getFieldLength(), fieldLayout.getFieldWidth());
+    poseEstimator = new PhotonPoseEstimator(filteredLayout, cameraToRobot);
   }
 
   /** Update the camera and target with the latest result */
@@ -78,21 +86,28 @@ public class PhotonVisionPoseCamera extends PhotonVisionCamera implements Fiduci
     poseEstimator.addHeadingData(Timer.getFPGATimestamp(), poseSupplier.get().getRotation());
 
     List<PoseObservation> observations = new ArrayList<>();
+    SmartDashboard.putBoolean("Camera/" + name() + "/updating", true);
 
     super.updateCameraInfo();
     Set<Short> tagIds = new HashSet<>();
 
     for (PhotonPipelineResult iCamResult : camResults) {
+      SmartDashboard.putBoolean("Camera/" + name() + "/resuls", iCamResult.hasTargets());
       Optional<EstimatedRobotPose> estimate = poseEstimator.estimateCoprocMultiTagPose(iCamResult);
-      if (estimate.isEmpty()) {
-        estimate = poseEstimator.estimateLowestAmbiguityPose(iCamResult);
+
+      if (estimate.isEmpty() && !DriverStation.isDisabled()) {
+        estimate = poseEstimator.estimatePnpDistanceTrigSolvePose(iCamResult);
       }
+
       if (estimate.isPresent()) {
-        Optional<EstimatedRobotPose> finalEstimate =
-            poseEstimator.estimatePnpDistanceTrigSolvePose(iCamResult);
-        if (finalEstimate.isPresent()) {
-          estimate = finalEstimate;
-        }
+        // if (!DriverStation.isDisabled()) {
+        //   Optional<EstimatedRobotPose> finalEstimate =
+        //       poseEstimator.estimatePnpDistanceTrigSolvePose(iCamResult);
+        //   if (finalEstimate.isPresent()) {
+        //     estimate = finalEstimate;
+        //   }
+        // }
+
         EstimatedRobotPose estimatedRobotPose = estimate.get();
         Pose3d robotPose = estimatedRobotPose.estimatedPose;
 
@@ -121,6 +136,13 @@ public class PhotonVisionPoseCamera extends PhotonVisionCamera implements Fiduci
               robotPose.getX(),
               robotPose.getY(),
               robotPose.getRotation().toRotation2d().getDegrees()
+            });
+        SmartDashboard.putNumberArray(
+            "Camera/" + name() + "/Photon Camera " + name + " Robot Offset",
+            new double[] {
+              robotToCamera.getX(),
+              robotToCamera.getY(),
+              robotToCamera.getRotation().toRotation2d().getDegrees()
             });
 
         observations.add(
@@ -151,7 +173,7 @@ public class PhotonVisionPoseCamera extends PhotonVisionCamera implements Fiduci
 
   @Override
   public Matrix<N3, N1> getStdDeviations(PoseObservation observation) {
-    double stdDevFactor = Math.pow(observation.averageTagDistance(), 4.0) / observation.tagCount();
+    double stdDevFactor = Math.pow(observation.averageTagDistance(), 2.0) / observation.tagCount();
     double linearStdDev = VisionConstants.linearStdDevBaseline * stdDevFactor;
 
     double angularStdDev = VisionConstants.angularStdDevBaseline * stdDevFactor;

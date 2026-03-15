@@ -7,60 +7,67 @@ package frc.robot.rebuilt.subsystems.Indexer;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.rebuilt.commands.IndexerCommands.IndexerState;
 import org.frc5010.common.arch.GenericSubsystem;
-import org.frc5010.common.motors.function.PercentControlMotor;
+import org.frc5010.common.arch.StateMachine;
 import org.frc5010.common.sensors.Controller;
 import org.littletonrobotics.junction.Logger;
 
 public class Indexer extends GenericSubsystem {
-  private PercentControlMotor Spindexer;
   private final IndexerIO io;
   private final IndexerIOInputsAutoLogged inputs = new IndexerIOInputsAutoLogged();
-  private PercentControlMotor Feeder;
 
-  /** Creates a new Index. */
+  /** Creates a new Index and selects the IO to real or simulated. */
   public Indexer() {
     super("indexer.json");
 
     if (RobotBase.isSimulation()) {
-      io = new IndexerIOSim(devices);
+      io = (IndexerIO) new IndexerIOSim(devices);
     } else {
       io = new IndexerIOReal(devices);
     }
   }
 
-  public void RunSpindexer(double speed) {
-    Spindexer.set(speed);
+  public void runSpindexer(double speed) {
+    io.runSpindexer(speed);
   }
 
-  public void RunFeeder(double speed) {
-    Feeder.set(speed);
+  public void runFeeder(double speed) {
+    io.runTransferFront(speed);
   }
 
-  public void ConfigController(Controller controller) {
-    controller.createAButton().whileTrue(spindexerCommand(.25));
-    controller.createBButton().whileTrue(feederCommand(.25));
+  // public void runTransferBack(double speed) {
+  //   io.runTransferBack(speed);
+  // }
+
+  public void runTransferFront(double speed) {
+    io.runTransferFront(speed);
   }
 
+  public void configTestControls(Controller controller) {
+    controller.createLeftBumper().whileTrue((spindexerCommand(.25)).alongWith(feederCommand(0.25)));
+  }
+  /** Command that runs the feeder at a given speed and stops when done */
   public Command feederCommand(double speed) {
     return Commands.run(
             () -> {
-              RunFeeder(0.25);
-            })
+              runFeeder(0.25);
+            },
+            this)
         .finallyDo(
             () -> {
-              RunFeeder(0);
+              runFeeder(0);
             });
   }
-
+  /** returns a command that runs the spindexer at a set speed and stops when done */
   public Command spindexerCommand(double speed) {
     return Commands.run(
             () -> {
-              RunSpindexer(0.25);
+              runSpindexer(speed);
             })
         .finallyDo(
             () -> {
-              RunSpindexer(0);
+              runSpindexer(0);
             });
   }
 
@@ -75,5 +82,25 @@ public class Indexer extends GenericSubsystem {
   @Override
   public void simulationPeriodic() {
     super.simulationPeriodic();
+  }
+
+  public boolean isRequested(IndexerState state) {
+    return inputs.stateRequested.compareTo(state) == 0;
+  }
+
+  public boolean isCurrent(IndexerState state) {
+    return inputs.stateCurrent.compareTo(state) == 0;
+  }
+
+  public void setCurrentState(IndexerState state) {
+    inputs.stateCurrent = state;
+  }
+
+  public void setRequestedState(IndexerState state) {
+    inputs.stateRequested = state;
+  }
+
+  public void setDefaultCommands(StateMachine stateMachine) {
+    inputs.stateRequested = IndexerState.IDLE;
   }
 }

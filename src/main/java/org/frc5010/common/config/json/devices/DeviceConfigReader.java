@@ -34,6 +34,9 @@ public class DeviceConfigReader {
       case "spark":
         motor = MotorFactory.Spark(id, Motor.valueOf(type));
         break;
+      case "sparkflex":
+        motor = MotorFactory.SparkFlex(id, Motor.valueOf(type));
+        break;
       case "talonfx":
         motor = MotorFactory.TalonFX(id, Motor.valueOf(type));
         break;
@@ -140,6 +143,9 @@ public class DeviceConfigReader {
         break;
       case "neo550":
         motorSim = DCMotor.getNeo550(numberOfMotors);
+        break;
+      case "neovortex":
+        motorSim = DCMotor.getNeoVortex(numberOfMotors);
         break;
       case "krakenx60":
         motorSim = DCMotor.getKrakenX60(numberOfMotors);

@@ -3,10 +3,13 @@
     "name": "turret",
     "controllerType": "talonfx",
     "motorType": "KrakenX44",
-    "canId": 17,
+    "canId": 18,
+    "inverted": true,
+    "logLevel": "HIGH",
+    "canBus": "canivore",
     "robotToMotor": {
       "x": {
-        "val": -5.872,
+        "val": -4.856,
         "uom": "in"
       },
       "y": {
@@ -24,52 +27,53 @@
     },
     "movementPlane": "XY"
   },
+  "controlAlgorithm": "PROFILED",
   "motorSystemId": {
     "feedBack": {
-      "p": 4,
+      "p": 225,
       "i": 0.0,
-      "d": 0.0
+      "d": 50
     },
     "feedForward": {
-      "s": 0.0,
-      "v": 0.0,
-      "a": 0.0
+      "s": 0.56547,
+      "v": 1.637,
+      "a": 0.53217
     },
     "maxVelocity": {
-      "val": 180,
+      "val": 1080,
       "uom": "deg/s"
     },
     "maxAcceleration": {
-      "val": 90,
+      "val": 700,
       "uom": "deg/s^2"
     }
   },
   "simSystemId": {
     "feedBack": {
-      "p": 4,
+      "p": 8,
       "i": 0.0,
-      "d": 0.0
+      "d": 8.0
     },
     "feedForward": {
-      "s": 0.0,
-      "v": 0.0,
-      "a": 0.0
+      "s": 0.030215,
+      "v": 0.00087341,
+      "a": 0.98956
     },
     "maxVelocity": {
-      "val": 180,
+      "val": 1080,
       "uom": "deg/s"
     },
     "maxAcceleration": {
-      "val": 90,
+      "val": 10800,
       "uom": "deg/s^2"
     }
   },
   "lowerHardLimit": {
-    "val": -170,
+    "val": -160,
     "uom": "deg"
   },
   "upperHardLimit": {
-    "val": 170,
+    "val": 160,
     "uom": "deg"
   },
   "startingAngle": {
@@ -77,27 +81,20 @@
     "uom": "deg"
   },
   "lowerSoftLimit": {
-    "val": -170,
+    "val": -150,
     "uom": "deg"
   },
   "upperSoftLimit": {
-    "val": 170,
+    "val": 150,
     "uom": "deg"
   },
-  "gearing": [
-    3,
-    4
-  ],
-  "startingPosition": {
-    "val": 0,
-    "uom": "deg"
-  },
+  "gearStages": "30:1",
   "radius": {
     "val": 5,
     "uom": "in"
   },
   "mass": {
-    "val": 2,
+    "val": 15,
     "uom": "lb"
   }
 }

@@ -1,16 +1,15 @@
 {
   "userConfig": "competition_mode.json",
   "driveType": "AKIT_SWERVE_DRIVE",
-  "trackWidth": 2,
+  "trackWidth": 22,
   "trackWidthUom": "in",
-  "wheelBase": 18.5,
+  "wheelBase": 22,
   "wheelBaseUom": "in",
-  "wheelDiameter": 0.103386904,
+  "wheelDiameter": 0.1002156588,
   "wheelDiameterUom": "m",
   "physicalMaxSpeed": 5.93,
   "physicalMaxSpeedUom": "m/s",
   "driveMotorGearRatio": 1.0,
   "loadSimulatedField": true,
-  "gamePieceA": "Coral",
-  "gamePieceB": "Algae"
+  "gamePieceA": "Fuel"
 }

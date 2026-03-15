@@ -33,6 +33,7 @@ public class YamsShooterConfigurationJson implements DeviceConfiguration {
   public UnitValueJson upperSoftLimit =
       new UnitValueJson(0, AngularVelocityUnit.DEGREES_PER_SECOND.toString());
   public double[] gearing;
+  public String gearStages = "";
   public UnitValueJson voltageCompensation = new UnitValueJson(12, VoltageUnit.VOLTS.toString());
   public UnitValueJson mass = new UnitValueJson(0, MassUnit.POUNDS.toString());
   public UnitValueJson radius = new UnitValueJson(0, DistanceUnit.INCHES.toString());
@@ -59,7 +60,8 @@ public class YamsShooterConfigurationJson implements DeviceConfiguration {
                     simSystemId.feedForward.a))
             .withControlMode(ControlMode.valueOf(motorSystemId.controlMode));
     YamsConfigCommon.PhysicalParameters physicalParams =
-        new YamsConfigCommon.PhysicalParameters(voltageCompensation, mass, radius, gearing);
+        new YamsConfigCommon.PhysicalParameters(
+            voltageCompensation, mass, radius, gearing, gearStages);
 
     Optional<SmartMotorController> smartMotor =
         YamsConfigCommon.configureSmartMotorController(
@@ -75,7 +77,7 @@ public class YamsShooterConfigurationJson implements DeviceConfiguration {
     }
     FlyWheelConfig shooterConfig =
         new FlyWheelConfig(smartMotor.get())
-            // .withMechanismPositionConfig(motorSetup.getMechanismPositionConfig())
+            .withMechanismPositionConfig(motorSetup.getMechanismPositionConfig())
             .withDiameter(UnitsParser.parseDistance(radius).times(2.0))
             .withMass(UnitsParser.parseMass(mass))
             .withUpperSoftLimit(UnitsParser.parseAngularVelocity(upperSoftLimit))

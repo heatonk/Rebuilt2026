@@ -33,6 +33,7 @@ public class YamsArmConfigurationJson implements DeviceConfiguration {
   public UnitValueJson lowerSoftLimit = new UnitValueJson(0, AngleUnit.DEGREES.toString());
   public UnitValueJson upperSoftLimit = new UnitValueJson(0, AngleUnit.DEGREES.toString());
   public double[] gearing;
+  public String gearStages = "";
   public UnitValueJson mass = new UnitValueJson(0, MassUnit.POUNDS.toString());
   public UnitValueJson voltageCompensation = new UnitValueJson(12, VoltageUnit.VOLTS.toString());
   public UnitValueJson horizontalZero = new UnitValueJson(0, AngleUnit.DEGREES.toString());
@@ -63,7 +64,8 @@ public class YamsArmConfigurationJson implements DeviceConfiguration {
                     simSystemId.feedForward.a));
 
     YamsConfigCommon.PhysicalParameters physicalParams =
-        new YamsConfigCommon.PhysicalParameters(voltageCompensation, mass, length, gearing);
+        new YamsConfigCommon.PhysicalParameters(
+            voltageCompensation, mass, length, gearing, gearStages);
 
     Optional<SmartMotorController> smartMotor =
         YamsConfigCommon.configureSmartMotorController(
@@ -86,6 +88,7 @@ public class YamsArmConfigurationJson implements DeviceConfiguration {
             .withTelemetry(motorSetup.name, TelemetryVerbosity.valueOf(motorSetup.logLevel))
             .withMass(physicalParams.mass)
             .withStartingPosition(UnitsParser.parseAngle(startingAngle))
+            .withMechanismPositionConfig(motorSetup.getMechanismPositionConfig())
             .withHorizontalZero(UnitsParser.parseAngle(horizontalZero));
     Arm arm = new Arm(armConfig);
     return arm;

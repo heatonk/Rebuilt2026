@@ -1,128 +1,80 @@
 package frc.robot.rebuilt.commands;
 
-import edu.wpi.first.units.Units;
-import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.rebuilt.Constants;
-import frc.robot.rebuilt.subsystems.Climb.Climb;
+// import frc.robot.rebuilt.subsystems.Climb.Climb;
 import frc.robot.rebuilt.subsystems.Indexer.Indexer;
 import frc.robot.rebuilt.subsystems.Launcher.Launcher;
 import frc.robot.rebuilt.subsystems.intake.Intake;
 import java.util.Map;
 import org.frc5010.common.arch.GenericSubsystem;
+import org.frc5010.common.config.ConfigConstants;
+import org.frc5010.common.drive.GenericDrivetrain;
 import org.frc5010.common.sensors.Controller;
+import org.frc5010.common.sensors.camera.QuestNavInterface;
 
 public class TestCommands {
 
   private Map<String, GenericSubsystem> subsystems;
 
   Indexer indexer;
-  Climb climb;
+  // Climb climb;
   Intake intake;
-  Launcher launcher;
+  static Launcher launcher;
 
   public TestCommands(Map<String, GenericSubsystem> subsystems) {
     this.subsystems = subsystems;
     indexer = (Indexer) subsystems.get(Constants.INDEXER);
-    climb = (Climb) subsystems.get(Constants.CLIMB);
+    // climb = (Climb) subsystems.get(Constants.CLIMB);
     intake = (Intake) subsystems.get(Constants.INTAKE);
     launcher = (Launcher) subsystems.get(Constants.LAUNCHER);
   }
 
   public void configureButtonBindings(Controller controller) {
+    controller.setRightYAxis(controller.createRightYAxis().negate().deadzone(0.07));
+    controller.setLeftYAxis(controller.createLeftYAxis().negate().deadzone(0.07));
+    launcher.setDefaultCommand(launcher.getDefaultCommand());
+    intake.setDefaultCommand(
+        Commands.run(
+            () -> {
+              intake.runHopper(controller.getRightYAxis());
+              intake.runSpintake(controller.getLeftYAxis());
+            },
+            intake));
 
-    indexer.ConfigController(controller);
-    intake.ConfigController(controller);
-    climb.ConfigController(controller);
-    controller.createLeftStickButton().whileTrue(testLauncherCommand(4, 1));
-  }
+    indexer.configTestControls(controller);
+    // intake.configTestController(controller);
+    // climb.configTestControls(controller);
+    controller
+        .createBButton()
+        .whileTrue(launcher.getTurretSysIdCommand().finallyDo(() -> launcher.stopAllMotors()));
+    controller
+        .createAButton()
+        .whileTrue(launcher.getFlyWheelSysIdCommand().finallyDo(() -> launcher.stopAllMotors()));
 
-  public Command testLauncherCommand(double speed, double time) {
+    QuestNavInterface calibrationQuest = new QuestNavInterface(new Transform3d());
+    controller
+        .createYButton()
+        .whileTrue(
+            calibrationQuest.determineOffsetToRobotCenter(
+                (GenericDrivetrain) subsystems.get(ConfigConstants.DRIVETRAIN)));
 
-    return (Commands.run(
+    controller
+        .createXButton()
+        .onTrue(
+            Commands.run(
                 () -> {
-                  launcher.runShooter(speed);
-                },
-                launcher)
-            .withTimeout(time))
-        .andThen(
-            (Commands.run(
-                    () -> {
-                      launcher.runShooter(0);
-                    }))
-                .withTimeout(time))
-        .andThen(
-            (Commands.run(
-                    () -> {
-                      launcher.runShooter(speed);
-                    }))
-                .withTimeout(time))
-        .andThen(
-            (Commands.run(
-                    () -> {
-                      launcher.runShooter(0);
-                    }))
-                .withTimeout(time))
-        .andThen(
-            (Commands.run(
-                    () -> {
-                      launcher.setHoodAngle(Units.Degrees.of(90));
-                    }))
-                .withTimeout(time))
-        .andThen(
-            (Commands.run(
-                    () -> {
-                      launcher.setHoodAngle(Units.Degrees.of(180));
-                    }))
-                .withTimeout(time))
-        .andThen(
-            (Commands.run(
-                    () -> {
-                      launcher.setHoodAngle(Units.Degrees.of(-90));
-                    }))
-                .withTimeout(time))
-        .andThen(
-            (Commands.run(
-                    () -> {
-                      launcher.setHoodAngle(Units.Degrees.of(-180));
-                    }))
-                .withTimeout(time))
-        .andThen(
-            (Commands.run(
-                    () -> {
-                      launcher.setHoodAngle(Units.Degrees.of(0));
-                    }))
-                .withTimeout(time))
-        .andThen(
-            (Commands.run(
-                    () -> {
-                      launcher.setTurretRotation(Units.Degrees.of(90.0));
-                    }))
-                .withTimeout(time))
-        .andThen(
-            (Commands.run(
-                    () -> {
-                      launcher.setTurretRotation(Units.Degrees.of(180.0));
-                    }))
-                .withTimeout(time))
-        .andThen(
-            (Commands.run(
-                    () -> {
-                      launcher.setTurretRotation(Units.Degrees.of(-90.0));
-                    }))
-                .withTimeout(time))
-        .andThen(
-            (Commands.run(
-                    () -> {
-                      launcher.setTurretRotation(Units.Degrees.of(180.0));
-                    }))
-                .withTimeout(time))
-        .andThen(
-            (Commands.run(
-                    () -> {
-                      launcher.setTurretRotation(Units.Degrees.of(0));
-                    }))
-                .withTimeout(time))
-        .repeatedly();
+                  calibrationQuest.resetPose(new Pose3d());
+                }));
+
+    // Shot tuning command – hold Y button to enter tuning mode
+    // controller
+    //     .createYButton()
+    //     .whileTrue(
+    //         ShotCalibrationCommand.createWithFeed(
+    //                 launcher, frc.robot.rebuilt.Rebuilt.drivetrain, 2.0, 0.5)
+    //             .finallyDo(() -> launcher.stopAllMotors()));
   }
 }

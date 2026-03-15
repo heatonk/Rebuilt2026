@@ -4,6 +4,8 @@
     "controllerType": "talonfx",
     "motorType": "KrakenX60",
     "canId": 12,
+    "logLevel": "LOW",
+    "inverted": true,
     "followers": [
       {
         "canId": 13,
@@ -30,6 +32,7 @@
     }
   },
   "motorSystemId": {
+    "controlMode": "OPEN_LOOP",
     "feedBack": {
       "p": 4,
       "i": 0.0,
@@ -77,10 +80,7 @@
     "val": 5000,
     "uom": "rpm"
   },
-  "gearing": [
-    3,
-    4
-  ],
+  "gearStages": "1:1",
   "mass": {
     "val": 2,
     "uom": "kg"

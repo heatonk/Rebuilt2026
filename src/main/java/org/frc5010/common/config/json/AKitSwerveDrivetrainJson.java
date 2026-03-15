@@ -101,6 +101,11 @@ public class AKitSwerveDrivetrainJson implements DrivetrainPropertiesJson {
           new SwerveDriveSimulation(
               SwerveDriveFunctions.mapleSimConfig, new Pose2d(3, 3, new Rotation2d()));
       SimulatedArena.getInstance().addDriveTrainSimulation(SwerveDriveFunctions.driveSimulation);
+
+      // Initialize odometry frequency for simulation so Phoenix 6 signals registered
+      // to it (like turnAbsolutePosition after recent commits) actually update.
+      config.ODOMETRY_FREQUENCY = 250.0;
+
       if ("TalonFX".equals(type)) {
         TalonFXOdometryThread.createInstance(config);
         driveFunctions =

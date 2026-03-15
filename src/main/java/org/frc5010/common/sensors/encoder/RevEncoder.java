@@ -5,7 +5,7 @@
 package org.frc5010.common.sensors.encoder;
 
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.sim.SparkMaxSim;
+import com.revrobotics.spark.SparkSim;
 import com.revrobotics.spark.config.EncoderConfig;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
@@ -14,7 +14,7 @@ import java.util.Optional;
 public class RevEncoder implements GenericEncoder {
   protected RelativeEncoder encoder;
   /** The simulated instance of the motor */
-  protected SparkMaxSim sparkMaxSim;
+  protected SparkSim sparkMaxSim;
 
   protected EncoderConfig config;
   protected double positionConversion = 1.0;
@@ -25,7 +25,7 @@ public class RevEncoder implements GenericEncoder {
     config = new EncoderConfig();
   }
 
-  public void setSimulation(SparkMaxSim sparkMaxSim) {
+  public void setSimulation(SparkSim sparkMaxSim) {
     this.sparkMaxSim = sparkMaxSim;
   }
 

@@ -5,6 +5,8 @@ import com.pathplanner.lib.config.PIDConstants;
 /** A class for library constants */
 public class Constants {
 
+  public static final double loopPeriodSecs = 0.02;
+
   /** Auton constants */
   public static final class AutonConstants {
     /** Translation PID constants */

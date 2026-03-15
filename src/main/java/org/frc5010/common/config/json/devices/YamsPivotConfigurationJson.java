@@ -34,10 +34,11 @@ public class YamsPivotConfigurationJson implements DeviceConfiguration {
   public UnitValueJson lowerSoftLimit = new UnitValueJson(0, AngleUnit.DEGREES.toString());
   public UnitValueJson upperSoftLimit = new UnitValueJson(0, AngleUnit.DEGREES.toString());
   public double[] gearing;
+  public String gearStages = "";
   public UnitValueJson voltageCompensation = new UnitValueJson(12, VoltageUnit.VOLTS.toString());
-  public UnitValueJson startingPosition = new UnitValueJson(0, AngleUnit.DEGREES.toString());
   public UnitValueJson radius = new UnitValueJson(1, DistanceUnit.INCHES.toString());
   public UnitValueJson mass = new UnitValueJson(1, MassUnit.POUNDS.toString());
+  public UnitValueJson startingPosition = new UnitValueJson(0, DistanceUnit.METERS.toString());
 
   /**
    * Configure the given GenericSubsystem with a pivot using the given json configuration.
@@ -54,17 +55,20 @@ public class YamsPivotConfigurationJson implements DeviceConfiguration {
             .withFeedforward(
                 new ArmFeedforward(
                     motorSystemId.feedForward.s,
+                    0,
                     motorSystemId.feedForward.v,
                     motorSystemId.feedForward.a))
             .withFeedforward(
                 new ArmFeedforward(
                     simSystemId.feedForward.s,
+                    0,
                     simSystemId.feedForward.v,
                     simSystemId.feedForward.a))
             .withControlMode(ControlMode.valueOf(motorSystemId.controlMode));
 
     YamsConfigCommon.PhysicalParameters physicalParams =
-        new YamsConfigCommon.PhysicalParameters(voltageCompensation, mass, radius, gearing);
+        new YamsConfigCommon.PhysicalParameters(
+            voltageCompensation, mass, radius, gearing, gearStages);
 
     Optional<SmartMotorController> smartMotor =
         YamsConfigCommon.configureSmartMotorController(
@@ -83,7 +87,8 @@ public class YamsPivotConfigurationJson implements DeviceConfiguration {
             .withHardLimit(
                 UnitsParser.parseAngle(lowerHardLimit), UnitsParser.parseAngle(upperHardLimit))
             .withTelemetry(motorSetup.name, TelemetryVerbosity.valueOf(motorSetup.logLevel))
-            .withStartingPosition(UnitsParser.parseAngle(startingPosition))
+            .withStartingPosition(UnitsParser.parseAngle(startingAngle))
+            .withMechanismPositionConfig(motorSetup.getMechanismPositionConfig())
             .withMOI(UnitsParser.parseDistance(radius), UnitsParser.parseMass(mass));
     Pivot pivot = new Pivot(pivotConfig);
     return pivot;

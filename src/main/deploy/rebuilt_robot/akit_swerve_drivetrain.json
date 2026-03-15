@@ -10,50 +10,50 @@
       "uom": "inches"
     },
     "wheelDiameter": {
-      "val": 3.955,
-      "uom": "inches"
+      "val": 0.1002156588,
+      "uom": "meters"
     },
     "maxDriveSpeed": {
       "val": 4.69,
       "uom": "m/sec"
     },
     "bumperFrameLength": {
-      "val": 30,
+      "val": 33,
       "uom": "inches"
     },
     "bumperFrameWidth": {
-      "val": 30,
+      "val": 33,
       "uom": "inches"
     },
     "gyro": {
       "type": "pigeon2",
       "id": 50,
       "inverted": false,
-      "canbus": ""
+      "canbus": "canivore"
     },
-    "driveGearRatio": "1:6.75",
-    "steerGearRatio": "1:25",
+    "driveGearRatio": "1:6",
+    "steerGearRatio": "1:24",
     "driveMotorControl": {
       "feedBack": {
-        "p": 0.1,
+        "p": 0.6,
         "i": 0.0,
         "d": 0.0
       },
       "feedForward": {
-        "s": 0.2,
-        "v": 0.124,
+        "s": 0.20406725776687384,
+        "v": 0.6682791477132728,
         "a": 0.0
       }
     },
     "steerMotorControl": {
       "feedBack": {
-        "p": 100,
+        "p": 30,
         "i": 0.0,
-        "d": 0.5
+        "d": 0.03
       },
       "feedForward": {
-        "s": 0.1,
-        "v": 1.91,
+        "s": 0.3245401421882499,
+        "v": 0.37097586102253277,
         "a": 0.0
       }
     },
@@ -63,17 +63,17 @@
           "name": "frontLeftDrive",
           "controllerType": "talonfx",
           "motorType": "KrakenX60",
-          "canId": 4
+          "canId": 1
         },
         "steerMotorSetup": {
           "name": "frontLeftSteer",
           "controllerType": "talonfx",
           "motorType": "Krakenx60",
-          "canId": 3
+          "canId": 2
         },
-        "encoderId": 13,
+        "encoderId": 1,
         "absoluteOffset": {
-          "val": 0.15234375,
+          "val": -0.11811640625,
           "uom": "rotations"
         },
         "encoderInverted": false
@@ -83,17 +83,17 @@
           "name": "frontRightDrive",
           "controllerType": "talonfx",
           "motorType": "Krakenx60",
-          "canId": 2
+          "canId": 7
         },
         "steerMotorSetup": {
           "name": "frontRightSteer",
           "controllerType": "talonfx",
           "motorType": "Krakenx60",
-          "canId": 1
+          "canId": 8
         },
-        "encoderId": 16,
+        "encoderId": 4,
         "absoluteOffset": {
-          "val": -0.4873046875,
+          "val": 0.055117578125,
           "uom": "rotations"
         },
         "encoderInverted": false
@@ -103,17 +103,17 @@
           "name": "backLeftDrive",
           "controllerType": "talonfx",
           "motorType": "Krakenx60",
-          "canId": 6
+          "canId": 3
         },
         "steerMotorSetup": {
           "name": "backLeftSteer",
           "controllerType": "talonfx",
           "motorType": "Krakenx60",
-          "canId": 5
+          "canId": 4
         },
-        "encoderId": 14,
+        "encoderId": 2,
         "absoluteOffset": {
-          "val": -0.219482421875,
+          "val": -0.094970703125,
           "uom": "rotations"
         },
         "encoderInverted": false
@@ -123,23 +123,23 @@
           "name": "backRightDrive",
           "controllerType": "talonfx",
           "motorType": "Krakenx60",
-          "canId": 8
+          "canId": 5
         },
         "steerMotorSetup": {
           "name": "backRightSteer",
           "controllerType": "talonfx",
           "motorType": "Krakenx60",
-          "canId": 7
+          "canId": 6
         },
-        "encoderId": 15,
+        "encoderId": 3,
         "absoluteOffset": {
-          "val": 0.17236328125,
+          "val": 0.24560546875,
           "uom": "rotations"
         },
         "encoderInverted": false
       }
     },
-    "coupleRatio": 3.8181818181818183,
+    "coupleRatio": 4.166666666666,
     "invertLeftSide": true,
     "invertRightSide": true,
     "steerInertia": {
@@ -151,7 +151,7 @@
       "uom": "kg*m^2"
     },
     "robotMass": {
-      "val": 50,
+      "val": 68,
       "uom": "kg"
     },
     "wheelCOF": 1.2,
@@ -159,7 +159,7 @@
       "val": 120,
       "uom": "amps"
     },
-    "canbus": "",
+    "canbus": "canivore",
     "startingPose": {
       "x": {
         "val": 1.0,

@@ -36,7 +36,6 @@ import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
@@ -56,6 +55,7 @@ import org.frc5010.common.commands.JoystickToSwerve;
 import org.frc5010.common.constants.GenericDrivetrainConstants;
 import org.frc5010.common.constants.RobotConstantsDef;
 import org.frc5010.common.drive.GenericDrivetrain;
+import org.frc5010.common.drive.swerve.akit.AkitSwerveDrive;
 import org.frc5010.common.drive.swerve_utils.PathConstraints5010;
 import org.frc5010.common.drive.swerve_utils.SwerveSetpointGenerator5010;
 import org.frc5010.common.sensors.Controller;
@@ -168,6 +168,11 @@ public class GenericSwerveDrivetrain extends GenericDrivetrain {
   }
 
   @Override
+  protected ChassisSpeeds getChassisSpeeds() {
+    return swerveDrive.getRobotVelocity();
+  }
+
+  @Override
   public void initGlassWidget(GenericDrivetrainConstants constants) {
     SmartDashboard.putData("Drive Visual", mechanismSimulation);
     GenericSwerveModuleInfo[] modules = swerveDrive.getModulesInfo();
@@ -262,6 +267,20 @@ public class GenericSwerveDrivetrain extends GenericDrivetrain {
    */
   public ChassisSpeeds getFieldVelocity() {
     return swerveDrive.getFieldVelocity();
+  }
+
+  /**
+   * Gets the current field-relative chassis acceleration derived from drive motor acceleration
+   * signals. Returns zero if the underlying drive implementation does not support acceleration
+   * signals.
+   *
+   * @return A ChassisSpeeds object representing field-relative acceleration (m/s² components)
+   */
+  public ChassisSpeeds getFieldAcceleration() {
+    if (swerveDrive instanceof AkitSwerveDrive) {
+      return ((AkitSwerveDrive) swerveDrive).getFieldAcceleration();
+    }
+    return new ChassisSpeeds();
   }
 
   /**
@@ -721,9 +740,9 @@ public class GenericSwerveDrivetrain extends GenericDrivetrain {
   }
 
   public Command createDefaultCommand(Controller driverXbox) {
-    DoubleSupplier leftX = () -> driverXbox.getAxisValue(XboxController.Axis.kLeftX.value);
-    DoubleSupplier leftY = () -> driverXbox.getAxisValue(XboxController.Axis.kLeftY.value);
-    DoubleSupplier rightX = () -> driverXbox.getAxisValue(XboxController.Axis.kRightX.value);
+    DoubleSupplier leftX = () -> driverXbox.getLeftXAxis();
+    DoubleSupplier leftY = () -> driverXbox.getLeftYAxis();
+    DoubleSupplier rightX = () -> driverXbox.getRightXAxis();
     BooleanSupplier isFieldOriented = () -> isFieldOrientedDrive.getValue();
 
     /**
@@ -744,9 +763,9 @@ public class GenericSwerveDrivetrain extends GenericDrivetrain {
   }
 
   public Command createDefaultTestCommand(Controller driverXbox) {
-    DoubleSupplier leftX = () -> driverXbox.getAxisValue(XboxController.Axis.kLeftX.value);
-    DoubleSupplier leftY = () -> driverXbox.getAxisValue(XboxController.Axis.kLeftY.value);
-    DoubleSupplier rightX = () -> driverXbox.getAxisValue(XboxController.Axis.kRightX.value);
+    DoubleSupplier leftX = () -> driverXbox.getLeftXAxis();
+    DoubleSupplier leftY = () -> driverXbox.getLeftYAxis();
+    DoubleSupplier rightX = () -> driverXbox.getRightXAxis();
     BooleanSupplier isFieldOriented = () -> isFieldOrientedDrive.getValue();
 
     driverXbox.createAButton().whileTrue(sysIdDriveMotorCommand());

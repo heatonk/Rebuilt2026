@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
+import org.frc5010.common.arch.GenericSubsystem;
 import org.frc5010.common.drive.swerve.GenericSwerveDrivetrain;
 import org.frc5010.common.drive.swerve.akit.AkitSwerveDrive;
 
@@ -189,15 +190,14 @@ public class AkitDriveCommands {
    *
    * <p>This command should only be used in voltage control mode.
    *
-   * @param swerveDrive the swerve drivetrain subsystem to characterize
+   * @param subsystem the swerve drivetrain subsystem to characterize
    * @param drive the swerve drive implementation
    * @param characterizer consumer that accepts voltage values to apply to drive motors
    * @param velocitySupplier supplier that returns the current velocity for measurement
    * @return a command that performs feedforward characterization and logs results
    */
   public static Command feedforwardCharacterization(
-      GenericSwerveDrivetrain swerveDrive,
-      AkitSwerveDrive drive,
+      GenericSubsystem subsystem,
       Consumer<Voltage> characterizer,
       Supplier<Double> velocitySupplier) {
     List<Double> velocitySamples = new LinkedList<>();
@@ -215,10 +215,9 @@ public class AkitDriveCommands {
         // Allow modules to orient
         Commands.run(
                 () -> {
-                  // drive.runCharacterization(0.0);
                   characterizer.accept(Volts.of(0.0));
                 },
-                swerveDrive)
+                subsystem)
             .withTimeout(FF_START_DELAY),
 
         // Start timer
@@ -228,12 +227,11 @@ public class AkitDriveCommands {
         Commands.run(
                 () -> {
                   double voltage = timer.get() * FF_RAMP_RATE;
-                  // drive.runCharacterization(voltage);
                   characterizer.accept(Volts.of(voltage));
                   velocitySamples.add(velocitySupplier.get());
                   voltageSamples.add(voltage);
                 },
-                swerveDrive)
+                subsystem)
 
             // When cancelled, calculate and print results
             .finallyDo(

@@ -36,6 +36,8 @@ import java.util.Optional;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import lombok.Getter;
+import lombok.Setter;
 import org.frc5010.common.arch.GenericRobot;
 import org.frc5010.common.arch.GenericRobot.LogLevel;
 import org.frc5010.common.arch.GenericSubsystem;
@@ -58,6 +60,11 @@ import swervelib.simulation.ironmaple.simulation.drivesims.SwerveDriveSimulation
 public abstract class GenericDrivetrain extends GenericSubsystem {
   /** The pose estimator */
   protected DrivePoseEstimator poseEstimator;
+  /** The robot velocity */
+  @Getter @Setter private ChassisSpeeds robotVelocity = new ChassisSpeeds();
+
+  /** Returns the measured chassis speeds of the robot. */
+  protected abstract ChassisSpeeds getChassisSpeeds();
   /** Whether or not the robot is field oriented */
   protected DisplayBoolean isFieldOrientedDrive;
   /**
@@ -155,6 +162,19 @@ public abstract class GenericDrivetrain extends GenericSubsystem {
     return poseEstimator.getGyroRotation2d();
   }
 
+  public ChassisSpeeds getFieldVelocity() {
+    return ChassisSpeeds.fromRobotRelativeSpeeds(robotVelocity, getHeading());
+  }
+
+  /**
+   * Returns the field-relative chassis acceleration. The base implementation returns zero; swerve
+   * drivetrains with motor acceleration signals override this.
+   *
+   * @return A ChassisSpeeds object with acceleration components in m/s²
+   */
+  public ChassisSpeeds getFieldAcceleration() {
+    return new ChassisSpeeds();
+  }
   /**
    * Drive with ChassisSpeeds
    *
@@ -173,6 +193,7 @@ public abstract class GenericDrivetrain extends GenericSubsystem {
   /** Updates the pose estimator in the periodic function. */
   @Override
   public void periodic() {
+    setRobotVelocity(getChassisSpeeds());
     hasIssues.setValue(hasIssues());
     if (RobotBase.isSimulation() || useGlass) {
       updateGlassWidget();

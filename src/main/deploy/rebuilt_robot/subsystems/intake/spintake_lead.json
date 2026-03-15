@@ -1,0 +1,11 @@
+{
+  "name": "spintakeLead",
+  "controller": "talonfx",
+  "type": "KrakenX60",
+  "id": 12,
+  "gearing": 1.0,
+  "momentOfInertiaKgMSq": 1.0,
+  "x": 0.5,
+  "y": -0.092,
+  "z": 0.2
+}

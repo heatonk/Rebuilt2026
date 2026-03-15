@@ -99,10 +99,10 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
 
     this.gyroIO = gyroIO;
     this.resetSimulationPoseCallBack = resetSimulationPoseCallBack;
-    modules[0] = new Module(flModuleIO, 0);
-    modules[1] = new Module(frModuleIO, 1);
-    modules[2] = new Module(blModuleIO, 2);
-    modules[3] = new Module(brModuleIO, 3);
+    modules[0] = new Module(flModuleIO, 0, config.FrontLeft);
+    modules[1] = new Module(frModuleIO, 1, config.FrontRight);
+    modules[2] = new Module(blModuleIO, 2, config.BackLeft);
+    modules[3] = new Module(brModuleIO, 3, config.BackRight);
 
     // Usage reporting for swerve template
     HAL.report(tResourceType.kResourceType_RobotDrive, tInstances.kRobotDriveSwerve_AdvantageKit);
@@ -150,6 +150,8 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
       Logger.recordOutput("SwerveStates/Setpoints", new SwerveModuleState[] {});
       Logger.recordOutput("SwerveStates/SetpointsOptimized", new SwerveModuleState[] {});
     }
+
+    getChassisSpeeds();
 
     // Update odometry
     double[] sampleTimestamps =
@@ -272,6 +274,7 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
     for (int i = 0; i < 4; i++) {
       states[i] = modules[i].getState();
     }
+    Logger.recordOutput("SwerveStates/Measured", states);
     return states;
   }
 
@@ -288,7 +291,9 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
   /** Returns the measured chassis speeds of the robot. */
   @AutoLogOutput(key = "SwerveChassisSpeeds/Measured")
   private ChassisSpeeds getChassisSpeeds() {
-    return kinematics.toChassisSpeeds(getModuleStates());
+    ChassisSpeeds speeds = kinematics.toChassisSpeeds(getModuleStates());
+    Logger.recordOutput("SwerveChassisSpeeds/Measured", speeds);
+    return speeds;
   }
 
   /** Returns the position of each module in radians. */
@@ -371,7 +376,27 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
 
   @Override
   public ChassisSpeeds getFieldVelocity() {
-    return ChassisSpeeds.fromFieldRelativeSpeeds(getChassisSpeeds(), gyroInputs.yawPosition);
+    return ChassisSpeeds.fromRobotRelativeSpeeds(getChassisSpeeds(), getRotation());
+  }
+
+  /**
+   * Returns the robot-relative chassis acceleration derived from drive motor acceleration signals.
+   * Uses the same kinematics math as velocity, but with per-module acceleration instead of
+   * velocity.
+   */
+  public ChassisSpeeds getChassisAcceleration() {
+    SwerveModuleState[] accelStates = new SwerveModuleState[4];
+    for (int i = 0; i < 4; i++) {
+      accelStates[i] = modules[i].getAccelerationState();
+    }
+    return kinematics.toChassisSpeeds(accelStates);
+  }
+
+  /**
+   * Returns the field-relative chassis acceleration derived from drive motor acceleration signals.
+   */
+  public ChassisSpeeds getFieldAcceleration() {
+    return ChassisSpeeds.fromRobotRelativeSpeeds(getChassisAcceleration(), getRotation());
   }
 
   @Override
@@ -518,14 +543,12 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
         "PRO: Swerve Drive Feedforward Characterization",
         AkitDriveCommands.feedforwardCharacterization(
             drivetrain,
-            this,
             (Voltage voltage) -> runCharacterization(voltage.in(Volts)),
             () -> getDriveFFCharacterizationVelocity()));
     selectableCommand.addOption(
         "PRO: Swerve Steer Feedforward Characterization",
         AkitDriveCommands.feedforwardCharacterization(
             drivetrain,
-            this,
             (Voltage voltage) -> runSteerCharacterization(voltage.in(Volts)),
             () -> getSteerFFCharacterizationVelocity()));
 
