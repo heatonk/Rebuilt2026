@@ -8,6 +8,7 @@
 package org.frc5010.common.drive.swerve.akit;
 
 import static edu.wpi.first.units.Units.Amps;
+
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
@@ -85,7 +86,7 @@ public class Module {
     state.cosineScale(Robot.isSimulation() ? inputs.turnAbsolutePosition : inputs.turnPosition);
 
     // Apply setpoints
-    io.setDriveVelocity(state.speedMetersPerSecond / wheelRadiusMeters, torqueCurrent);
+    io.setDriveVelocity(state.speedMetersPerSecond / constants.WheelRadius, torqueCurrent);
     io.setTurnPosition(state.angle);
   }
 
