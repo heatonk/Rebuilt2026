@@ -26,6 +26,8 @@ public interface IntakeIO {
 
   public void runSpintake(double speed);
 
+  public void runSpintakes(double outerSpeed, double innerSpeed);
+
   public Command setHopperAngle(Angle angle);
 
   public void setHopperPosition(Angle angle);

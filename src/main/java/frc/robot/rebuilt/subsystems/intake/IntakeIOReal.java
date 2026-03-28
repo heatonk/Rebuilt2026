@@ -43,7 +43,12 @@ public class IntakeIOReal implements IntakeIO {
   @Override
   public void runSpintake(double speed) {
     spintakeOuter.getMotor().setDutyCycle(speed);
-    spintakeInner.getMotor().setDutyCycle(speed * 0.5);
+    spintakeInner.getMotor().setDutyCycle(Constants.Intake.INTAKE_INNER_IN);
+  }
+
+  public void runSpintakes(double outerSpeed, double innerSpeed) {
+    spintakeOuter.getMotor().setDutyCycle(outerSpeed);
+    spintakeInner.getMotor().setDutyCycle(innerSpeed);
   }
 
   public Command setHopperAngle(Angle angle) {

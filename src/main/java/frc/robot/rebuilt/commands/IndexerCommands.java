@@ -46,7 +46,6 @@ public class IndexerCommands {
             Commands.either(
                 shouldForceCommand(), shouldChurnCommand(), () -> launcher.isOKToFire()))
         .onFalse(shouldChurnCommand());
-    operator.createRightBumper().onTrue(shouldHardChurnCommand()).onFalse(shouldChurnCommand());
   }
 
   private void configureTriggerStates() {
