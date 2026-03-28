@@ -44,7 +44,7 @@
       "uom": "deg/s"
     },
     "maxAcceleration": {
-      "val": 700,
+      "val": 1000,
       "uom": "deg/s^2"
     }
   },

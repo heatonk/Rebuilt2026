@@ -39,16 +39,16 @@ public class Constants {
   }
 
   public static class Indexer {
-    public static final double SPINDEXER_SPEED = 0.7;
-    public static final double TRANSFER_SPEED = 0.7;
+    public static final double SPINDEXER_SPEED = 1.0;
+    public static final double TRANSFER_SPEED = 1.0;
     public static final double TRANSFER_CHURN = 0.25;
   }
 
   public static class Intake {
     public static final double HOPPER_GO_OUT = -0.3;
     public static final double HOPPER_GO_IN = 0.2;
-    public static final double INTAKE_IN = 0.8;
-    public static final double INTAKE_AUTO = 0.8;
+    public static final double INTAKE_IN = 1.0;
+    public static final double INTAKE_AUTO = 1.0;
     public static final double INTAKE_DEADZONE = 0.25;
     public static final double INTAKE_CHURN = 0.25;
     public static final double INTAKE_MAX_IN = 0.9;
