@@ -113,7 +113,7 @@ public class IntakeCommands {
 
     operator.createDownPovButton().onTrue(operatorHopperDownCommand());
     controller.createXButton().onTrue(operatorHopperDownCommand());
-    operator.createLeftBumper().onTrue(shouldAngled()).onFalse(shouldIntaking());
+    operator.createRightBumper().onTrue(shouldAngled()).onFalse(shouldIntaking());
 
     intakeSpeedSupplier =
         () -> {
@@ -207,7 +207,11 @@ public class IntakeCommands {
                 .setDesiredHopperAngle(Constants.Intake.HOPPER_ANGLED)
                 .until(() -> intake.isHopperMoving())
                 .andThen(
-                    Commands.run(() -> intake.runSpintake(Constants.Intake.INTAKE_CHURN), intake)));
+                    Commands.run(
+                        () ->
+                            intake.runSpintakes(
+                                Constants.Intake.INTAKE_IN * 0.5, Constants.Intake.INTAKE_CHURN),
+                        intake)));
   }
 
   public static Command retractingCommand() {

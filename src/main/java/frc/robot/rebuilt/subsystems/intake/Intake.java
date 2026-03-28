@@ -34,6 +34,11 @@ public class Intake extends GenericSubsystem {
   public void runSpintake(double speed) {
     io.runSpintake(speed);
   }
+
+  public void runSpintakes(double outerSpeed, double innerSpeed) {
+    io.runSpintakes(innerSpeed, outerSpeed);
+  }
+
   /** Creates a command that runs the spintake at the given speed and stops when done */
   public Command spintakeCommand(double speed) {
     return Commands.run(
