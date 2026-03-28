@@ -167,9 +167,14 @@ public class LauncherCommands {
 
     Trigger readyToFireTrigger =
         new Trigger(() -> launcher.isCurrent(LauncherState.PREP) && launcher.isAtGoal());
+    readyToFireTrigger.onTrue(IndexerCommands.shouldFeedCommand());
+    Trigger churnWhileFiring =
+        new Trigger(() -> launcher.isCurrent(LauncherState.PREP) && !launcher.isAtGoal());
+    churnWhileFiring.onTrue(IndexerCommands.shouldChurnCommand());
     readyToFireTrigger
-        .onTrue(IndexerCommands.shouldFeedCommand())
-        .onFalse(IndexerCommands.shouldIdleCommand());
+        .negate()
+        .and(churnWhileFiring.negate())
+        .onTrue(IndexerCommands.shouldIdleCommand());
   }
 
   /**
@@ -190,7 +195,6 @@ public class LauncherCommands {
 
     driver.createAButton().onTrue(shouldLowCommand()).onFalse(shouldHammerTimeCommand());
 
-    // operator.createLeftBumper().whileTrue(shouldPrepCommand()).onFalse(shouldLowCommand());
     operator
         .createLeftPovButton()
         .onTrue(Commands.runOnce(() -> ShotCalculator.incrementFlywheelMultiplier(-0.01)));

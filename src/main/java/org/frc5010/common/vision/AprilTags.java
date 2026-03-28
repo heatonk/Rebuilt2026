@@ -193,8 +193,7 @@ public class AprilTags {
   static {
     try {
       aprilTagFieldLayout =
-          AprilTagFieldLayout.loadFromResource(
-              AprilTagFields.kDefaultField.m_resourceFile);
+          AprilTagFieldLayout.loadFromResource(AprilTagFields.kDefaultField.m_resourceFile);
 
       List<AprilTag> aprilTagPoses = new ArrayList<>();
       for (AprilTag5010 aprilTag : AprilTag5010.values()) {

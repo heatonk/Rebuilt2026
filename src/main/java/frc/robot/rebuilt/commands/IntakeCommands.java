@@ -113,6 +113,7 @@ public class IntakeCommands {
 
     operator.createDownPovButton().onTrue(operatorHopperDownCommand());
     controller.createXButton().onTrue(operatorHopperDownCommand());
+    operator.createLeftBumper().onTrue(shouldAngled()).onFalse(shouldIntaking());
 
     intakeSpeedSupplier =
         () -> {
