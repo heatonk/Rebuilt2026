@@ -84,6 +84,9 @@ public class LauncherIOReal implements LauncherIO {
    */
   protected double turretKv = 0.0;
 
+  /** RoboRIO-side trapezoidal profile controller for the turret. */
+  protected TurretProfileController turretProfileController;
+
   public LauncherIOReal(Map<String, Object> devices, Map<String, GenericSubsystem> subsystems) {
     this.devices = devices;
     drivetrain = (GenericDrivetrain) subsystems.get(ConfigConstants.DRIVETRAIN);
@@ -189,6 +192,38 @@ public class LauncherIOReal implements LauncherIO {
                   return 0.0;
                 });
 
+    // Create the RoboRIO-side trapezoidal profile controller for the turret.
+    // This replaces the TalonFX-internal MotionMagic profile so that feedforward velocity
+    // can be integrated into the profile goal rather than fighting the controller.
+    {
+      var turretConfig = turret.getMotorController().getConfig();
+      var trapConstraints = turretConfig.getTrapezoidProfile();
+      // YAMS stores maxVelocity/maxAcceleration in rot/s at the motor; convert to mechanism rot/s.
+      double gearRatioValue = 30.0; // 30:1 gear ratio from turret.json
+      double maxVelMechRotPerSec =
+          trapConstraints.map(c -> c.maxVelocity / gearRatioValue).orElse(1080.0 / 360.0);
+      double maxAccelMechRotPerSecSq =
+          trapConstraints.map(c -> c.maxAcceleration / gearRatioValue).orElse(1000.0 / 360.0);
+      double lowerLimitRot =
+          turretConfig.getMechanismLowerLimit().orElse(Degrees.of(-150)).in(Rotations);
+      double upperLimitRot =
+          turretConfig.getMechanismUpperLimit().orElse(Degrees.of(150)).in(Rotations);
+
+      Object rawController = turret.getMotorController().getMotorController();
+      if (rawController instanceof com.ctre.phoenix6.hardware.TalonFX talonFXRaw) {
+        turretProfileController =
+            new TurretProfileController(
+                talonFXRaw,
+                maxVelMechRotPerSec,
+                maxAccelMechRotPerSecSq,
+                gearRatioValue,
+                lowerLimitRot,
+                upperLimitRot);
+        // Reset profile to the CRT-solved initial position.
+        turretProfileController.reset(calculatedAngle.in(Rotations), 0);
+      }
+    }
+
     turret.min().or(turret.max()).onTrue(Commands.runOnce(() -> turret.getMotor().setDutyCycle(0)));
   }
 
@@ -260,8 +295,12 @@ public class LauncherIOReal implements LauncherIO {
             .orElse(RPM.of(0.0));
     inputs.hoodAngleDesired =
         hood.getMotorController().getMechanismPositionSetpoint().orElse(Degrees.of(0.0));
+    // Read the turret desired angle from the profile controller's final goal rather than the YAMS
+    // setpoint. YAMS setpoint is never updated since we bypass it and command the TalonFX directly.
     inputs.turretAngleDesired =
-        turret.getMotorController().getMechanismPositionSetpoint().orElse(Degrees.of(0.0));
+        turretProfileController != null
+            ? Rotations.of(turretProfileController.getGoalPositionMechRot())
+            : turret.getMotorController().getMechanismPositionSetpoint().orElse(Degrees.of(0.0));
 
     inputs.flyWheelSpeedActual = flyWheel.getSpeed();
     inputs.hoodAngleActual = hood.getAngle();
@@ -311,6 +350,18 @@ public class LauncherIOReal implements LauncherIO {
     double maxAccelRadPerSecSq =
         trapConstraints.map(c -> c.maxAcceleration * 2.0 * Math.PI).orElse(Math.toRadians(360.0));
     shotCalculator.setTurretMotionConstraints(maxVelRadPerSec, maxAccelRadPerSecSq, 0.85);
+
+    // Provide the turret profile controller's velocity to the shot calculator for
+    // velocity-aware settling time estimation.
+    if (turretProfileController != null) {
+      shotCalculator.setTurretVelocitySupplier(
+          turretProfileController::getCurrentVelocityRadPerSec);
+    }
+  }
+
+  @Override
+  public TurretProfileController getTurretProfileController() {
+    return turretProfileController;
   }
 
   /** Sets the flywheel motor's duty cycle */
@@ -335,7 +386,7 @@ public class LauncherIOReal implements LauncherIO {
     LEDStrip.changeSegmentPattern(ConfigConstants.ALL_LEDS, LEDStrip.getSolidPattern(Color.kGreen));
   }
 
-  /** Sets the angle of the turret based on the motor request */
+  /** Sets the angle of the turret via the RoboRIO-side profile controller (zero feedforward). */
   public void setTurretRotation(Angle angle) {
     if (angle.gt(turretHighLimit)) {
       SmartDashboard.putBoolean("Launcher/Turret Limit", true);
@@ -346,17 +397,20 @@ public class LauncherIOReal implements LauncherIO {
     } else {
       SmartDashboard.putBoolean("Launcher/Turret Limit", false);
     }
-    turret.getMotorController().setPosition(angle);
+    if (turretProfileController != null) {
+      turretProfileController.setGoal(angle, 0.0);
+    } else {
+      turret.getMotorController().setPosition(angle);
+    }
   }
 
   /**
-   * Sets the turret angle with an additional velocity feedforward injected into the MotionMagic
-   * request. The feedforward is expressed in mechanism rad/s (as produced by the shot solver) and
-   * is converted to volts using the tuned kV: {@code ffVolts = turretKv * (ffRadPerSec / 2π)}.
+   * Sets the turret angle with an additional velocity feedforward integrated into the RoboRIO-side
+   * trapezoidal profile. The feedforward becomes the profile's goal velocity so that the profile
+   * naturally includes tracking velocity rather than fighting a zero-velocity-targeting controller.
    *
-   * <p>Accessing the raw {@link com.ctre.phoenix6.hardware.TalonFX} through the YAMS layer allows
-   * us to reuse the tuned MotionMagic profile while still injecting the solver's kinematic
-   * feedforward on every update.
+   * @param angle desired turret mechanism angle
+   * @param feedforwardRadPerSec angular velocity feedforward in rad/s (mechanism units)
    */
   @Override
   public void setTurretRotationWithFeedforward(Angle angle, double feedforwardRadPerSec) {
@@ -370,18 +424,8 @@ public class LauncherIOReal implements LauncherIO {
       SmartDashboard.putBoolean("Launcher/Turret Limit", false);
     }
 
-    // Convert mechanism feedforward (rad/s) to motor voltage: V = kV * (rad/s / 2π)
-    double feedforwardVolts = turretKv * (feedforwardRadPerSec / (2.0 * Math.PI));
-
-    // Send MotionMagicVoltage with feedforward directly to the TalonFX obtained through YAMS.
-    Object rawController = turret.getMotorController().getMotorController();
-    if (rawController instanceof com.ctre.phoenix6.hardware.TalonFX talonFX) {
-      turret.getMotorController().setPosition(angle);
-      talonFX.setControl(
-          new com.ctre.phoenix6.controls.MotionMagicVoltage(
-                  angle.in(edu.wpi.first.units.Units.Rotations))
-              .withFeedForward(feedforwardVolts));
-
+    if (turretProfileController != null) {
+      turretProfileController.setGoal(angle, feedforwardRadPerSec);
     } else {
       // Fallback: YAMS setPosition without feedforward
       turret.getMotorController().setPosition(angle);

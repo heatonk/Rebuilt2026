@@ -13,6 +13,7 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -32,6 +33,9 @@ public class Launcher extends GenericSubsystem {
   private final LauncherIOInputsAutoLogged inputs = new LauncherIOInputsAutoLogged();
   public static Transform3d robotToTurret = new Transform3d();
   private Map<String, GenericSubsystem> subsystems;
+  private TurretProfileController turretProfileController;
+
+  private static final double PROFILE_PERIOD_SECONDS = 0.005; // 200 Hz
 
   /** Creates a new Launcher. */
   public Launcher(Map<String, GenericSubsystem> subsystems) {
@@ -52,6 +56,17 @@ public class Launcher extends GenericSubsystem {
     }
 
     io.configureShotCalculator(ShotCalculator.getInstance());
+
+    // Register the turret profile controller's high-frequency stepping loop.
+    // This runs at 200 Hz (5 ms) via a Notifier, feeding intermediate position
+    // setpoints from the RoboRIO-side trapezoidal profile to the TalonFX.
+    turretProfileController = io.getTurretProfileController();
+    if (turretProfileController != null) {
+      Notifier profileNotifier =
+          new Notifier(() -> turretProfileController.step(PROFILE_PERIOD_SECONDS));
+      profileNotifier.setName("TurretProfile");
+      profileNotifier.startPeriodic(PROFILE_PERIOD_SECONDS);
+    }
   }
 
   /**

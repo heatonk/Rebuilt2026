@@ -6,6 +6,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import java.util.function.BiFunction;
 import java.util.function.DoubleFunction;
 
 public class TurretControlPhysics {
@@ -22,7 +23,7 @@ public class TurretControlPhysics {
   private static final double CONVERGENCE_THRESHOLD_SECONDS = 0.001;
 
   private final DoubleFunction<Double> timeOfFlightFunction;
-  private final DoubleFunction<Double> settlingTimeFunction;
+  private final BiFunction<Double, Double, Double> settlingTimeFunction;
   private final double minEffectiveRangeMeters;
   private final double maxEffectiveRangeMeters;
 
@@ -60,6 +61,95 @@ public class TurretControlPhysics {
     };
   }
 
+  /**
+   * Builds a velocity-aware settling-time function from trapezoidal motion-profile constraints.
+   *
+   * <p>Unlike {@link #trapezoidalSettlingTimeFunction}, this version accounts for the turret's
+   * current velocity when estimating time-to-arrival. Uses a closed-form analytical formula — O(1)
+   * cost with a single sqrt — derived from the three-phase trapezoidal profile:
+   *
+   * <ul>
+   *   <li>Moving toward target without overshoot: normal accel-cruise-decel formula
+   *   <li>Moving toward target but overshooting: decelerate past goal, then come back from rest
+   *   <li>Moving away from target: decelerate to stop (going backward), then move forward
+   * </ul>
+   *
+   * <p>The returned estimate is accurate to within the settlingTimeGain that the caller applies;
+   * the overshoot case uses a symmetric-return path which very slightly undershoots reality.
+   *
+   * @param maxVelocityRadPerSec peak turret velocity (rad/s)
+   * @param maxAccelRadPerSecSq peak turret acceleration (rad/s²)
+   * @return a {@link BiFunction} mapping (|angleErrorRadians|, currentVelocityRadPerSec) →
+   *     settlingTimeSeconds
+   */
+  public static BiFunction<Double, Double, Double> velocityAwareSettlingTimeFunction(
+      double maxVelocityRadPerSec, double maxAccelRadPerSecSq) {
+    double vMax = Math.abs(maxVelocityRadPerSec);
+    double aMax = Math.abs(maxAccelRadPerSecSq);
+    if (vMax < 1e-6 || aMax < 1e-6) {
+      return (err, vel) -> 0.0;
+    }
+    return (angleErrorRad, currentVelocityRadPerSec) ->
+        trapezoidSettlingTime(Math.abs(angleErrorRad), currentVelocityRadPerSec, vMax, aMax);
+  }
+
+  /**
+   * Closed-form trapezoidal settling-time estimate.
+   *
+   * @param d absolute angle error in rad (must be ≥ 0)
+   * @param v0 current velocity in rad/s (positive = toward target)
+   * @param vMax peak velocity in rad/s
+   * @param aMax peak acceleration in rad/s²
+   * @return estimated settling time in seconds
+   */
+  static double trapezoidSettlingTime(double d, double v0, double vMax, double aMax) {
+    if (d < 1e-9) return 0.0;
+    // Clamp to reachable velocity range.
+    v0 = Math.max(-vMax, Math.min(vMax, v0));
+
+    if (v0 < 0.0) {
+      // Moving away from the target. First decelerate to rest (while traveling backward),
+      // then cover the original distance plus the backward overshoot from rest.
+      double tDecel = -v0 / aMax; // > 0
+      double dBack = v0 * v0 / (2.0 * aMax); // distance traveled backward
+      return tDecel + fromRest(d + dBack, vMax, aMax);
+    }
+
+    // v0 >= 0: moving toward the target.
+    double dStop = v0 * v0 / (2.0 * aMax); // braking distance from v0 to 0
+    if (dStop > d) {
+      // Would overshoot. Decelerate past the target, stop, then return from rest.
+      double tDecel = v0 / aMax;
+      double dOvershoot = dStop - d; // how far past the target before stopping
+      return tDecel + fromRest(dOvershoot, vMax, aMax);
+    }
+
+    // Normal approach: won't overshoot. Check trapezoid vs triangle.
+    double d1 = (vMax * vMax - v0 * v0) / (2.0 * aMax); // to accelerate from v0 to vMax
+    double d3 = vMax * vMax / (2.0 * aMax); // to decelerate from vMax to 0
+    if (d >= d1 + d3) {
+      // Trapezoid: accelerate to vMax, cruise, decelerate to 0.
+      double t1 = (vMax - v0) / aMax;
+      double t2 = (d - d1 - d3) / vMax;
+      double t3 = vMax / aMax;
+      return t1 + t2 + t3;
+    } else {
+      // Triangle: accelerate to v_peak, decelerate to 0. v_peak < vMax.
+      double vPeak = Math.sqrt(aMax * d + v0 * v0 / 2.0);
+      return (vPeak - v0) / aMax + vPeak / aMax;
+    }
+  }
+
+  /** Settling time from rest (v=0) to cover distance d under a trapezoidal profile. */
+  private static double fromRest(double d, double vMax, double aMax) {
+    double threshold = vMax * vMax / aMax;
+    if (d < threshold) {
+      return 2.0 * Math.sqrt(d / aMax); // triangle
+    } else {
+      return vMax / aMax + d / vMax; // trapezoid
+    }
+  }
+
   public record RobotState(Pose2d pose, ChassisSpeeds velocity, ChassisSpeeds acceleration) {}
 
   @FunctionalInterface
@@ -75,7 +165,8 @@ public class TurretControlPhysics {
    * @param settlingGain Gain for settling time estimation (<1.0 underestimates to prevent
    *     oscillation).
    * @param timeOfFlightFunc Function returning projectile flight time (s) given distance (m).
-   * @param settlingTimeFunc Function returning turret settling time (s) given angle error (rad).
+   * @param settlingTimeFunc Function returning turret settling time (s) given angle error (rad) and
+   *     current velocity (rad/s).
    * @param minRangeMeters Minimum effective shot range.
    * @param maxRangeMeters Maximum effective shot range.
    */
@@ -86,7 +177,7 @@ public class TurretControlPhysics {
       Rotation2d feedforwardPaddingAngle,
       double settlingGain,
       DoubleFunction<Double> timeOfFlightFunc,
-      DoubleFunction<Double> settlingTimeFunc,
+      BiFunction<Double, Double, Double> settlingTimeFunc,
       double minRangeMeters,
       double maxRangeMeters) {
     this.turretOffsetRobotFrame = turretOffsetRobotFrame;
@@ -131,13 +222,19 @@ public class TurretControlPhysics {
    *
    * @param targetFieldPos The field-relative position of the target.
    * @param currentTurretAngle The current robot-relative angle of the turret.
+   * @param currentTurretVelocityRadPerSec The current turret angular velocity in rad/s.
    * @param predictor The prediction logic to estimate future robot states.
    * @return A complete aiming solution including setpoints and status.
    */
   public AimingSolution solve(
-      Translation2d targetFieldPos, Rotation2d currentTurretAngle, RobotPredictor predictor) {
+      Translation2d targetFieldPos,
+      Rotation2d currentTurretAngle,
+      double currentTurretVelocityRadPerSec,
+      RobotPredictor predictor) {
 
-    SolverState finalState = runNewtonSolver(targetFieldPos, currentTurretAngle, predictor);
+    SolverState finalState =
+        runNewtonSolver(
+            targetFieldPos, currentTurretAngle, currentTurretVelocityRadPerSec, predictor);
 
     Rotation2d fieldHeading = getAngleFromVector(finalState.vectorToVirtualTarget);
     Rotation2d localHeading = fieldHeading.minus(finalState.robotStateAtFire.pose().getRotation());
@@ -220,14 +317,22 @@ public class TurretControlPhysics {
    * moving
    */
   private SolverState runNewtonSolver(
-      Translation2d targetFieldPos, Rotation2d currentTurretAngle, RobotPredictor predictor) {
+      Translation2d targetFieldPos,
+      Rotation2d currentTurretAngle,
+      double currentTurretVelocityRadPerSec,
+      RobotPredictor predictor) {
 
     double timeFlightGuess = 0.5;
     SolverState bestState = null;
     /** Computes the solver state for the current guess for the current time of flight guess */
     for (int i = 0; i < MAX_SOLVER_ITERATIONS; i++) {
       SolverState stateCurrent =
-          computePhysicsState(timeFlightGuess, targetFieldPos, currentTurretAngle, predictor);
+          computePhysicsState(
+              timeFlightGuess,
+              targetFieldPos,
+              currentTurretAngle,
+              currentTurretVelocityRadPerSec,
+              predictor);
 
       if (Math.abs(stateCurrent.errorSeconds) < CONVERGENCE_THRESHOLD_SECONDS) {
         return stateCurrent.markConverged();
@@ -238,6 +343,7 @@ public class TurretControlPhysics {
               timeFlightGuess + DERIVATIVE_PROBE_TIME_DELTA,
               targetFieldPos,
               currentTurretAngle,
+              currentTurretVelocityRadPerSec,
               predictor);
 
       double slope =
@@ -257,6 +363,7 @@ public class TurretControlPhysics {
       double timeFlightGuess,
       Translation2d targetFieldPos,
       Rotation2d currentTurretAngle,
+      double currentTurretVelocityRadPerSec,
       RobotPredictor predictor) {
 
     RobotState stateNow = predictor.predict(0.0, 0.0);
@@ -281,7 +388,9 @@ public class TurretControlPhysics {
     double angleErrorRadians =
         Math.abs(MathUtil.angleModulus(goalAngleLocal.minus(currentTurretAngle).getRadians()));
 
-    double estimatedSettlingTime = settlingTimeFunction.apply(angleErrorRadians) * settlingTimeGain;
+    double estimatedSettlingTime =
+        settlingTimeFunction.apply(angleErrorRadians, currentTurretVelocityRadPerSec)
+            * settlingTimeGain;
 
     RobotState stateAtFire = predictor.predict(0.0, estimatedSettlingTime);
     Rotation2d headingAtFire = stateAtFire.pose().getRotation();
