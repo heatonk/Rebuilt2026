@@ -1,5 +1,7 @@
 package frc.robot.rebuilt.subsystems.Launcher;
 
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.math.MathUtil;
@@ -76,8 +78,12 @@ public class TurretProfileController {
     positionMechRot = MathUtil.clamp(positionMechRot, lowerLimitRotations, upperLimitRotations);
     // Convert feedforward from rad/s to mechanism rot/s.
     double feedforwardMechRotPerSec = feedforwardRadPerSec / (2.0 * Math.PI);
+    feedforwardMechRotPerSec = 0;
     goalState.set(new TrapezoidProfile.State(positionMechRot, feedforwardMechRotPerSec));
     enabled = true;
+    Logger.recordOutput("TurretProfile/End Goal Position", position);
+    Logger.recordOutput(
+        "TurretProfile/End Goal Velocity", RadiansPerSecond.of(feedforwardRadPerSec));
   }
 
   /**
@@ -98,8 +104,8 @@ public class TurretProfileController {
       // Sync profile state to actual motor position/velocity so there is no jump when a goal is
       // first set. The TalonFX signals are updated independently; reading the cached value here is
       // sufficient since positional accuracy during idle is not critical.
-      double actualMechRot = talonFX.getPosition().getValueAsDouble() / gearRatio;
-      double actualMechRotPerSec = talonFX.getVelocity().getValueAsDouble() / gearRatio;
+      double actualMechRot = talonFX.getPosition().getValueAsDouble();
+      double actualMechRotPerSec = talonFX.getVelocity().getValueAsDouble();
       currentState = new TrapezoidProfile.State(actualMechRot, actualMechRotPerSec);
       return;
     }
@@ -109,11 +115,9 @@ public class TurretProfileController {
     currentState = profile.calculate(dtSeconds, currentState, goal);
 
     // Convert mechanism rotations to motor rotations for the TalonFX.
-    double motorRotations = currentState.position * gearRatio;
+    double motorRotations = currentState.position;
     talonFX.setControl(
-        positionRequest
-            .withPosition(motorRotations)
-            .withVelocity(currentState.velocity * gearRatio));
+        positionRequest.withPosition(motorRotations).withVelocity(currentState.velocity));
 
     // Log profile state for tuning and diagnostics.
     Logger.recordOutput("TurretProfile/CurrentPositionMechRot", currentState.position);
