@@ -58,7 +58,7 @@ public class YamsPivotConfigurationJson implements DeviceConfiguration {
                     0,
                     motorSystemId.feedForward.v,
                     motorSystemId.feedForward.a))
-            .withFeedforward(
+            .withSimFeedforward(
                 new ArmFeedforward(
                     simSystemId.feedForward.s,
                     0,
