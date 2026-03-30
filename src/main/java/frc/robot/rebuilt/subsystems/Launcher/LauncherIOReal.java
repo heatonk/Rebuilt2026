@@ -198,12 +198,11 @@ public class LauncherIOReal implements LauncherIO {
     {
       var turretConfig = turret.getMotorController().getConfig();
       var trapConstraints = turretConfig.getTrapezoidProfile();
-      // YAMS stores maxVelocity/maxAcceleration in rot/s at the motor; convert to mechanism rot/s.
-      double gearRatioValue = 30.0; // 30:1 gear ratio from turret.json
+      // Mechanism rot/s and rot/s²; fallback values from turret.json maxVelocity/maxAcceleration.
       double maxVelMechRotPerSec =
-          trapConstraints.map(c -> c.maxVelocity / gearRatioValue).orElse(1080.0 / 360.0);
+          trapConstraints.map(c -> c.maxVelocity).orElse(1080.0 / 360.0);
       double maxAccelMechRotPerSecSq =
-          trapConstraints.map(c -> c.maxAcceleration / gearRatioValue).orElse(1000.0 / 360.0);
+          trapConstraints.map(c -> c.maxAcceleration).orElse(1000.0 / 360.0);
       double lowerLimitRot =
           turretConfig.getMechanismLowerLimit().orElse(Degrees.of(-150)).in(Rotations);
       double upperLimitRot =
@@ -216,7 +215,6 @@ public class LauncherIOReal implements LauncherIO {
                 talonFXRaw,
                 maxVelMechRotPerSec,
                 maxAccelMechRotPerSecSq,
-                gearRatioValue,
                 lowerLimitRot,
                 upperLimitRot);
         // Reset profile to the CRT-solved initial position.

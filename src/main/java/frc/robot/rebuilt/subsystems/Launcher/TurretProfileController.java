@@ -25,7 +25,6 @@ import org.littletonrobotics.junction.Logger;
 public class TurretProfileController {
   private final TalonFX talonFX;
   private final TrapezoidProfile.Constraints constraints;
-  private final double gearRatio; // mechanism-to-motor ratio (e.g. 30.0 for 30:1)
 
   // Profile state in mechanism rotations (NOT motor rotations).
   private TrapezoidProfile.State currentState;
@@ -42,7 +41,6 @@ public class TurretProfileController {
    * @param talonFX the raw TalonFX hardware reference
    * @param maxVelocityMechRotPerSec maximum mechanism velocity in rot/s
    * @param maxAccelMechRotPerSecSq maximum mechanism acceleration in rot/s²
-   * @param gearRatio mechanism-to-motor gear ratio (e.g. 30:1 → 30.0)
    * @param lowerLimitRotations lower soft limit in mechanism rotations
    * @param upperLimitRotations upper soft limit in mechanism rotations
    */
@@ -50,13 +48,11 @@ public class TurretProfileController {
       TalonFX talonFX,
       double maxVelocityMechRotPerSec,
       double maxAccelMechRotPerSecSq,
-      double gearRatio,
       double lowerLimitRotations,
       double upperLimitRotations) {
     this.talonFX = talonFX;
     this.constraints =
         new TrapezoidProfile.Constraints(maxVelocityMechRotPerSec, maxAccelMechRotPerSecSq);
-    this.gearRatio = gearRatio;
     this.lowerLimitRotations = lowerLimitRotations;
     this.upperLimitRotations = upperLimitRotations;
     this.currentState = new TrapezoidProfile.State(0, 0);
@@ -78,7 +74,6 @@ public class TurretProfileController {
     positionMechRot = MathUtil.clamp(positionMechRot, lowerLimitRotations, upperLimitRotations);
     // Convert feedforward from rad/s to mechanism rot/s.
     double feedforwardMechRotPerSec = feedforwardRadPerSec / (2.0 * Math.PI);
-    feedforwardMechRotPerSec = 0;
     goalState.set(new TrapezoidProfile.State(positionMechRot, feedforwardMechRotPerSec));
     enabled = true;
     Logger.recordOutput("TurretProfile/End Goal Position", position);
@@ -114,17 +109,14 @@ public class TurretProfileController {
     TrapezoidProfile profile = new TrapezoidProfile(constraints);
     currentState = profile.calculate(dtSeconds, currentState, goal);
 
-    // Convert mechanism rotations to motor rotations for the TalonFX.
-    double motorRotations = currentState.position;
     talonFX.setControl(
-        positionRequest.withPosition(motorRotations).withVelocity(currentState.velocity));
+        positionRequest.withPosition(currentState.position).withVelocity(currentState.velocity));
 
     // Log profile state for tuning and diagnostics.
     Logger.recordOutput("TurretProfile/CurrentPositionMechRot", currentState.position);
     Logger.recordOutput("TurretProfile/CurrentVelocityMechRotPerSec", currentState.velocity);
     Logger.recordOutput("TurretProfile/GoalPositionMechRot", goal.position);
     Logger.recordOutput("TurretProfile/GoalVelocityMechRotPerSec", goal.velocity);
-    Logger.recordOutput("TurretProfile/MotorPositionRot", motorRotations);
   }
 
   /**
@@ -179,7 +171,7 @@ public class TurretProfileController {
 
   /** Stops the turret by holding it at the current actual motor position with zero velocity. */
   public void stop() {
-    double actualMechRot = talonFX.getPosition().getValueAsDouble() / gearRatio;
+    double actualMechRot = talonFX.getPosition().getValueAsDouble();
     goalState.set(new TrapezoidProfile.State(actualMechRot, 0));
     currentState = new TrapezoidProfile.State(actualMechRot, 0);
     enabled = false;
