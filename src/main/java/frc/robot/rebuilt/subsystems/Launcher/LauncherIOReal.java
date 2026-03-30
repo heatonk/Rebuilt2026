@@ -199,8 +199,7 @@ public class LauncherIOReal implements LauncherIO {
       var turretConfig = turret.getMotorController().getConfig();
       var trapConstraints = turretConfig.getTrapezoidProfile();
       // Mechanism rot/s and rot/s²; fallback values from turret.json maxVelocity/maxAcceleration.
-      double maxVelMechRotPerSec =
-          trapConstraints.map(c -> c.maxVelocity).orElse(1080.0 / 360.0);
+      double maxVelMechRotPerSec = trapConstraints.map(c -> c.maxVelocity).orElse(1080.0 / 360.0);
       double maxAccelMechRotPerSecSq =
           trapConstraints.map(c -> c.maxAcceleration).orElse(1000.0 / 360.0);
       double lowerLimitRot =

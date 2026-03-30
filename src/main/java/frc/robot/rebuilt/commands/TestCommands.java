@@ -49,17 +49,17 @@ public class TestCommands {
         .createAButton()
         .whileTrue(launcher.getFlyWheelSysIdCommand().finallyDo(() -> launcher.stopAllMotors()));
 
-    // Turret PID tuning — hold right bumper to enter tuning mode
-    controller
-        .createRightBumper()
-        .whileTrue(new TurretTuningCommand(launcher).finallyDo(() -> launcher.stopAllMotors()));
+    // // Turret PID tuning — hold right bumper to enter tuning mode
+    // controller
+    //     .createRightBumper()
+    //     .whileTrue(new TurretTuningCommand(launcher).finallyDo(() -> launcher.stopAllMotors()));
 
-    // D-pad left/right cycles turret presets while tuning
-    controller
-        .createRightPovButton()
-        .onTrue(Commands.runOnce(() -> TurretTuningCommand.nextPreset()));
-    controller
-        .createLeftPovButton()
-        .onTrue(Commands.runOnce(() -> TurretTuningCommand.previousPreset()));
+    // // D-pad left/right cycles turret presets while tuning
+    // controller
+    //     .createRightPovButton()
+    //     .onTrue(Commands.runOnce(() -> TurretTuningCommand.nextPreset()));
+    // controller
+    //     .createLeftPovButton()
+    //     .onTrue(Commands.runOnce(() -> TurretTuningCommand.previousPreset()));
   }
 }
