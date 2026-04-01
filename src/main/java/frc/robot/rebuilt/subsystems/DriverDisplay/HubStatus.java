@@ -2,12 +2,13 @@ package frc.robot.rebuilt.subsystems.DriverDisplay;
 
 import static edu.wpi.first.units.Units.Seconds;
 
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 // added import
 import org.frc5010.common.arch.GenericSubsystem;
 import org.frc5010.common.sensors.Controller;
 import org.littletonrobotics.junction.Logger;
+
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 public class HubStatus extends GenericSubsystem {
   private HubStatusIO io = new HubStatusIOImpl();
@@ -27,4 +28,7 @@ public class HubStatus extends GenericSubsystem {
 
     Logger.processInputs("HubStatus", inputs);
   }
-}
+
+  
+  }
+
