@@ -38,7 +38,7 @@ public class TurretFFCharacterizationCommand extends Command {
 
   private static final double RAMP_RATE_AMPS_PER_SEC = 0.5;
   private static final double SETTLE_DELAY_SECONDS = 2.0;
-  private static final double POSITION_SAFETY_MARGIN_ROT = 5.0 / 360.0; // 5 degrees
+  private static final double POSITION_SAFETY_MARGIN_ROT = 90.0 / 360.0;
   private static final String PREFIX = "TurretFFChar/";
 
   public TurretFFCharacterizationCommand(
