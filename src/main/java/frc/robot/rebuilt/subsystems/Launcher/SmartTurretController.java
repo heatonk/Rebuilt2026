@@ -108,6 +108,14 @@ public class SmartTurretController {
     fxConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = config.getLowerLimitRotations();
 
     talonFX.getConfigurator().apply(fxConfig);
+
+    // Stop the YAMS SmartMotorController's background closed-loop Notifier. YAMS runs its own
+    // 20ms update loop that continuously sends position setpoints to the TalonFX. Since
+    // SmartTurretController now owns this motor via direct TorqueCurrentFOC commands, that loop
+    // must be permanently disabled to prevent interference.
+    if (config.getYamsController() != null) {
+      config.getYamsController().stopClosedLoopController();
+    }
   }
 
   /**

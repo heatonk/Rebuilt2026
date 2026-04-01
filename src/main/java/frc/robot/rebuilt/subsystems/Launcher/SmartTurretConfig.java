@@ -2,6 +2,7 @@ package frc.robot.rebuilt.subsystems.Launcher;
 
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
+import yams.motorcontrollers.SmartMotorController;
 
 /**
  * Configuration for the {@link SmartTurretController} 2-state turret control system.
@@ -13,6 +14,12 @@ public class SmartTurretConfig {
 
   // Hardware
   private final TalonFX talonFX;
+  /**
+   * YAMS SmartMotorController — its closed-loop Notifier will be stopped when SmartTurretController
+   * takes over.
+   */
+  private final SmartMotorController yamsController;
+
   private final double gearRatio;
 
   // Motion constraints (mechanism rot/s and rot/s^2)
@@ -54,6 +61,7 @@ public class SmartTurretConfig {
 
   private SmartTurretConfig(Builder builder) {
     this.talonFX = builder.talonFX;
+    this.yamsController = builder.yamsController;
     this.gearRatio = builder.gearRatio;
     this.maxVelocityMechRotPerSec = builder.maxVelocityMechRotPerSec;
     this.maxAccelMechRotPerSecSq = builder.maxAccelMechRotPerSecSq;
@@ -78,6 +86,11 @@ public class SmartTurretConfig {
 
   public TalonFX getTalonFX() {
     return talonFX;
+  }
+
+  /** Returns the YAMS SmartMotorController, or {@code null} if not configured. */
+  public SmartMotorController getYamsController() {
+    return yamsController;
   }
 
   public double getGearRatio() {
@@ -162,6 +175,7 @@ public class SmartTurretConfig {
 
   public static class Builder {
     private TalonFX talonFX;
+    private SmartMotorController yamsController = null;
     private double gearRatio = 30.0;
     private double maxVelocityMechRotPerSec = 3.0;
     private double maxAccelMechRotPerSecSq = 2.78;
@@ -185,6 +199,16 @@ public class SmartTurretConfig {
 
     public Builder withTalonFX(TalonFX talonFX) {
       this.talonFX = talonFX;
+      return this;
+    }
+
+    /**
+     * Provides the YAMS {@link SmartMotorController} so {@link SmartTurretController} can stop its
+     * background closed-loop Notifier thread on construction, preventing interference with our
+     * direct TorqueCurrentFOC control.
+     */
+    public Builder withYAMSController(SmartMotorController yamsController) {
+      this.yamsController = yamsController;
       return this;
     }
 
