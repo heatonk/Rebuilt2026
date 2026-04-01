@@ -30,6 +30,7 @@ public class TurretKsMapCommand extends Command {
     DONE
   }
 
+  private final SmartTurretController controller;
   private final TalonFX talonFX;
   private final MotionMagicTorqueCurrentFOC moveRequest =
       new MotionMagicTorqueCurrentFOC(0).withSlot(0);
@@ -60,6 +61,7 @@ public class TurretKsMapCommand extends Command {
       Angle lowerLimit,
       Angle upperLimit,
       GenericSubsystem requirement) {
+    this.controller = controller;
     this.talonFX = controller.getTalonFX();
     addRequirements(requirement);
 
@@ -74,6 +76,8 @@ public class TurretKsMapCommand extends Command {
 
   @Override
   public void initialize() {
+    // Disable the SmartTurretController so the 200Hz Notifier stops sending competing commands.
+    controller.stop();
     currentIndex = 0;
     currentState = State.MOVE_TO_POSITION;
     resultMapPositive.clear();
@@ -175,6 +179,8 @@ public class TurretKsMapCommand extends Command {
   @Override
   public void end(boolean interrupted) {
     talonFX.setControl(probeRequest.withOutput(0));
+    // Re-disable the controller so the turret doesn't chase a stale target.
+    controller.stop();
     if (currentState == State.DONE) {
       Logger.recordOutput(PREFIX + "Status", "Complete");
       System.out.println("[TurretKsMap] Mapping complete. Results:");

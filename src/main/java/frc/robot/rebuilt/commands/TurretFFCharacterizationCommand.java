@@ -4,6 +4,7 @@ import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.rebuilt.subsystems.Launcher.SmartTurretController;
 import java.util.LinkedList;
 import java.util.List;
 import org.frc5010.common.arch.GenericSubsystem;
@@ -21,6 +22,7 @@ import org.littletonrobotics.junction.Logger;
  */
 public class TurretFFCharacterizationCommand extends Command {
 
+  private final SmartTurretController controller;
   private final TalonFX talonFX;
   private final TorqueCurrentFOC torqueRequest = new TorqueCurrentFOC(0);
   private final Timer timer = new Timer();
@@ -42,15 +44,18 @@ public class TurretFFCharacterizationCommand extends Command {
   private static final String PREFIX = "TurretFFChar/";
 
   public TurretFFCharacterizationCommand(
-      TalonFX talonFX, double lowerLimitRot, double upperLimitRot, GenericSubsystem requirement) {
-    this.talonFX = talonFX;
-    this.lowerLimitRot = lowerLimitRot;
-    this.upperLimitRot = upperLimitRot;
+      SmartTurretController controller, GenericSubsystem requirement) {
+    this.controller = controller;
+    this.talonFX = controller.getTalonFX();
+    this.lowerLimitRot = controller.getConfig().getLowerLimitRotations();
+    this.upperLimitRot = controller.getConfig().getUpperLimitRotations();
     addRequirements(requirement);
   }
 
   @Override
   public void initialize() {
+    // Disable the SmartTurretController so the 200Hz Notifier stops sending competing commands.
+    controller.stop();
     timer.restart();
     currentSamples.clear();
     velocitySamples.clear();
@@ -106,6 +111,9 @@ public class TurretFFCharacterizationCommand extends Command {
   @Override
   public void end(boolean interrupted) {
     talonFX.setControl(torqueRequest.withOutput(0));
+    // Re-disable the controller so the turret holds position via coast/brake, not via closed-loop
+    // chasing a stale target. The next teleop command will re-enable it via setTarget().
+    controller.stop();
 
     if (positionSafetyTriggered) {
       Logger.recordOutput(PREFIX + "Status", "Position safety triggered");

@@ -540,10 +540,7 @@ public class LauncherIOReal implements LauncherIO {
   public Command getTurretFFCharacterizationCommand(GenericSubsystem launcher) {
     if (smartTurretController == null) return Commands.none();
     return new frc.robot.rebuilt.commands.TurretFFCharacterizationCommand(
-        smartTurretController.getTalonFX(),
-        smartTurretController.getConfig().getLowerLimitRotations(),
-        smartTurretController.getConfig().getUpperLimitRotations(),
-        launcher);
+        smartTurretController, launcher);
   }
 
   @Override
