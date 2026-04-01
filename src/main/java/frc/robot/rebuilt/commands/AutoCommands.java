@@ -38,6 +38,15 @@ public class AutoCommands {
                 subsystems.get(org.frc5010.common.config.ConfigConstants.DRIVETRAIN),
             2.0,
             0.5));
+    selectableCommand.addOption(
+        "PRO: Turret FF Characterization (TorqueCurrent)",
+        ((Launcher) subsystems.get(Constants.LAUNCHER)).getTurretFFCharacterizationCommand());
+    selectableCommand.addOption(
+        "TUNE: Turret kS Map Generation",
+        ((Launcher) subsystems.get(Constants.LAUNCHER)).getTurretKsMapCommand());
+    selectableCommand.addOption(
+        "TUNE: Turret Tracking Sinusoidal Tuning",
+        ((Launcher) subsystems.get(Constants.LAUNCHER)).getTurretTrackingTuneCommand());
   }
 
   public void configureBasicAutoCommands(LoggedDashboardChooser<Command> selectableCommand) {

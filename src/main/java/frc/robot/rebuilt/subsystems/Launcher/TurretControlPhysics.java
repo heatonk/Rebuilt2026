@@ -94,6 +94,41 @@ public class TurretControlPhysics {
   }
 
   /**
+   * Builds a settling-time function that accounts for the 2-state SmartTurretController behavior.
+   *
+   * <p>When the turret is already within the seeking threshold (close to target), only a small
+   * constant tracking settle time is needed. When farther away, the trapezoidal settling time is
+   * used for the seeking portion beyond the threshold, plus the tracking settle time.
+   *
+   * @param seekingThresholdRad the SEEKING -> TRACKING transition threshold in radians
+   * @param trackingSettleTimeSeconds constant settle time for the tracking-mode PID (~0.05s)
+   * @param maxVelocityRadPerSec peak turret velocity (rad/s)
+   * @param maxAccelRadPerSecSq peak turret acceleration (rad/s^2)
+   * @return a {@link BiFunction} mapping (|angleErrorRadians|, currentVelocityRadPerSec) ->
+   *     settlingTimeSeconds
+   */
+  public static BiFunction<Double, Double, Double> twoStateSettlingTimeFunction(
+      double seekingThresholdRad,
+      double trackingSettleTimeSeconds,
+      double maxVelocityRadPerSec,
+      double maxAccelRadPerSecSq) {
+    double vMax = Math.abs(maxVelocityRadPerSec);
+    double aMax = Math.abs(maxAccelRadPerSecSq);
+    if (vMax < 1e-6 || aMax < 1e-6) {
+      return (err, vel) -> 0.0;
+    }
+    return (angleErrorRad, currentVelocityRadPerSec) -> {
+      double absError = Math.abs(angleErrorRad);
+      if (absError <= seekingThresholdRad) {
+        return trackingSettleTimeSeconds;
+      }
+      double seekError = absError - seekingThresholdRad;
+      double seekTime = trapezoidSettlingTime(seekError, currentVelocityRadPerSec, vMax, aMax);
+      return seekTime + trackingSettleTimeSeconds;
+    };
+  }
+
+  /**
    * Closed-form trapezoidal settling-time estimate.
    *
    * @param d absolute angle error in rad (must be ≥ 0)

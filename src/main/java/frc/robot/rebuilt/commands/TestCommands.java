@@ -49,6 +49,21 @@ public class TestCommands {
         .createAButton()
         .whileTrue(launcher.getFlyWheelSysIdCommand().finallyDo(() -> launcher.stopAllMotors()));
 
+    // SmartTurret tuning commands
+    controller
+        .createXButton()
+        .whileTrue(
+            launcher
+                .getTurretFFCharacterizationCommand()
+                .finallyDo(() -> launcher.stopAllMotors()));
+    controller
+        .createYButton()
+        .whileTrue(launcher.getTurretKsMapCommand().finallyDo(() -> launcher.stopAllMotors()));
+    controller
+        .createRightBumper()
+        .whileTrue(
+            launcher.getTurretTrackingTuneCommand().finallyDo(() -> launcher.stopAllMotors()));
+
     // // Turret PID tuning — hold right bumper to enter tuning mode
     // controller
     //     .createRightBumper()
