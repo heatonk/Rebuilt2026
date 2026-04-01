@@ -43,7 +43,6 @@ public class PhotonVisionPoseCamera extends PhotonVisionCamera implements Fiduci
    * @param name - the name of the camera
    * @param colIndex - the column index for the dashboard
    * @param fieldLayout - the field layout
-   * @param strategy - the pose strategy
    * @param cameraToRobot - the camera-to-robot transform
    * @param poseSupplier - the pose supplier
    */

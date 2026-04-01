@@ -24,7 +24,6 @@ public class SimulatedFiducialTargetCamera extends SimulatedCamera {
    * @param name - the name of the camera
    * @param colIndex - the column index for the dashboard
    * @param fieldLayout - the field layout
-   * @param strategy - the pose strategy
    * @param cameraToRobot - the camera-to-robot transform
    * @param poseSupplier - the pose supplier
    * @param fiducialIds - the list of fiducial IDs
