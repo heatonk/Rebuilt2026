@@ -40,6 +40,7 @@ public class Rebuilt extends GenericRobot {
   public static IntakeCommands intakecommands;
   public static IndexerCommands indexerCommands;
   public static TestCommands testCommands;
+  public static OrchestraManager orchestra;
   private boolean isButtonsConfigured = false;
   private boolean isAltButtonsConfigured = false;
 
@@ -59,6 +60,12 @@ public class Rebuilt extends GenericRobot {
     intakecommands = new IntakeCommands(subsystems);
     indexerCommands = new IndexerCommands(subsystems);
     autocommands = new AutoCommands(subsystems);
+    orchestra = new OrchestraManager();
+  }
+
+  @Override
+  public void disabledInit() {
+    orchestra.play();
   }
 
   @Override

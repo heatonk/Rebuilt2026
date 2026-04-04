@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.rebuilt.Rebuilt;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -148,6 +149,7 @@ public class Robot extends LoggedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
+    if (Rebuilt.orchestra != null) Rebuilt.orchestra.stop();
     m_robotContainer.setupDefaults();
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
@@ -163,6 +165,7 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void teleopInit() {
+    if (Rebuilt.orchestra != null) Rebuilt.orchestra.stop();
     // This makes sure that the autonomous stops running when
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
@@ -182,6 +185,7 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void testInit() {
+    if (Rebuilt.orchestra != null) Rebuilt.orchestra.stop();
     // Cancels all running commands at the start of test mode.
     CommandScheduler.getInstance().cancelAll();
     m_robotContainer.configureAltButtonBindings();
