@@ -134,8 +134,12 @@ public class Launcher extends GenericSubsystem {
     return io.getTurretCharacterizationCommand(this);
   }
 
-  public Command getTurretFFCharacterizationCommand() {
-    return io.getTurretFFCharacterizationCommand(this);
+  public Command getTurretQuasistaticCommand() {
+    return io.getTurretQuasistaticCommand(this);
+  }
+
+  public Command getTurretDynamicCommand() {
+    return io.getTurretDynamicCommand(this);
   }
 
   public Command getTurretKsMapCommand() {

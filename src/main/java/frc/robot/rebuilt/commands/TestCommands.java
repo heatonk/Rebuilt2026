@@ -54,11 +54,17 @@ public class TestCommands {
         .createXButton()
         .whileTrue(
             launcher
-                .getTurretFFCharacterizationCommand()
+                .getTurretQuasistaticCommand()
                 .finallyDo(() -> launcher.stopAllMotors()));
     controller
         .createYButton()
         .whileTrue(launcher.getTurretKsMapCommand().finallyDo(() -> launcher.stopAllMotors()));
+    controller
+        .createLeftBumper()
+        .whileTrue(
+            launcher
+                .getTurretDynamicCommand()
+                .finallyDo(() -> launcher.stopAllMotors()));
     controller
         .createRightBumper()
         .whileTrue(

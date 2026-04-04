@@ -145,7 +145,11 @@ public interface LauncherIO {
 
   public Optional<Translation2d> determineTarget();
 
-  public default Command getTurretFFCharacterizationCommand(GenericSubsystem launcher) {
+  public default Command getTurretQuasistaticCommand(GenericSubsystem launcher) {
+    return Commands.none();
+  }
+
+  public default Command getTurretDynamicCommand(GenericSubsystem launcher) {
     return Commands.none();
   }
 

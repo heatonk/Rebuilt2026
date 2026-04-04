@@ -1,12 +1,17 @@
 package frc.robot.rebuilt.subsystems.Launcher;
 
+import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.PositionTorqueCurrentFOC;
+import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
 import java.util.concurrent.atomic.AtomicReference;
 import org.littletonrobotics.junction.Logger;
 
@@ -42,8 +47,16 @@ public class SmartTurretController {
   public record TurretTarget(
       double positionMechRot, double velocityRadPerSec, double accelerationRadPerSecSq) {}
 
+  /** Signal update frequency for turret telemetry on CANivore (Hz). */
+  private static final double SIGNAL_UPDATE_FREQUENCY_HZ = 250.0;
+
   private final TalonFX talonFX;
   private final SmartTurretConfig config;
+
+  // High-frequency status signals — cached references for refreshAll() in characterization.
+  private final StatusSignal<Angle> positionSignal;
+  private final StatusSignal<AngularVelocity> velocitySignal;
+  private final StatusSignal<Current> torqueCurrentSignal;
 
   // Pre-allocated control requests (reused each cycle to avoid allocation).
   private final MotionMagicTorqueCurrentFOC seekingRequest =
@@ -109,6 +122,15 @@ public class SmartTurretController {
     fxConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = config.getLowerLimitRotations();
 
     talonFX.getConfigurator().apply(fxConfig);
+
+    // Cache high-frequency status signals for position, velocity, and torque current.
+    // Set them to 250 Hz on CANivore for smooth characterization data.
+    positionSignal = talonFX.getPosition();
+    velocitySignal = talonFX.getVelocity();
+    torqueCurrentSignal = talonFX.getTorqueCurrent();
+    BaseStatusSignal.setUpdateFrequencyForAll(
+        SIGNAL_UPDATE_FREQUENCY_HZ, positionSignal, velocitySignal, torqueCurrentSignal);
+    ParentDevice.optimizeBusUtilizationForAll(talonFX);
 
     // Stop the YAMS SmartMotorController's background closed-loop Notifier. YAMS runs its own
     // 20ms update loop that continuously sends position setpoints to the TalonFX. Since
@@ -332,6 +354,30 @@ public class SmartTurretController {
    */
   public TalonFX getTalonFX() {
     return talonFX;
+  }
+
+  /**
+   * Returns the high-frequency position status signal (250 Hz on CANivore).
+   * Use with {@link BaseStatusSignal#refreshAll} for latency-compensated reads.
+   */
+  public StatusSignal<Angle> getPositionSignal() {
+    return positionSignal;
+  }
+
+  /**
+   * Returns the high-frequency velocity status signal (250 Hz on CANivore).
+   * Use with {@link BaseStatusSignal#refreshAll} for latency-compensated reads.
+   */
+  public StatusSignal<AngularVelocity> getVelocitySignal() {
+    return velocitySignal;
+  }
+
+  /**
+   * Returns the high-frequency torque current status signal (250 Hz on CANivore).
+   * Use with {@link BaseStatusSignal#refreshAll} for latency-compensated reads.
+   */
+  public StatusSignal<Current> getTorqueCurrentSignal() {
+    return torqueCurrentSignal;
   }
 
   /**

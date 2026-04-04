@@ -1,10 +1,13 @@
 package frc.robot.rebuilt.commands;
 
+import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.rebuilt.subsystems.Launcher.SmartTurretController;
@@ -32,6 +35,8 @@ public class TurretKsMapCommand extends Command {
 
   private final SmartTurretController controller;
   private final TalonFX talonFX;
+  private final StatusSignal<Angle> positionSignal;
+  private final StatusSignal<AngularVelocity> velocitySignal;
   private final MotionMagicTorqueCurrentFOC moveRequest =
       new MotionMagicTorqueCurrentFOC(0).withSlot(0);
   private final TorqueCurrentFOC probeRequest = new TorqueCurrentFOC(0);
@@ -63,6 +68,8 @@ public class TurretKsMapCommand extends Command {
       GenericSubsystem requirement) {
     this.controller = controller;
     this.talonFX = controller.getTalonFX();
+    this.positionSignal = controller.getPositionSignal();
+    this.velocitySignal = controller.getVelocitySignal();
     addRequirements(requirement);
 
     // Generate evenly-spaced test positions across the turret range.
@@ -87,8 +94,10 @@ public class TurretKsMapCommand extends Command {
 
   @Override
   public void execute() {
-    double actualPos = talonFX.getPosition().getValueAsDouble();
-    double actualVel = talonFX.getVelocity().getValueAsDouble();
+    // Refresh signals for latest 250 Hz data.
+    BaseStatusSignal.refreshAll(positionSignal, velocitySignal);
+    double actualPos = positionSignal.getValueAsDouble();
+    double actualVel = velocitySignal.getValueAsDouble();
 
     Logger.recordOutput(PREFIX + "State", currentState.name());
     Logger.recordOutput(PREFIX + "Position Index", currentIndex);
@@ -115,7 +124,7 @@ public class TurretKsMapCommand extends Command {
       case PROBE_POSITIVE:
         probeCurrent += PROBE_RAMP_RATE_AMPS_PER_CYCLE;
         talonFX.setControl(probeRequest.withOutput(probeCurrent));
-        if (Math.abs(talonFX.getVelocity().getValueAsDouble()) > MOVEMENT_THRESHOLD_ROT_PER_SEC) {
+        if (Math.abs(velocitySignal.getValueAsDouble()) > MOVEMENT_THRESHOLD_ROT_PER_SEC) {
           ksPositive = probeCurrent;
           probeCurrent = 0;
           settleTimer.restart();
@@ -138,7 +147,7 @@ public class TurretKsMapCommand extends Command {
         }
         probeCurrent -= PROBE_RAMP_RATE_AMPS_PER_CYCLE;
         talonFX.setControl(probeRequest.withOutput(probeCurrent));
-        if (Math.abs(talonFX.getVelocity().getValueAsDouble()) > MOVEMENT_THRESHOLD_ROT_PER_SEC) {
+        if (Math.abs(velocitySignal.getValueAsDouble()) > MOVEMENT_THRESHOLD_ROT_PER_SEC) {
           ksNegative = Math.abs(probeCurrent);
           probeCurrent = 0;
           currentState = State.RECORD_AND_ADVANCE;

@@ -39,8 +39,11 @@ public class AutoCommands {
             2.0,
             0.5));
     selectableCommand.addOption(
-        "PRO: Turret FF Characterization (TorqueCurrent)",
-        ((Launcher) subsystems.get(Constants.LAUNCHER)).getTurretFFCharacterizationCommand());
+        "PRO: Turret Quasistatic (kS, kV)",
+        ((Launcher) subsystems.get(Constants.LAUNCHER)).getTurretQuasistaticCommand());
+    selectableCommand.addOption(
+        "PRO: Turret Dynamic (kA)",
+        ((Launcher) subsystems.get(Constants.LAUNCHER)).getTurretDynamicCommand());
     selectableCommand.addOption(
         "TUNE: Turret kS Map Generation",
         ((Launcher) subsystems.get(Constants.LAUNCHER)).getTurretKsMapCommand());
