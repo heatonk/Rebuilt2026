@@ -191,7 +191,6 @@ public class AkitDriveCommands {
    * <p>This command should only be used in voltage control mode.
    *
    * @param subsystem the swerve drivetrain subsystem to characterize
-   * @param drive the swerve drive implementation
    * @param characterizer consumer that accepts voltage values to apply to drive motors
    * @param velocitySupplier supplier that returns the current velocity for measurement
    * @return a command that performs feedforward characterization and logs results
