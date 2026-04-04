@@ -38,9 +38,10 @@ public class TurretFFCharacterizationCommand extends Command {
   private final double upperLimitRot;
   private boolean positionSafetyTriggered = false;
 
-  private static final double RAMP_RATE_AMPS_PER_SEC = 0.5;
+  private static final double RAMP_RATE_AMPS_PER_SEC = 2.0;
   private static final double SETTLE_DELAY_SECONDS = 2.0;
-  private static final double POSITION_SAFETY_MARGIN_ROT = 90.0 / 360.0;
+  private static final double POSITION_SAFETY_MARGIN_ROT = 5.0 / 360.0;
+  private static final double base_kS = 31.565756376734008;
   private static final String PREFIX = "TurretFFChar/";
 
   public TurretFFCharacterizationCommand(
@@ -72,19 +73,21 @@ public class TurretFFCharacterizationCommand extends Command {
       // Hold at zero current while settling.
       talonFX.setControl(torqueRequest.withOutput(0));
       previousTimestamp = elapsed;
+      Logger.recordOutput(PREFIX + "State", "Settling");
       return;
     }
 
     double actualPos = talonFX.getPosition().getValueAsDouble();
-    if (actualPos > (upperLimitRot - POSITION_SAFETY_MARGIN_ROT)
+    if (actualPos > (upperLimitRot - POSITION_SAFETY_MARGIN_ROT - (90.0 / 360.0))
         || actualPos < (lowerLimitRot + POSITION_SAFETY_MARGIN_ROT)) {
       positionSafetyTriggered = true;
       talonFX.setControl(torqueRequest.withOutput(0));
+      Logger.recordOutput(PREFIX + "State", "Within Position Safety");
       return;
     }
 
     double rampTime = elapsed - SETTLE_DELAY_SECONDS;
-    double current = rampTime * RAMP_RATE_AMPS_PER_SEC;
+    double current = rampTime * RAMP_RATE_AMPS_PER_SEC + base_kS;
     talonFX.setControl(torqueRequest.withOutput(current));
 
     double velocity = talonFX.getVelocity().getValueAsDouble(); // mechanism rot/s
@@ -179,12 +182,12 @@ public class TurretFFCharacterizationCommand extends Command {
     double kA = detKA / det;
 
     Logger.recordOutput(PREFIX + "kS (Amps)", kS);
-    Logger.recordOutput(PREFIX + "kV (Amps per rot/s)", kV);
-    Logger.recordOutput(PREFIX + "kA (Amps per rot/s^2)", kA);
+    Logger.recordOutput(PREFIX + "kV (Amps per rot s)", kV);
+    Logger.recordOutput(PREFIX + "kA (Amps per rot s^2)", kA);
     Logger.recordOutput(PREFIX + "Status", "Complete (" + currentSamples.size() + " samples)");
 
     System.out.println(
-        "[TurretFFChar] kS = " + kS + " A, kV = " + kV + " A/(rot/s), kA = " + kA + " A/(rot/s^2)");
+        "[TurretFFChar] kS = " + kS + " A, kV = " + kV + " A(rots), kA = " + kA + " A(rots^2)");
     System.out.println("[TurretFFChar] Samples: " + currentSamples.size());
   }
 

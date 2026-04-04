@@ -57,6 +57,7 @@ public class SmartTurretController {
 
   private volatile TurretState currentState = TurretState.SEEKING;
   private volatile boolean enabled = false;
+  private volatile boolean forceDisabled = true;
 
   /**
    * Constructs a SmartTurretController and configures the TalonFX with two PID slots, MotionMagic
@@ -144,7 +145,7 @@ public class SmartTurretController {
    *     compatibility)
    */
   public void step(double dtSeconds) {
-    if (!enabled) {
+    if (!enabled || forceDisabled) {
       return;
     }
 
