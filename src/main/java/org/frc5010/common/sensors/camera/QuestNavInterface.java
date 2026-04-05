@@ -52,6 +52,13 @@ public class QuestNavInterface implements PoseProvider {
   private Translation2d _calculatedOffsetToRobotCenter = new Translation2d();
   private int _calculatedOffsetToRobotCenterCount = 0;
 
+  /** Reusable observation list — cleared each cycle to avoid per-cycle ArrayList allocation */
+  private final List<PoseObservation> questObservations = new ArrayList<>();
+  /** Grow-only output array — never shrunk to minimise GC pressure */
+  private PoseObservation[] questObsArray = new PoseObservation[0];
+  /** Pre-allocated stdDev matrix — mutated in getStdDeviations() to avoid per-call allocation */
+  private final Matrix<N3, N1> stdDevMatrix = VecBuilder.fill(0.0, 0.0, 0.0);
+
   public QuestNavInterface(Transform3d robotToQuest) {
     super();
     this.robotToQuest = robotToQuest;
@@ -119,14 +126,14 @@ public class QuestNavInterface implements PoseProvider {
       latestPoseFrame = unreadQuestFrames[unreadQuestFrames.length - 1];
     }
 
-    List<PoseObservation> observations = new ArrayList<>();
+    questObservations.clear();
 
     if (initializedPosition) {
       for (PoseFrame frame : unreadQuestFrames) {
         Pose3d robotPose =
             getRobotPoseFromQuestPose(frame.questPose3d()).transformBy(softResetTransform);
         double captureTime = frame.dataTimestamp();
-        observations.add(
+        questObservations.add(
             new PoseObservation(
                 captureTime,
                 robotPose,
@@ -138,11 +145,15 @@ public class QuestNavInterface implements PoseProvider {
       }
     }
     input.connected = isActive();
-    // Save pose observations to inputs object
-    input.poseObservations = new PoseObservation[observations.size()];
-    for (int i = 0; i < observations.size(); i++) {
-      input.poseObservations[i] = observations.get(i);
+    // Save pose observations to inputs object using grow-only pre-allocated array
+    int obsSize = questObservations.size();
+    if (questObsArray.length != obsSize) {
+      questObsArray = new PoseObservation[obsSize];
     }
+    for (int i = 0; i < obsSize; i++) {
+      questObsArray[i] = questObservations.get(i);
+    }
+    input.poseObservations = questObsArray;
   }
 
   @Override
@@ -161,7 +172,10 @@ public class QuestNavInterface implements PoseProvider {
         calib = 10;
       }
     }
-    return VecBuilder.fill(calib, calib, calib * 0.2);
+    stdDevMatrix.set(0, 0, calib);
+    stdDevMatrix.set(1, 0, calib);
+    stdDevMatrix.set(2, 0, calib * 0.2);
+    return stdDevMatrix;
   }
 
   public double getConfidence() {

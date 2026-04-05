@@ -24,7 +24,6 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import org.frc5010.common.arch.GenericSubsystem;
 import org.frc5010.common.commands.calibration.PoseProviderAutoOffset;
 import org.frc5010.common.drive.GenericDrivetrain;
@@ -47,6 +46,12 @@ public class DrivePoseEstimator extends GenericSubsystem {
   private boolean disableVisionUpdateCommand = false;
   /** List of PoseProviders */
   private List<PoseProvider> poseProviders = new ArrayList<>();
+  /** Reusable filtered list to avoid per-cycle stream/collect allocation */
+  private final List<PoseProvider> activePoseProviders = new ArrayList<>();
+  /** Cached current pose in 3D — updated once per periodic() to avoid per-call allocation */
+  private Pose3d cachedPose3d = new Pose3d();
+  /** Pre-allocated array for Shuffleboard pose3d widget — filled in-place each cycle */
+  private final double[] pose3dArray = new double[7];
 
   private DisplayBoolean aprilTagVisible = DashBoard.makeDisplayBoolean("AprilTagVisible");
   private boolean updatingPoseAcceptor = false;
@@ -188,7 +193,7 @@ public class DrivePoseEstimator extends GenericSubsystem {
    * @return the current pose with z = 0
    */
   public Pose3d getCurrentPose3d() {
-    return new Pose3d(poseTracker.getCurrentPose());
+    return cachedPose3d;
   }
 
   /**
@@ -197,23 +202,25 @@ public class DrivePoseEstimator extends GenericSubsystem {
    * @return the current pose
    */
   public double[] getCurrentPose3dArray() {
-    Pose3d pose = getCurrentPose3d();
-    Quaternion rotation = pose.getRotation().getQuaternion();
-    return new double[] {
-      pose.getX(),
-      pose.getY(),
-      pose.getZ(),
-      rotation.getW(),
-      rotation.getX(),
-      rotation.getY(),
-      rotation.getZ()
-    };
+    Quaternion rotation = cachedPose3d.getRotation().getQuaternion();
+    pose3dArray[0] = cachedPose3d.getX();
+    pose3dArray[1] = cachedPose3d.getY();
+    pose3dArray[2] = cachedPose3d.getZ();
+    pose3dArray[3] = rotation.getW();
+    pose3dArray[4] = rotation.getX();
+    pose3dArray[5] = rotation.getY();
+    pose3dArray[6] = rotation.getZ();
+    return pose3dArray;
   }
 
   @Override
   public void periodic() {
-    poseProviders.forEach(it -> it.update());
+    for (int i = 0; i < poseProviders.size(); i++) {
+      poseProviders.get(i).update();
+    }
     updatePoseObservationFromProviders();
+    // Refresh cached pose once per cycle — used by getCurrentPose3d() and getCurrentPose3dArray()
+    cachedPose3d = new Pose3d(poseTracker.getCurrentPose());
     field2d.setRobotPose(getCurrentPose());
   }
 
@@ -239,15 +246,21 @@ public class DrivePoseEstimator extends GenericSubsystem {
     boolean accepterUpdating = false;
     poseAcceptable = false;
     if (!disableVisionUpdateCommand) {
-      for (PoseProvider provider :
-          poseProviders.stream()
-              .filter(
-                  it ->
-                      it.isConnected()
-                          && (state.type == ProviderType.ALL || it.getType() == state.type))
-              .collect(Collectors.toList())) {
-        List<PoseObservation> observations = provider.getObservations();
-        for (PoseObservation observation : observations) {
+      // Build the filtered provider list without stream/collect allocation
+      activePoseProviders.clear();
+      for (int i = 0; i < poseProviders.size(); i++) {
+        PoseProvider p = poseProviders.get(i);
+        if (p.isConnected() && (state.type == ProviderType.ALL || p.getType() == state.type)) {
+          activePoseProviders.add(p);
+        }
+      }
+      for (int pi = 0; pi < activePoseProviders.size(); pi++) {
+        PoseProvider provider = activePoseProviders.get(pi);
+        PoseObservation[] observations = provider.getObservationsArray();
+        // Cache current pose once per provider to avoid repeated calls inside the observation loop
+        Pose3d cachedCurrentPose3d = getCurrentPose3d();
+        for (int oi = 0; oi < observations.length; oi++) {
+          PoseObservation observation = observations[oi];
           boolean rejectPose =
               (provider.getType() != ProviderType.ENVIRONMENT_BASED)
                       && observation.tagCount() == 0 // Must have at least one tag
@@ -284,7 +297,7 @@ public class DrivePoseEstimator extends GenericSubsystem {
                       || (!DriverStation.isDisabled()
                           && robotPose
                                   .getTranslation()
-                                  .getDistance(getCurrentPose3d().getTranslation())
+                                  .getDistance(cachedCurrentPose3d.getTranslation())
                               < 0.1));
         }
       }

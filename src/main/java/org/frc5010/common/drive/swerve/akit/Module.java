@@ -31,7 +31,8 @@ public class Module {
   private final Alert turnDisconnectedAlert;
   private final Alert turnEncoderDisconnectedAlert;
 
-  private SwerveModulePosition[] odometryPositions = new SwerveModulePosition[] {};
+  /** Grow-only array: never shrunk to minimise GC pressure from per-cycle allocation */
+  private SwerveModulePosition[] odometryPositions = new SwerveModulePosition[0];
 
   public Module(
       ModuleIO io,
@@ -63,11 +64,17 @@ public class Module {
         Math.min(
             inputs.odometryDrivePositionsRad.length,
             inputs.odometryTurnPositions.length); // All signals are sampled together
-    odometryPositions = new SwerveModulePosition[sampleCount];
+    // Grow the array only when needed; never shrink to avoid per-cycle GC pressure
+    if (odometryPositions.length != sampleCount) {
+      odometryPositions = new SwerveModulePosition[sampleCount];
+      for (int i = 0; i < sampleCount; i++) {
+        odometryPositions[i] = new SwerveModulePosition();
+      }
+    }
     for (int i = 0; i < sampleCount; i++) {
-      double positionMeters = inputs.odometryDrivePositionsRad[i] * constants.WheelRadius;
-      Rotation2d angle = inputs.odometryTurnPositions[i];
-      odometryPositions[i] = new SwerveModulePosition(positionMeters, angle);
+      odometryPositions[i].distanceMeters =
+          inputs.odometryDrivePositionsRad[i] * constants.WheelRadius;
+      odometryPositions[i].angle = inputs.odometryTurnPositions[i];
     }
 
     // Update alerts

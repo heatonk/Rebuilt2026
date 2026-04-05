@@ -47,10 +47,18 @@ deploy {
                 // getTargetTypeClass is a shortcut to get the class type using a string
 
                 frcJava(getArtifactTypeClass('FRCJavaArtifact')) {
+                    // Heap: pre-size to 32m so the JVM doesn't start with a tiny default heap
+                    // and immediately GC. Max 128m keeps us well within the roboRIO's ~400m
+                    // available to user processes.
+                    jvmArgs.add("-Xms32m")
+                    jvmArgs.add("-Xmx128m")
                     jvmArgs.add("-XX:+UnlockExperimentalVMOptions")
-                    jvmArgs.add("-XX:GCTimeRatio=5")
+                    // GCTimeRatio=5 means 1/(1+5)=16% of CPU time is allowed for GC.
+                    // Increase to 19 (≈5%) to starve GC less on a real-time loop.
+                    jvmArgs.add("-XX:GCTimeRatio=19")
                     jvmArgs.add("-XX:+UseSerialGC")
-                    jvmArgs.add("-XX:MaxGCPauseMillis=50")
+                    // Keep MaxGCPauseMillis — hint to GC to try to stay under 4ms.
+                    jvmArgs.add("-XX:MaxGCPauseMillis=4")
                     // Enable VisualVM connection
                     jvmArgs.add("-Dcom.sun.management.jmxremote=true")
                     jvmArgs.add("-Dcom.sun.management.jmxremote.port=1198")

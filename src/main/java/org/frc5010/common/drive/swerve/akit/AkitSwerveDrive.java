@@ -81,6 +81,27 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
   private SwerveDrivePoseEstimator poseEstimator;
   private final Consumer<Pose2d> resetSimulationPoseCallBack;
 
+  // Pre-allocated odometry buffers — sized for max odometry samples per 20ms loop.
+  // At 250 Hz odometry the theoretical max is ~5 samples; 16 provides ample headroom.
+  private static final int MAX_ODOMETRY_SAMPLES = 16;
+  /** Empty array sentinel for disabled-mode logging — never mutated */
+  private static final SwerveModuleState[] EMPTY_MODULE_STATES = new SwerveModuleState[] {};
+
+  private final SwerveModulePosition[][] odometryModulePositions =
+      new SwerveModulePosition[MAX_ODOMETRY_SAMPLES][4];
+  private final SwerveModulePosition[][] odometryModuleDeltas =
+      new SwerveModulePosition[MAX_ODOMETRY_SAMPLES][4];
+
+  {
+    // Pre-populate every slot so no null checks are needed in the hot loop
+    for (int s = 0; s < MAX_ODOMETRY_SAMPLES; s++) {
+      for (int m = 0; m < 4; m++) {
+        odometryModulePositions[s][m] = new SwerveModulePosition();
+        odometryModuleDeltas[s][m] = new SwerveModulePosition();
+      }
+    }
+  }
+
   public AkitSwerveDrive(
       AkitSwerveConfig config,
       GyroIO gyroIO,
@@ -145,8 +166,8 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
 
     // Log empty setpoint states when disabled
     if (DriverStation.isDisabled()) {
-      Logger.recordOutput("SwerveStates/Setpoints", new SwerveModuleState[] {});
-      Logger.recordOutput("SwerveStates/SetpointsOptimized", new SwerveModuleState[] {});
+      Logger.recordOutput("SwerveStates/Setpoints", EMPTY_MODULE_STATES);
+      Logger.recordOutput("SwerveStates/SetpointsOptimized", EMPTY_MODULE_STATES);
     }
 
     getChassisSpeeds();
@@ -154,19 +175,20 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
     // Update odometry
     double[] sampleTimestamps =
         modules[0].getOdometryTimestamps(); // All signals are sampled together
-    int sampleCount = sampleTimestamps.length;
+    int sampleCount = Math.min(sampleTimestamps.length, MAX_ODOMETRY_SAMPLES);
     for (int i = 0; i < sampleCount; i++) {
-      // Read wheel positions and deltas from each module
-      SwerveModulePosition[] modulePositions = new SwerveModulePosition[4];
-      SwerveModulePosition[] moduleDeltas = new SwerveModulePosition[4];
+      // Reuse pre-allocated position / delta arrays for this sample
+      SwerveModulePosition[] modulePositions = odometryModulePositions[i];
+      SwerveModulePosition[] moduleDeltas = odometryModuleDeltas[i];
       for (int moduleIndex = 0; moduleIndex < 4; moduleIndex++) {
-        modulePositions[moduleIndex] = modules[moduleIndex].getOdometryPositions()[i];
-        moduleDeltas[moduleIndex] =
-            new SwerveModulePosition(
-                modulePositions[moduleIndex].distanceMeters
-                    - lastModulePositions[moduleIndex].distanceMeters,
-                modulePositions[moduleIndex].angle);
-        lastModulePositions[moduleIndex] = modulePositions[moduleIndex];
+        SwerveModulePosition freshPos = modules[moduleIndex].getOdometryPositions()[i];
+        modulePositions[moduleIndex].distanceMeters = freshPos.distanceMeters;
+        modulePositions[moduleIndex].angle = freshPos.angle;
+        moduleDeltas[moduleIndex].distanceMeters =
+            freshPos.distanceMeters - lastModulePositions[moduleIndex].distanceMeters;
+        moduleDeltas[moduleIndex].angle = freshPos.angle;
+        lastModulePositions[moduleIndex].distanceMeters = freshPos.distanceMeters;
+        lastModulePositions[moduleIndex].angle = freshPos.angle;
       }
 
       // Update gyro angle
@@ -482,9 +504,14 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
 
   @Override
   public GenericSwerveModuleInfo[] getModulesInfo() {
-    if (null == moduleInfos) moduleInfos = new GenericSwerveModuleInfo[modules.length];
+    if (null == moduleInfos) {
+      moduleInfos = new GenericSwerveModuleInfo[modules.length];
+      for (int i = 0; i < modules.length; i++) {
+        moduleInfos[i] = new GenericSwerveModuleInfo();
+      }
+    }
     for (int i = 0; i < modules.length; i++) {
-      moduleInfos[i] = new GenericSwerveModuleInfo(modules[i]);
+      moduleInfos[i].update(modules[i]);
     }
     return moduleInfos;
   }

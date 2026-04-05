@@ -48,6 +48,12 @@ public interface PoseProvider {
     public double captureTime;
     public PoseObservation[] poseObservations = new PoseObservation[0];
     public int[] tagIds = new int[0];
+    /** Total summed distance to all visible tags (meters) */
+    public double totalTagDistance = 0.0;
+    /** Pose ambiguity of the best visible target */
+    public double poseAmbiguity = 0.0;
+    /** Latest estimated robot pose from this camera */
+    public Pose3d estimatedRobotPose = new Pose3d();
   }
 
   /** Represents the angle to a simple target, not used for pose estimation. */
@@ -70,6 +76,15 @@ public interface PoseProvider {
    */
   public default List<PoseObservation> getObservations() {
     return Arrays.asList(input.poseObservations);
+  }
+
+  /**
+   * Returns the raw observations array without wrapping — zero allocation per call.
+   *
+   * @return The current observations of the robot as a raw array.
+   */
+  public default PoseObservation[] getObservationsArray() {
+    return input.poseObservations;
   }
 
   /*

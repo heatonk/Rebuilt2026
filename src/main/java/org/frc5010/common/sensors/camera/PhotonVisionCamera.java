@@ -38,11 +38,15 @@ public class PhotonVisionCamera extends GenericCamera {
     camera = new PhotonCamera(name);
   }
 
+  /** The empty pipeline result sentinel — avoids allocating a new one each cycle */
+  private static final PhotonPipelineResult EMPTY_RESULT = new PhotonPipelineResult();
+
   /** Update the camera and target with the latest result */
   @Override
   public void updateCameraInfo() {
     camResults = camera.getAllUnreadResults();
-    camResult = camResults.stream().findFirst().orElse(new PhotonPipelineResult());
+    // Avoid stream().findFirst() allocation — use direct index access
+    camResult = camResults.isEmpty() ? EMPTY_RESULT : camResults.get(0);
     input.connected = camera.isConnected();
     input.captureTime = camResult.getTimestampSeconds();
   }
