@@ -71,8 +71,7 @@ public class TurretQuasistaticCommand extends Command {
 
   private static final String PREFIX = "TurretQuasistatic/";
 
-  public TurretQuasistaticCommand(
-      SmartTurretController controller, GenericSubsystem requirement) {
+  public TurretQuasistaticCommand(SmartTurretController controller, GenericSubsystem requirement) {
     this.controller = controller;
     this.talonFX = controller.getTalonFX();
     this.positionSignal = controller.getPositionSignal();

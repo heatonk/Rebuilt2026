@@ -364,24 +364,24 @@ public class SmartTurretController {
   }
 
   /**
-   * Returns the high-frequency position status signal (250 Hz on CANivore).
-   * Use with {@link BaseStatusSignal#refreshAll} for latency-compensated reads.
+   * Returns the high-frequency position status signal (250 Hz on CANivore). Use with {@link
+   * BaseStatusSignal#refreshAll} for latency-compensated reads.
    */
   public StatusSignal<Angle> getPositionSignal() {
     return positionSignal;
   }
 
   /**
-   * Returns the high-frequency velocity status signal (250 Hz on CANivore).
-   * Use with {@link BaseStatusSignal#refreshAll} for latency-compensated reads.
+   * Returns the high-frequency velocity status signal (250 Hz on CANivore). Use with {@link
+   * BaseStatusSignal#refreshAll} for latency-compensated reads.
    */
   public StatusSignal<AngularVelocity> getVelocitySignal() {
     return velocitySignal;
   }
 
   /**
-   * Returns the high-frequency torque current status signal (250 Hz on CANivore).
-   * Use with {@link BaseStatusSignal#refreshAll} for latency-compensated reads.
+   * Returns the high-frequency torque current status signal (250 Hz on CANivore). Use with {@link
+   * BaseStatusSignal#refreshAll} for latency-compensated reads.
    */
   public StatusSignal<Current> getTorqueCurrentSignal() {
     return torqueCurrentSignal;

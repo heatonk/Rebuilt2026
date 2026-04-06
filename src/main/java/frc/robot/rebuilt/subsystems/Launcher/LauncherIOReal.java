@@ -540,15 +540,13 @@ public class LauncherIOReal implements LauncherIO {
   @Override
   public Command getTurretQuasistaticCommand(GenericSubsystem launcher) {
     if (smartTurretController == null) return Commands.none();
-    return new frc.robot.rebuilt.commands.TurretQuasistaticCommand(
-        smartTurretController, launcher);
+    return new frc.robot.rebuilt.commands.TurretQuasistaticCommand(smartTurretController, launcher);
   }
 
   @Override
   public Command getTurretDynamicCommand(GenericSubsystem launcher) {
     if (smartTurretController == null) return Commands.none();
-    return new frc.robot.rebuilt.commands.TurretDynamicCommand(
-        smartTurretController, launcher);
+    return new frc.robot.rebuilt.commands.TurretDynamicCommand(smartTurretController, launcher);
   }
 
   @Override
