@@ -10,6 +10,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import java.util.concurrent.atomic.AtomicReference;
@@ -56,6 +57,7 @@ public class SmartTurretController {
   // High-frequency status signals — cached references for refreshAll() in characterization.
   private final StatusSignal<Angle> positionSignal;
   private final StatusSignal<AngularVelocity> velocitySignal;
+  private final StatusSignal<AngularAcceleration> accelerationSignal;
   private final StatusSignal<Current> torqueCurrentSignal;
 
   // Pre-allocated control requests (reused each cycle to avoid allocation).
@@ -127,9 +129,14 @@ public class SmartTurretController {
     // Set them to 250 Hz on CANivore for smooth characterization data.
     positionSignal = talonFX.getPosition();
     velocitySignal = talonFX.getVelocity();
+    accelerationSignal = talonFX.getAcceleration();
     torqueCurrentSignal = talonFX.getTorqueCurrent();
     BaseStatusSignal.setUpdateFrequencyForAll(
-        SIGNAL_UPDATE_FREQUENCY_HZ, positionSignal, velocitySignal, torqueCurrentSignal);
+        SIGNAL_UPDATE_FREQUENCY_HZ,
+        positionSignal,
+        velocitySignal,
+        accelerationSignal,
+        torqueCurrentSignal);
     ParentDevice.optimizeBusUtilizationForAll(talonFX);
 
     // Stop the YAMS SmartMotorController's background closed-loop Notifier. YAMS runs its own
@@ -378,6 +385,14 @@ public class SmartTurretController {
    */
   public StatusSignal<Current> getTorqueCurrentSignal() {
     return torqueCurrentSignal;
+  }
+
+  /**
+   * Returns the high-frequency acceleration status signal (250 Hz on CANivore).
+   * Use with {@link BaseStatusSignal#refreshAll} for latency-compensated reads.
+   */
+  public StatusSignal<AngularAcceleration> getAccelerationSignal() {
+    return accelerationSignal;
   }
 
   /**
