@@ -15,7 +15,7 @@ public class OrchestraManager {
   // TalonFX CAN IDs on the CANivore bus
   private static final int[] CANIVORE_IDS = {1, 2, 3, 4, 5, 6, 7, 8, 18};
 
-  private static final String MUSIC_FILE = "mariachi.chrp";
+  private static final String MUSIC_FILE = "sea2.chrp";
 
   public OrchestraManager() {
     for (int id : RIO_IDS) {
