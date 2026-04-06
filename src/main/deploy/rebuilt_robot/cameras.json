@@ -1,6 +1,7 @@
 {
   "cameras": [
     "left.json",
+    "right.json",
     "rear.json"
   ],
   "viewGamePieces": false,
