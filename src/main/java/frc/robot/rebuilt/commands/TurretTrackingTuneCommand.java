@@ -103,9 +103,9 @@ public class TurretTrackingTuneCommand extends Command {
       slot1.kP = newKP;
       slot1.kI = newKI;
       slot1.kD = newKD;
-      slot1.kS = 0;
+      slot1.kS = 23.164510145468732;
       slot1.kV = 0;
-      slot1.kA = 0;
+      slot1.kA = 0.5134;
       talonFX.getConfigurator().apply(slot1);
       lastKP = newKP;
       lastKI = newKI;

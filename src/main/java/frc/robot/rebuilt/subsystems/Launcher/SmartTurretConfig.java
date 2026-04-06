@@ -194,7 +194,7 @@ public class SmartTurretConfig {
     private double upperLimitRotations = 150.0 / 360.0;
     private InterpolatingDoubleTreeMap ksMapPositive;
     private InterpolatingDoubleTreeMap ksMapNegative;
-    private double peakTorqueCurrentAmps = 40.0;
+    private double peakTorqueCurrentAmps = 240.0;
     private double feedforwardPaddingRotations = 10.0 / 360.0; // 10 degrees
 
     public Builder withTalonFX(TalonFX talonFX) {
