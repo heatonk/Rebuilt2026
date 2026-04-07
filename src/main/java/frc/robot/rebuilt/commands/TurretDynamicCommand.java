@@ -38,7 +38,7 @@ import org.littletonrobotics.junction.Logger;
  * (current - kS - kV * velocity) = kA * acceleration}, then kA is determined via least-squares
  * regression on the acceleration transient samples.
  *
- * <p>Results are logged under the "TurretDynamic/" prefix.
+ * <p>Results are logged under the "TurretDynamic" prefix.
  */
 public class TurretDynamicCommand extends Command {
 
@@ -83,7 +83,7 @@ public class TurretDynamicCommand extends Command {
   /** Sampling period for the high-frequency Notifier (4 ms = 250 Hz). */
   private static final double SAMPLING_PERIOD_SECONDS = 1.0 / 250.0;
 
-  private static final String PREFIX = "TurretDynamic/";
+  private static final String PREFIX = "TurretDynamic";
 
   public TurretDynamicCommand(SmartTurretController controller, GenericSubsystem requirement) {
     this.controller = controller;
