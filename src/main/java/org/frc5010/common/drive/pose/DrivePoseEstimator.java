@@ -218,15 +218,19 @@ public class DrivePoseEstimator extends GenericSubsystem {
     for (int i = 0; i < poseProviders.size(); i++) {
       poseProviders.get(i).update();
     }
+    // Refresh cached pose BEFORE updatePoseObservationFromProviders() so that getCurrentPose3d()
+    // returns the current cycle's odometry pose for the acceptor distance check and pose reset.
+    cachedPose3d = new Pose3d(poseTracker.getCurrentPose());
     updatePoseObservationFromProviders();
-    // Refresh cached pose once per cycle — used by getCurrentPose3d() and getCurrentPose3dArray()
+    // Re-cache after vision fusion so field2d and consumers see the vision-fused pose.
     cachedPose3d = new Pose3d(poseTracker.getCurrentPose());
     field2d.setRobotPose(getCurrentPose());
   }
 
   private void resetProviderPoses(Pose2d pose) {
-    for (PoseProvider provider : poseProviders) {
-      provider.resetPose(new Pose3d(pose));
+    Pose3d pose3d = new Pose3d(pose);
+    for (int i = 0; i < poseProviders.size(); i++) {
+      poseProviders.get(i).resetPose(pose3d);
     }
   }
 
@@ -305,7 +309,8 @@ public class DrivePoseEstimator extends GenericSubsystem {
 
     // Accept poses after estimation integration
     if (activateAcceptorUpdates && (poseAcceptable || state == State.DISABLED_FIELD)) {
-      for (PoseProvider provider2 : poseProviders) {
+      for (int i = 0; i < poseProviders.size(); i++) {
+        PoseProvider provider2 = poseProviders.get(i);
         if (provider2.getType() == ProviderType.ENVIRONMENT_BASED) {
           provider2.resetPose(getCurrentPose3d());
           accepterUpdating = true;

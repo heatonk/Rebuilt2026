@@ -10,8 +10,6 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.wpilibj.Alert;
-import edu.wpi.first.wpilibj.Alert.AlertType;
 import java.util.Arrays;
 import java.util.List;
 import org.frc5010.common.vision.VisionConstants;
@@ -20,9 +18,19 @@ import org.littletonrobotics.junction.Logger;
 
 public interface PoseProvider {
 
-  public VisionIOInputsAutoLogged input = new VisionIOInputsAutoLogged();
-  public Alert disconnectedAlert = new Alert("PoseProvider", AlertType.kWarning);
-  public int cameraIndex = 0;
+  /**
+   * Returns this provider's own {@link VisionIOInputsAutoLogged} instance.
+   *
+   * <p>Each implementing class must declare and return its own instance. The old pattern of a
+   * single {@code public VisionIOInputsAutoLogged input} field on the interface was implicitly
+   * {@code static final} in Java — meaning all cameras shared one object and each camera's {@code
+   * updateCameraInfo()} overwrote the previous camera's observations.
+   *
+   * @return the per-instance inputs object
+   */
+  public VisionIOInputsAutoLogged getInput();
+
+  public int getCameraIndex();
 
   public enum ProviderType {
     ALL,
@@ -75,7 +83,7 @@ public interface PoseProvider {
    * @return The current observations of the robot.
    */
   public default List<PoseObservation> getObservations() {
-    return Arrays.asList(input.poseObservations);
+    return Arrays.asList(getInput().poseObservations);
   }
 
   /**
@@ -84,7 +92,7 @@ public interface PoseProvider {
    * @return The current observations of the robot as a raw array.
    */
   public default PoseObservation[] getObservationsArray() {
-    return input.poseObservations;
+    return getInput().poseObservations;
   }
 
   /*
@@ -94,11 +102,11 @@ public interface PoseProvider {
    * @return Whether the pose provider is currently active.
    */
   public default boolean isConnected() {
-    return input.connected;
+    return getInput().connected;
   }
 
   public default double getCaptureTime() {
-    return input.captureTime;
+    return getInput().captureTime;
   }
 
   public void update();
@@ -108,7 +116,7 @@ public interface PoseProvider {
   public ProviderType getType();
 
   public default void logInput(String tableName) {
-    Logger.processInputs(VisionConstants.SBTabVisionDisplay + "/Camera " + tableName, input);
+    Logger.processInputs(VisionConstants.SBTabVisionDisplay + "/Camera " + tableName, getInput());
   }
 
   public default Matrix<N3, N1> getStdDeviations(PoseObservation observation) {
@@ -120,9 +128,9 @@ public interface PoseProvider {
       linearStdDev *= VisionConstants.linearStdDevMegatag2Factor;
       angularStdDev *= VisionConstants.angularStdDevMegatag2Factor;
     }
-    if (cameraIndex < VisionConstants.cameraStdDevFactors.length) {
-      linearStdDev *= VisionConstants.cameraStdDevFactors[cameraIndex];
-      angularStdDev *= VisionConstants.cameraStdDevFactors[cameraIndex];
+    if (getCameraIndex() < VisionConstants.cameraStdDevFactors.length) {
+      linearStdDev *= VisionConstants.cameraStdDevFactors[getCameraIndex()];
+      angularStdDev *= VisionConstants.cameraStdDevFactors[getCameraIndex()];
     }
 
     return VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev);
