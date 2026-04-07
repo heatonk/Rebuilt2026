@@ -190,9 +190,9 @@ public class LauncherIOReal implements LauncherIO {
                 .withYAMSController(turret.getMotorController())
                 .withGearRatio(30.0)
                 .withMotionConstraints(maxVelMechRotPerSec, maxAccelMechRotPerSecSq)
-                .withSeekingPID(225, 0, 50) // Initial values from turret.json
-                .withTrackingPID(225, 0, 50) // Start same, tune separately
-                .withFeedforward(10.0, 0.0, 5.0) // Amps — use FF characterization to determine
+                .withSeekingPID(255, 0, 50) // Initial values from turret.json
+                .withTrackingPID(255, 0, 50) // Start same, tune separately
+                .withFeedforward(23.164510145468732, 0.0, 0.5134)
                 .withSeekingThreshold(Degrees.of(10).in(Rotations))
                 .withHysteresisBuffer(Degrees.of(3).in(Rotations))
                 .withSoftLimits(lowerLimitRot, upperLimitRot)
@@ -540,15 +540,13 @@ public class LauncherIOReal implements LauncherIO {
   @Override
   public Command getTurretQuasistaticCommand(GenericSubsystem launcher) {
     if (smartTurretController == null) return Commands.none();
-    return new frc.robot.rebuilt.commands.TurretQuasistaticCommand(
-        smartTurretController, launcher);
+    return new frc.robot.rebuilt.commands.TurretQuasistaticCommand(smartTurretController, launcher);
   }
 
   @Override
   public Command getTurretDynamicCommand(GenericSubsystem launcher) {
     if (smartTurretController == null) return Commands.none();
-    return new frc.robot.rebuilt.commands.TurretDynamicCommand(
-        smartTurretController, launcher);
+    return new frc.robot.rebuilt.commands.TurretDynamicCommand(smartTurretController, launcher);
   }
 
   @Override

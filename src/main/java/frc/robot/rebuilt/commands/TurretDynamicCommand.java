@@ -34,9 +34,9 @@ import org.littletonrobotics.junction.Logger;
  * <p>Data is collected at ~250 Hz via a dedicated {@link Notifier} using the TalonFX's hardware
  * acceleration signal (not numerical differentiation), providing smooth, high-resolution data.
  *
- * <p>The model: {@code current = kS + kV * velocity + kA * acceleration} is rearranged to:
- * {@code (current - kS - kV * velocity) = kA * acceleration}, then kA is determined via
- * least-squares regression on the acceleration transient samples.
+ * <p>The model: {@code current = kS + kV * velocity + kA * acceleration} is rearranged to: {@code
+ * (current - kS - kV * velocity) = kA * acceleration}, then kA is determined via least-squares
+ * regression on the acceleration transient samples.
  *
  * <p>Results are logged under the "TurretDynamic/" prefix.
  */
@@ -72,7 +72,7 @@ public class TurretDynamicCommand extends Command {
   private static final double SETTLE_DELAY_SECONDS = 1.0;
 
   /** Default step current (Amps). */
-  private static final double DEFAULT_STEP_AMPS = 35.0;
+  private static final double DEFAULT_STEP_AMPS = 50.0;
 
   /** Minimum acceleration threshold to filter out near-zero noise samples. */
   private static final double MIN_ACCEL_ROT_PER_SEC_SQ = 0.1;
@@ -85,10 +85,10 @@ public class TurretDynamicCommand extends Command {
 
   private static final String PREFIX = "TurretDynamic/";
 
-  public TurretDynamicCommand(
-      SmartTurretController controller, GenericSubsystem requirement) {
+  public TurretDynamicCommand(SmartTurretController controller, GenericSubsystem requirement) {
     this.controller = controller;
     this.talonFX = controller.getTalonFX();
+
     this.positionSignal = controller.getPositionSignal();
     this.velocitySignal = controller.getVelocitySignal();
     this.accelerationSignal = controller.getAccelerationSignal();
@@ -108,14 +108,11 @@ public class TurretDynamicCommand extends Command {
 
     // Publish defaults if not already on SmartDashboard.
     SmartDashboard.putNumber(
-        "Dynamic kS",
-        SmartDashboard.getNumber("Dynamic kS", controller.getConfig().getKS()));
+        "Dynamic kS", SmartDashboard.getNumber("Dynamic kS", 22.62322164680455));
     SmartDashboard.putNumber(
-        "Dynamic kV",
-        SmartDashboard.getNumber("Dynamic kV", controller.getConfig().getKV()));
+        "Dynamic kV", SmartDashboard.getNumber("Dynamic kV", controller.getConfig().getKV()));
     SmartDashboard.putNumber(
-        "Dynamic Step Amps",
-        SmartDashboard.getNumber("Dynamic Step Amps", DEFAULT_STEP_AMPS));
+        "Dynamic Step Amps", SmartDashboard.getNumber("Dynamic Step Amps", DEFAULT_STEP_AMPS));
 
     // Read the operator-supplied values.
     inputKS = SmartDashboard.getNumber("Dynamic kS", controller.getConfig().getKS());
@@ -217,8 +214,7 @@ public class TurretDynamicCommand extends Command {
     // where residual = measuredCurrent - kS - kV * velocity
     double sumRA = 0, sumAA = 0;
     for (CharacterizationSample sample : samples) {
-      double residual =
-          sample.currentAmps() - inputKS - inputKV * sample.velocityRotPerSec();
+      double residual = sample.currentAmps() - inputKS - inputKV * sample.velocityRotPerSec();
       double a = sample.accelerationRotPerSecSq();
       sumRA += residual * a;
       sumAA += a * a;

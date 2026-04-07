@@ -72,7 +72,7 @@ public class SmartTurretController {
 
   private volatile TurretState currentState = TurretState.SEEKING;
   private volatile boolean enabled = false;
-  private volatile boolean forceDisabled = true;
+  private volatile boolean forceDisabled = false;
 
   /**
    * Constructs a SmartTurretController and configures the TalonFX with two PID slots, MotionMagic
@@ -116,6 +116,7 @@ public class SmartTurretController {
     // Torque current peak limits.
     fxConfig.TorqueCurrent.PeakForwardTorqueCurrent = config.getPeakTorqueCurrentAmps();
     fxConfig.TorqueCurrent.PeakReverseTorqueCurrent = -config.getPeakTorqueCurrentAmps();
+    fxConfig.CurrentLimits.StatorCurrentLimitEnable = false;
 
     // Firmware-level soft limits — last line of defense against hard stop contact.
     fxConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
@@ -364,32 +365,32 @@ public class SmartTurretController {
   }
 
   /**
-   * Returns the high-frequency position status signal (250 Hz on CANivore).
-   * Use with {@link BaseStatusSignal#refreshAll} for latency-compensated reads.
+   * Returns the high-frequency position status signal (250 Hz on CANivore). Use with {@link
+   * BaseStatusSignal#refreshAll} for latency-compensated reads.
    */
   public StatusSignal<Angle> getPositionSignal() {
     return positionSignal;
   }
 
   /**
-   * Returns the high-frequency velocity status signal (250 Hz on CANivore).
-   * Use with {@link BaseStatusSignal#refreshAll} for latency-compensated reads.
+   * Returns the high-frequency velocity status signal (250 Hz on CANivore). Use with {@link
+   * BaseStatusSignal#refreshAll} for latency-compensated reads.
    */
   public StatusSignal<AngularVelocity> getVelocitySignal() {
     return velocitySignal;
   }
 
   /**
-   * Returns the high-frequency torque current status signal (250 Hz on CANivore).
-   * Use with {@link BaseStatusSignal#refreshAll} for latency-compensated reads.
+   * Returns the high-frequency torque current status signal (250 Hz on CANivore). Use with {@link
+   * BaseStatusSignal#refreshAll} for latency-compensated reads.
    */
   public StatusSignal<Current> getTorqueCurrentSignal() {
     return torqueCurrentSignal;
   }
 
   /**
-   * Returns the high-frequency acceleration status signal (250 Hz on CANivore).
-   * Use with {@link BaseStatusSignal#refreshAll} for latency-compensated reads.
+   * Returns the high-frequency acceleration status signal (250 Hz on CANivore). Use with {@link
+   * BaseStatusSignal#refreshAll} for latency-compensated reads.
    */
   public StatusSignal<AngularAcceleration> getAccelerationSignal() {
     return accelerationSignal;
