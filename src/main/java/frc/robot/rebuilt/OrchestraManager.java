@@ -1,6 +1,7 @@
 package frc.robot.rebuilt;
 
 import com.ctre.phoenix6.Orchestra;
+import com.ctre.phoenix6.configs.AudioConfigs;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.wpilibj.Filesystem;
 
@@ -19,13 +20,18 @@ public class OrchestraManager {
 
   public OrchestraManager() {
     for (int id : RIO_IDS) {
-      orchestra.addInstrument(new TalonFX(id));
+      TalonFX motor = new TalonFX(id);
+      AudioConfigs config = new AudioConfigs().withAllowMusicDurDisable(true);
+      motor.getConfigurator().apply(config, 0);
+      orchestra.addInstrument(motor);
     }
     for (int id : CANIVORE_IDS) {
-      orchestra.addInstrument(new TalonFX(id, "canivore"));
+      TalonFX motor = new TalonFX(id, "canivore");
+      AudioConfigs config = new AudioConfigs().withAllowMusicDurDisable(true);
+      motor.getConfigurator().apply(config);
+      orchestra.addInstrument(motor, 0);
     }
-    orchestra.loadMusic(
-        Filesystem.getDeployDirectory().toPath().resolve(MUSIC_FILE).toString());
+    orchestra.loadMusic(Filesystem.getDeployDirectory().toPath().resolve(MUSIC_FILE).toString());
   }
 
   /** Start playing the mariachi song. Safe to call repeatedly. */
