@@ -3,7 +3,7 @@ package frc.robot.rebuilt.subsystems.Launcher;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC;
+import com.ctre.phoenix6.controls.MotionMagicExpoTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.PositionTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -19,8 +19,10 @@ import org.littletonrobotics.junction.Logger;
 /**
  * 2-state turret controller that switches between SEEKING and TRACKING modes.
  *
- * <p><b>SEEKING</b>: Uses {@link MotionMagicTorqueCurrentFOC} (TalonFX onboard profiling) for safe,
- * profiled travel over large distances. Prevents overshoot and respects motion constraints.
+ * <p><b>SEEKING</b>: Uses {@link MotionMagicExpoTorqueCurrentFOC} (TalonFX exponential profiling)
+ * for smooth, physically-optimal travel over large distances. The exponential profile adapts to the
+ * mechanism's motor model (kV/kA) for crisp arrivals without overshoot. Velocity is capped by
+ * {@code MotionMagicCruiseVelocity}.
  *
  * <p><b>TRACKING</b>: Uses {@link PositionTorqueCurrentFOC} with explicit velocity and acceleration
  * feedforward to smoothly track a moving target at close range.
@@ -61,8 +63,8 @@ public class SmartTurretController {
   private final StatusSignal<Current> torqueCurrentSignal;
 
   // Pre-allocated control requests (reused each cycle to avoid allocation).
-  private final MotionMagicTorqueCurrentFOC seekingRequest =
-      new MotionMagicTorqueCurrentFOC(0).withSlot(0);
+  private final MotionMagicExpoTorqueCurrentFOC seekingRequest =
+      new MotionMagicExpoTorqueCurrentFOC(0).withSlot(0);
   private final PositionTorqueCurrentFOC trackingRequest =
       new PositionTorqueCurrentFOC(0).withSlot(1);
 
@@ -89,7 +91,7 @@ public class SmartTurretController {
     TalonFXConfiguration fxConfig = new TalonFXConfiguration();
     talonFX.getConfigurator().refresh(fxConfig);
 
-    // Slot0: Seeking (MotionMagicTorqueCurrentFOC)
+    // Slot0: Seeking (MotionMagicExpoTorqueCurrentFOC)
     fxConfig.Slot0.kP = config.getSeekingKP();
     fxConfig.Slot0.kI = config.getSeekingKI();
     fxConfig.Slot0.kD = config.getSeekingKD();
@@ -98,20 +100,24 @@ public class SmartTurretController {
     fxConfig.Slot0.kA = config.getKA();
 
     // Slot1: Tracking (PositionTorqueCurrentFOC)
-    // kV and kA are set to 0 in the slot — we supply these externally via withFeedForward()
-    // to avoid double-counting since the TalonFX's internal kV/kA multiply the reference
-    // derivative which is zero for a static position command.
+    // kV and kA run at firmware frequency (1 kHz) for the best temporal alignment with PID.
+    // The Velocity field on the control request provides the reference for kV.
+    // kS is set to 0 in the slot because it is position-dependent and injected externally
+    // via withFeedForward() each cycle.
     fxConfig.Slot1.kP = config.getTrackingKP();
     fxConfig.Slot1.kI = config.getTrackingKI();
     fxConfig.Slot1.kD = config.getTrackingKD();
     fxConfig.Slot1.kS = 0;
-    fxConfig.Slot1.kV = 0;
-    fxConfig.Slot1.kA = 0;
+    fxConfig.Slot1.kV = config.getKV();
+    fxConfig.Slot1.kA = config.getKA();
 
-    // MotionMagic cruise velocity and acceleration (mechanism rot/s and rot/s^2).
+    // MotionMagicExpo: voltage-domain plant model for the exponential velocity profile.
+    // These are ALWAYS in Volts (V/rps and V/rps²) regardless of control output type.
+    // They define the mechanism's physical limits so the expo profile shapes appropriately.
+    // CruiseVelocity provides an additional hard cap on profile velocity.
+    fxConfig.MotionMagic.MotionMagicExpo_kV = config.getExpoKV();
+    fxConfig.MotionMagic.MotionMagicExpo_kA = config.getExpoKA();
     fxConfig.MotionMagic.MotionMagicCruiseVelocity = config.getMaxVelocityMechRotPerSec();
-    fxConfig.MotionMagic.MotionMagicAcceleration = config.getMaxAccelMechRotPerSecSq();
-    fxConfig.MotionMagic.MotionMagicJerk = 0; // Unlimited jerk (no S-curve).
 
     // Torque current peak limits.
     fxConfig.TorqueCurrent.PeakForwardTorqueCurrent = config.getPeakTorqueCurrentAmps();
@@ -211,19 +217,20 @@ public class SmartTurretController {
 
       case TRACKING:
         double velMechRotPerSec = currentTarget.velocityRadPerSec() / (2.0 * Math.PI);
-        double accelMechRotPerSecSq = currentTarget.accelerationRadPerSecSq() / (2.0 * Math.PI);
 
-        // Compute explicit feedforward in Amps:
-        // kS for static friction, kV for velocity, kA for acceleration.
+        // Only inject the dynamic, position-dependent kS via external feedforward.
+        // kV and kA are in Slot1 and run at firmware frequency (1 kHz), fed by the
+        // Velocity parameter on the control request.
         double velocitySign = Math.signum(velMechRotPerSec);
         double ffAmps =
-            effectiveKS * (Math.abs(velMechRotPerSec) > 1e-3 ? velocitySign : directionSign)
-                + config.getKV() * velMechRotPerSec
-                + config.getKA() * accelMechRotPerSecSq;
+            effectiveKS * (Math.abs(velMechRotPerSec) > 1e-3 ? velocitySign : directionSign);
         ffAmps = applyFeedforwardSafetyPadding(actualPositionMechRot, ffAmps);
 
         talonFX.setControl(
-            trackingRequest.withPosition(currentTarget.positionMechRot()).withFeedForward(ffAmps));
+            trackingRequest
+                .withPosition(currentTarget.positionMechRot())
+                .withVelocity(velMechRotPerSec)
+                .withFeedForward(ffAmps));
         break;
     }
 

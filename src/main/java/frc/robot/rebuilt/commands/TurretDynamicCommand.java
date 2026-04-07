@@ -21,24 +21,29 @@ import org.frc5010.common.arch.GenericSubsystem;
 import org.littletonrobotics.junction.Logger;
 
 /**
- * Dynamic feedforward characterization for the turret using {@link TorqueCurrentFOC}.
+ * Dynamic feedforward characterization for the turret using bidirectional current pulses.
  *
- * <p>Applies a constant current step above kS and measures the acceleration response to determine
- * kA. Unlike a slow ramp (quasistatic), a step input causes rapid acceleration, making the kA term
- * dominant and measurable.
+ * <p>Applies alternating positive and negative current steps to create many acceleration transients
+ * in both directions. The bidirectional pulsing keeps the turret oscillating near its starting
+ * position so more transients can be recorded before hitting a soft limit.
  *
- * <p>Requires kS and kV values from a prior quasistatic characterization. These are read from
- * SmartDashboard keys {@code "Dynamic kS"} and {@code "Dynamic kV"}. The step current level is also
- * tunable via {@code "Dynamic Step Amps"}.
+ * <p>Two distinct quantities are measured from the same dataset:
  *
- * <p>Data is collected at ~250 Hz via a dedicated {@link Notifier} using the TalonFX's hardware
- * acceleration signal (not numerical differentiation), providing smooth, high-resolution data.
+ * <ul>
+ *   <li><b>kS_dynamic</b>: kinetic (dynamic) friction during motion. Computed from near-steady-
+ *       state samples (|acceleration| below {@link #STEADY_STATE_ACCEL_THRESHOLD}) where
+ *       {@code kS_dyn = sgn(v) * (current - kV * velocity)}. This is often different from the
+ *       static kS measured by the quasistatic command.
+ *   <li><b>kA</b>: inertia feedforward. Computed from transient samples (|acceleration| above
+ *       {@link #MIN_ACCEL_ROT_PER_SEC_SQ}) using kS_dynamic in the residual:
+ *       {@code (current - kS_dyn * sgn(v) - kV * v) = kA * acceleration}.
+ * </ul>
  *
- * <p>The model: {@code current = kS + kV * velocity + kA * acceleration} is rearranged to: {@code
- * (current - kS - kV * velocity) = kA * acceleration}, then kA is determined via least-squares
- * regression on the acceleration transient samples.
+ * <p>kS_dynamic is written back to the SmartDashboard key {@code "Dynamic kS"} at the end of each
+ * run so it is automatically available for the next run's input (closing the tuning loop).
  *
- * <p>Results are logged under the "TurretDynamic/" prefix.
+ * <p>Data is collected at 250 Hz via a dedicated {@link Notifier}. Results are logged under the
+ * {@code "TurretDynamic/"} prefix.
  */
 public class TurretDynamicCommand extends Command {
 
@@ -64,18 +69,35 @@ public class TurretDynamicCommand extends Command {
   private boolean positionSafetyTriggered = false;
 
   // Values read from SmartDashboard at command start.
-  private double inputKS;
   private double inputKV;
   private double stepAmps;
 
-  /** Time to hold zero current before applying the step. */
+  /** Time to hold zero current before applying pulses. */
   private static final double SETTLE_DELAY_SECONDS = 1.0;
 
-  /** Default step current (Amps). */
+  /** Default step current (Amps). Configurable via SmartDashboard. */
   private static final double DEFAULT_STEP_AMPS = 50.0;
 
-  /** Minimum acceleration threshold to filter out near-zero noise samples. */
-  private static final double MIN_ACCEL_ROT_PER_SEC_SQ = 0.1;
+  /**
+   * Duration of each current pulse in seconds. Short enough for multiple oscillation cycles, long
+   * enough to generate a clean acceleration transient at each direction change.
+   */
+  private static final double PULSE_DURATION_SECS = 0.08;
+
+  /**
+   * Acceleration threshold below which a sample is considered steady-state (used for kS_dynamic).
+   * Units: mechanism rot/s^2.
+   */
+  private static final double STEADY_STATE_ACCEL_THRESHOLD = 0.3;
+
+  /**
+   * Minimum acceleration magnitude for transient samples used in kA regression. Units: mechanism
+   * rot/s^2.
+   */
+  private static final double MIN_ACCEL_ROT_PER_SEC_SQ = 0.5;
+
+  /** Minimum velocity magnitude to include a sample (filters near-zero noise). */
+  private static final double MIN_VELOCITY_ROT_PER_SEC = 0.05;
 
   /** Safety margin from soft limits in mechanism rotations. */
   private static final double POSITION_SAFETY_MARGIN_ROT = 5.0 / 360.0;
@@ -106,23 +128,22 @@ public class TurretDynamicCommand extends Command {
     positionSafetyTriggered = false;
     recording = false;
 
-    // Publish defaults if not already on SmartDashboard.
-    SmartDashboard.putNumber(
-        "Dynamic kS", SmartDashboard.getNumber("Dynamic kS", 22.62322164680455));
+    // Publish defaults — kV comes from the controller config; kS is not needed as an input
+    // because this command measures kS_dynamic directly from the data.
     SmartDashboard.putNumber(
         "Dynamic kV", SmartDashboard.getNumber("Dynamic kV", controller.getConfig().getKV()));
     SmartDashboard.putNumber(
         "Dynamic Step Amps", SmartDashboard.getNumber("Dynamic Step Amps", DEFAULT_STEP_AMPS));
 
-    // Read the operator-supplied values.
-    inputKS = SmartDashboard.getNumber("Dynamic kS", controller.getConfig().getKS());
     inputKV = SmartDashboard.getNumber("Dynamic kV", controller.getConfig().getKV());
     stepAmps = SmartDashboard.getNumber("Dynamic Step Amps", DEFAULT_STEP_AMPS);
 
+    System.out.println("[TurretDynamic] Step=" + stepAmps + " A, kV=" + inputKV);
     System.out.println(
-        "[TurretDynamic] Step=" + stepAmps + " A, kS=" + inputKS + ", kV=" + inputKV);
+        "[TurretDynamic] Bidirectional pulsing: "
+            + PULSE_DURATION_SECS
+            + "s pulses. kS_dynamic will be computed from data.");
 
-    // Start the 250 Hz sampling Notifier.
     samplingNotifier = new Notifier(this::collectSample);
     samplingNotifier.setName("TurretDynamicSampler");
     samplingNotifier.startPeriodic(SAMPLING_PERIOD_SECONDS);
@@ -165,22 +186,25 @@ public class TurretDynamicCommand extends Command {
       return;
     }
 
-    // Apply constant step current.
-    talonFX.setControl(torqueRequest.withOutput(stepAmps));
+    // Bidirectional pulsing: alternate polarity every PULSE_DURATION_SECS.
+    // Each direction change creates a fresh acceleration transient and near-zero-accel steady-state.
+    double pulseElapsed = elapsed - SETTLE_DELAY_SECONDS;
+    int pulseIndex = (int) (pulseElapsed / PULSE_DURATION_SECS);
+    double appliedAmps = (pulseIndex % 2 == 0) ? stepAmps : -stepAmps;
+
+    talonFX.setControl(torqueRequest.withOutput(appliedAmps));
     recording = true;
 
-    // 50 Hz dashboard telemetry for live viewing.
-    Logger.recordOutput(PREFIX + "Current (A)", stepAmps);
+    Logger.recordOutput(PREFIX + "Applied Current (A)", appliedAmps);
     Logger.recordOutput(PREFIX + "Velocity (rot-s)", velocitySignal.getValueAsDouble());
-    Logger.recordOutput(
-        PREFIX + "Acceleration (rot-s2)", accelerationSignal.getValueAsDouble());
+    Logger.recordOutput(PREFIX + "Acceleration (rot-s2)", accelerationSignal.getValueAsDouble());
     Logger.recordOutput(PREFIX + "Position (rot)", actualPos);
+    Logger.recordOutput(PREFIX + "PulseIndex", pulseIndex);
     Logger.recordOutput(PREFIX + "SampleCount", sampleQueue.size());
   }
 
   @Override
   public void end(boolean interrupted) {
-    // Stop sampling first, then stop the motor.
     recording = false;
     if (samplingNotifier != null) {
       samplingNotifier.stop();
@@ -191,51 +215,112 @@ public class TurretDynamicCommand extends Command {
     controller.stop();
 
     if (positionSafetyTriggered) {
-      Logger.recordOutput(PREFIX + "Status", "Position safety triggered");
-      System.out.println("[TurretDynamic] Ended: position safety triggered");
+      Logger.recordOutput(PREFIX + "Status", "Position safety triggered — partial data");
+      System.out.println("[TurretDynamic] Ended: position safety triggered (using collected data)");
     }
 
-    // Drain the queue, filtering for samples with meaningful acceleration.
-    List<CharacterizationSample> samples = new ArrayList<>();
+    // Drain and filter samples: require minimum velocity to avoid near-zero noise.
+    List<CharacterizationSample> allSamples = new ArrayList<>();
     CharacterizationSample s;
     while ((s = sampleQueue.poll()) != null) {
-      if (Math.abs(s.accelerationRotPerSecSq()) > MIN_ACCEL_ROT_PER_SEC_SQ) {
-        samples.add(s);
+      if (Math.abs(s.velocityRotPerSec()) > MIN_VELOCITY_ROT_PER_SEC) {
+        allSamples.add(s);
       }
     }
 
-    if (samples.size() < 5) {
-      Logger.recordOutput(PREFIX + "Status", "Not enough samples (" + samples.size() + ")");
-      System.out.println("[TurretDynamic] Not enough samples: " + samples.size());
+    if (allSamples.size() < 10) {
+      Logger.recordOutput(PREFIX + "Status", "Not enough samples (" + allSamples.size() + ")");
+      System.out.println("[TurretDynamic] Not enough samples: " + allSamples.size());
       return;
     }
 
-    // 1-parameter least-squares: residual = kA * acceleration
-    // where residual = measuredCurrent - kS - kV * velocity
-    double sumRA = 0, sumAA = 0;
-    for (CharacterizationSample sample : samples) {
-      double residual = sample.currentAmps() - inputKS - inputKV * sample.velocityRotPerSec();
-      double a = sample.accelerationRotPerSecSq();
-      sumRA += residual * a;
-      sumAA += a * a;
+    // ---- Pass 1: Compute kS_dynamic from near-steady-state samples -------------------------
+    // At near-constant velocity: current ≈ kS_dyn * sgn(v) + kV * v
+    // → kS_dyn estimate per sample = sgn(v) * (current - kV * v)
+    List<Double> ksDynEstimates = new ArrayList<>();
+    for (CharacterizationSample sample : allSamples) {
+      if (Math.abs(sample.accelerationRotPerSecSq()) < STEADY_STATE_ACCEL_THRESHOLD) {
+        double ksDynEst =
+            Math.signum(sample.velocityRotPerSec())
+                * (sample.currentAmps() - inputKV * sample.velocityRotPerSec());
+        ksDynEstimates.add(ksDynEst);
+      }
     }
 
-    if (Math.abs(sumAA) < 1e-12) {
-      Logger.recordOutput(PREFIX + "Status", "No acceleration variance");
-      System.out.println("[TurretDynamic] No acceleration variance — cannot solve for kA");
+    double kSDynamic;
+    if (ksDynEstimates.size() >= 5) {
+      kSDynamic = ksDynEstimates.stream().mapToDouble(Double::doubleValue).average().orElse(0);
+    } else {
+      // Not enough steady-state samples — fall back to the controller config kS.
+      kSDynamic = controller.getConfig().getKS();
+      Logger.recordOutput(
+          PREFIX + "kS_dynamic Status",
+          "Insufficient steady-state samples (" + ksDynEstimates.size() + "), using config kS");
+      System.out.println(
+          "[TurretDynamic] Not enough steady-state samples for kS_dynamic ("
+              + ksDynEstimates.size()
+              + "); using config kS = "
+              + kSDynamic);
+    }
+
+    // ---- Pass 2: Compute kA from transient samples using kS_dynamic -----------------------
+    // Model: current - kS_dyn * sgn(v) - kV * v = kA * acceleration
+    // 1-parameter LS: kA = sum(residual * a) / sum(a^2)
+    double sumRA = 0, sumAA = 0;
+    int transientCount = 0;
+    for (CharacterizationSample sample : allSamples) {
+      if (Math.abs(sample.accelerationRotPerSecSq()) > MIN_ACCEL_ROT_PER_SEC_SQ) {
+        double residual =
+            sample.currentAmps()
+                - kSDynamic * Math.signum(sample.velocityRotPerSec())
+                - inputKV * sample.velocityRotPerSec();
+        double a = sample.accelerationRotPerSecSq();
+        sumRA += residual * a;
+        sumAA += a * a;
+        transientCount++;
+      }
+    }
+
+    if (transientCount < 5 || Math.abs(sumAA) < 1e-12) {
+      Logger.recordOutput(
+          PREFIX + "Status",
+          "Not enough transient samples for kA (" + transientCount + ")");
+      System.out.println("[TurretDynamic] Not enough transient samples: " + transientCount);
+      // Still output kS_dynamic even if kA failed.
+      outputKSDynamic(kSDynamic, ksDynEstimates.size());
       return;
     }
 
     double kA = sumRA / sumAA;
 
+    // ---- Output results -------------------------------------------------------------------
+    Logger.recordOutput(PREFIX + "kS_dynamic (Amps)", kSDynamic);
+    Logger.recordOutput(PREFIX + "kS_dynamic Sample Count", ksDynEstimates.size());
     Logger.recordOutput(PREFIX + "kA (Amps per rot-s2)", kA);
-    Logger.recordOutput(PREFIX + "Input kS (Amps)", inputKS);
+    Logger.recordOutput(PREFIX + "kA Sample Count", transientCount);
     Logger.recordOutput(PREFIX + "Input kV (Amps per rot-s)", inputKV);
-    Logger.recordOutput(PREFIX + "Status", "Complete (" + samples.size() + " samples)");
+    Logger.recordOutput(PREFIX + "Total Sample Count", allSamples.size());
+    Logger.recordOutput(PREFIX + "Status", "Complete");
 
-    System.out.println("[TurretDynamic] kA = " + kA + " A/(rot/s^2)");
-    System.out.println("[TurretDynamic] Used kS=" + inputKS + ", kV=" + inputKV);
-    System.out.println("[TurretDynamic] Samples: " + samples.size());
+    System.out.println("[TurretDynamic] kS_dynamic = " + kSDynamic + " A  (" + ksDynEstimates.size() + " samples)");
+    System.out.println("[TurretDynamic] kA         = " + kA + " A/(rot/s^2)  (" + transientCount + " samples)");
+    System.out.println("[TurretDynamic] Used kV=" + inputKV + ", total samples=" + allSamples.size());
+
+    outputKSDynamic(kSDynamic, ksDynEstimates.size());
+  }
+
+  /**
+   * Publishes kS_dynamic to the SmartDashboard key {@code "Dynamic kS"} so it is available as the
+   * starting value for the next characterization run and for use in other commands.
+   */
+  private void outputKSDynamic(double kSDynamic, int sampleCount) {
+    SmartDashboard.putNumber("Dynamic kS", kSDynamic);
+    System.out.println(
+        "[TurretDynamic] kS_dynamic="
+            + kSDynamic
+            + " A written to SmartDashboard 'Dynamic kS' ("
+            + sampleCount
+            + " steady-state samples).");
   }
 
   @Override

@@ -18,6 +18,7 @@ import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.hardware.CANcoder;
+import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -184,6 +185,13 @@ public class LauncherIOReal implements LauncherIO {
 
       Object rawController = turret.getMotorController().getMotorController();
       if (rawController instanceof com.ctre.phoenix6.hardware.TalonFX talonFXRaw) {
+        // Load feedforward from YAMS mechanism config (populated from turret.json motorSystemId).
+        // Turret is a Pivot so getArmFeedforward() contains the characterised kS/kV/kA in SI units.
+        // Fallback values match turret.json in case the YAMS FF was not set.
+        ArmFeedforward yamsFf = turretConfig.getArmFeedforward().orElse(null);
+        double kS = yamsFf != null ? yamsFf.getKs() : 23.1645;
+        double kV = yamsFf != null ? yamsFf.getKv() : 0.0;
+        double kA = yamsFf != null ? yamsFf.getKa() : 0.5134;
         SmartTurretConfig smartConfig =
             new SmartTurretConfig.Builder()
                 .withTalonFX(talonFXRaw)
@@ -192,7 +200,7 @@ public class LauncherIOReal implements LauncherIO {
                 .withMotionConstraints(maxVelMechRotPerSec, maxAccelMechRotPerSecSq)
                 .withSeekingPID(255, 0, 50) // Initial values from turret.json
                 .withTrackingPID(255, 0, 50) // Start same, tune separately
-                .withFeedforward(23.164510145468732, 0.0, 0.5134)
+                .withFeedforward(kS, kV, kA)
                 .withSeekingThreshold(Degrees.of(10).in(Rotations))
                 .withHysteresisBuffer(Degrees.of(3).in(Rotations))
                 .withSoftLimits(lowerLimitRot, upperLimitRot)
@@ -560,6 +568,13 @@ public class LauncherIOReal implements LauncherIO {
   public Command getTurretTrackingTuneCommand(GenericSubsystem launcher) {
     if (smartTurretController == null) return Commands.none();
     return new frc.robot.rebuilt.commands.TurretTrackingTuneCommand(
+        smartTurretController, launcher);
+  }
+
+  @Override
+  public Command getTurretSeekingTuneCommand(GenericSubsystem launcher) {
+    if (smartTurretController == null) return Commands.none();
+    return new frc.robot.rebuilt.commands.TurretSeekingTuneCommand(
         smartTurretController, launcher);
   }
 }

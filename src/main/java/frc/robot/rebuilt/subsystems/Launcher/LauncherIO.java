@@ -160,4 +160,8 @@ public interface LauncherIO {
   public default Command getTurretTrackingTuneCommand(GenericSubsystem launcher) {
     return Commands.none();
   }
+
+  public default Command getTurretSeekingTuneCommand(GenericSubsystem launcher) {
+    return Commands.none();
+  }
 }

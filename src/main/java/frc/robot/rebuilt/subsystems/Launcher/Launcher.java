@@ -150,6 +150,10 @@ public class Launcher extends GenericSubsystem {
     return io.getTurretTrackingTuneCommand(this);
   }
 
+  public Command getTurretSeekingTuneCommand() {
+    return io.getTurretSeekingTuneCommand(this);
+  }
+
   public Translation2d getRobotTarget() {
     return io.determineTarget().get();
   }

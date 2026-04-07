@@ -65,6 +65,12 @@ public class TestCommands {
         .whileTrue(
             launcher.getTurretTrackingTuneCommand().finallyDo(() -> launcher.stopAllMotors()));
 
+    // Seeking (MotionMagicExpo) tuning — D-pad up to hold
+    controller
+        .createUpPovButton()
+        .whileTrue(
+            launcher.getTurretSeekingTuneCommand().finallyDo(() -> launcher.stopAllMotors()));
+
     // // Turret PID tuning — hold right bumper to enter tuning mode
     // controller
     //     .createRightBumper()

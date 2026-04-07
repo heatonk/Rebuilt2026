@@ -15,10 +15,13 @@ import org.littletonrobotics.junction.Logger;
 /**
  * Generates a sinusoidal reference signal for the turret and measures tracking error.
  *
- * <p>Amplitude, frequency, and PID gains (Slot1: tracking) are adjustable via SmartDashboard in
- * real-time. The amplitude is automatically clamped so the sinusoidal stays within safe turret
- * limits centered at 0. The analytically-derived velocity and acceleration of the sinusoid are
- * passed as feedforward to the SmartTurretController.
+ * <p>Amplitude, frequency, PID gains (Slot1: tracking), and feedforward gains (kV, kA) are
+ * adjustable via SmartDashboard in real-time. The amplitude is automatically clamped so the
+ * sinusoidal stays within safe turret limits centered at 0. The analytically-derived velocity and
+ * acceleration of the sinusoid are passed as feedforward to the SmartTurretController.
+ *
+ * <p>Slot1 kS is always 0 in the firmware — the position-dependent kS is injected externally by the
+ * SmartTurretController. kV and kA run at full firmware frequency (1 kHz) for best performance.
  */
 public class TurretTrackingTuneCommand extends Command {
 
@@ -31,8 +34,9 @@ public class TurretTrackingTuneCommand extends Command {
   private double amplitudeRotations;
   private double frequencyHz;
 
-  // Cached PID values for change detection.
+  // Cached gain values for change detection.
   private double lastKP = -1, lastKI = -1, lastKD = -1;
+  private double lastKV = -1, lastKA = -1;
 
   private static final double SAFETY_MARGIN_ROT = 10.0 / 360.0; // 10 degrees
   private static final String PREFIX = "TurretTrackTune/";
@@ -68,6 +72,14 @@ public class TurretTrackingTuneCommand extends Command {
     lastKI = currentKI;
     lastKD = currentKD;
 
+    // Publish tunable feedforward gains (Amps). kV and kA run in the firmware slot.
+    double currentKV = controller.getConfig().getKV();
+    double currentKA = controller.getConfig().getKA();
+    SmartDashboard.putNumber(PREFIX + "Tracking kV (A/rps)", currentKV);
+    SmartDashboard.putNumber(PREFIX + "Tracking kA (A/rps2)", currentKA);
+    lastKV = currentKV;
+    lastKA = currentKA;
+
     Logger.recordOutput(PREFIX + "MaxSafeAmplitudeRot", maxSafeAmplitudeRot);
   }
 
@@ -93,23 +105,29 @@ public class TurretTrackingTuneCommand extends Command {
 
     controller.setTarget(Rotations.of(positionRot), velocityRadPerSec, accelRadPerSecSq);
 
-    // Check if PID gains changed on dashboard and apply.
+    // Check if any gains changed on dashboard and apply Slot1 update.
     double newKP = SmartDashboard.getNumber(PREFIX + "Tracking kP", lastKP);
     double newKI = SmartDashboard.getNumber(PREFIX + "Tracking kI", lastKI);
     double newKD = SmartDashboard.getNumber(PREFIX + "Tracking kD", lastKD);
+    double newKV = SmartDashboard.getNumber(PREFIX + "Tracking kV (A/rps)", lastKV);
+    double newKA = SmartDashboard.getNumber(PREFIX + "Tracking kA (A/rps2)", lastKA);
 
-    if (newKP != lastKP || newKI != lastKI || newKD != lastKD) {
+    if (newKP != lastKP || newKI != lastKI || newKD != lastKD || newKV != lastKV
+        || newKA != lastKA) {
       Slot1Configs slot1 = new Slot1Configs();
       slot1.kP = newKP;
       slot1.kI = newKI;
       slot1.kD = newKD;
-      slot1.kS = 23.164510145468732;
-      slot1.kV = 0;
-      slot1.kA = 0.5134;
+      // kS = 0: position-dependent kS is injected externally by SmartTurretController.
+      slot1.kS = 0;
+      slot1.kV = newKV;
+      slot1.kA = newKA;
       talonFX.getConfigurator().apply(slot1);
       lastKP = newKP;
       lastKI = newKI;
       lastKD = newKD;
+      lastKV = newKV;
+      lastKA = newKA;
     }
 
     // Log tracking data via AdvantageKit.

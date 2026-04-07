@@ -7,8 +7,9 @@ import yams.motorcontrollers.SmartMotorController;
 /**
  * Configuration for the {@link SmartTurretController} 2-state turret control system.
  *
- * <p>All feedforward values (kS, kV, kA) are in <b>Amps</b> for use with TorqueCurrentFOC control.
- * All positional values are in <b>mechanism rotations</b> (post-gear-reduction).
+ * <p>All slot feedforward values (kS, kV, kA) are in <b>Amps</b> for use with TorqueCurrentFOC
+ * control. The expo profile parameters (expoKV, expoKA) are always in <b>Volts</b> regardless of
+ * control mode. All positional values are in <b>mechanism rotations</b> (post-gear-reduction).
  */
 public class SmartTurretConfig {
 
@@ -40,6 +41,11 @@ public class SmartTurretConfig {
   private final double kS;
   private final double kV;
   private final double kA;
+
+  // MotionMagicExpo plant model — ALWAYS in Volts regardless of control mode.
+  // These define the mechanism's voltage-domain model for the expo velocity profile.
+  private final double expoKV; // V/(mechanism rot/s)
+  private final double expoKA; // V/(mechanism rot/s^2)
 
   // State transition thresholds (mechanism rotations)
   private final double seekingThresholdRotations;
@@ -74,6 +80,8 @@ public class SmartTurretConfig {
     this.kS = builder.kS;
     this.kV = builder.kV;
     this.kA = builder.kA;
+    this.expoKV = builder.expoKV;
+    this.expoKA = builder.expoKA;
     this.seekingThresholdRotations = builder.seekingThresholdRotations;
     this.hysteresisBufferRotations = builder.hysteresisBufferRotations;
     this.lowerLimitRotations = builder.lowerLimitRotations;
@@ -141,6 +149,16 @@ public class SmartTurretConfig {
     return kA;
   }
 
+  /** MotionMagicExpo kV in V/(mechanism rot/s). Always in Volts regardless of control mode. */
+  public double getExpoKV() {
+    return expoKV;
+  }
+
+  /** MotionMagicExpo kA in V/(mechanism rot/s^2). Always in Volts regardless of control mode. */
+  public double getExpoKA() {
+    return expoKA;
+  }
+
   public double getSeekingThresholdRotations() {
     return seekingThresholdRotations;
   }
@@ -188,6 +206,10 @@ public class SmartTurretConfig {
     private double kS = 10.0;
     private double kV = 0.0;
     private double kA = 5.0;
+    // Expo defaults: computed from motion constraints in build() if not explicitly set.
+    // -1 signals "auto-compute from maxVelocity/maxAccel".
+    private double expoKV = -1;
+    private double expoKA = -1;
     private double seekingThresholdRotations = 10.0 / 360.0;
     private double hysteresisBufferRotations = 3.0 / 360.0;
     private double lowerLimitRotations = -150.0 / 360.0;
@@ -245,6 +267,19 @@ public class SmartTurretConfig {
       return this;
     }
 
+    /**
+     * Sets the MotionMagicExpo plant model parameters in Volts. These are always in V/rps and
+     * V/rps^2 regardless of control mode (even when using TorqueCurrentFOC).
+     *
+     * <p>If not called, defaults are auto-computed from motion constraints as {@code 12.0 /
+     * maxVelocity} and {@code 12.0 / maxAcceleration}.
+     */
+    public Builder withExpoConstraints(double expoKV, double expoKA) {
+      this.expoKV = expoKV;
+      this.expoKA = expoKA;
+      return this;
+    }
+
     public Builder withSeekingThreshold(double seekingThresholdRotations) {
       this.seekingThresholdRotations = seekingThresholdRotations;
       return this;
@@ -281,6 +316,14 @@ public class SmartTurretConfig {
     public SmartTurretConfig build() {
       if (talonFX == null) {
         throw new IllegalStateException("TalonFX must be set");
+      }
+      // Auto-compute expo plant model from motion constraints if not explicitly set.
+      // V_max / kV_expo = max achievable velocity; V_max / kA_expo = max achievable acceleration.
+      if (expoKV < 0) {
+        expoKV = 12.0 / maxVelocityMechRotPerSec;
+      }
+      if (expoKA < 0) {
+        expoKA = 12.0 / maxAccelMechRotPerSecSq;
       }
       return new SmartTurretConfig(this);
     }
