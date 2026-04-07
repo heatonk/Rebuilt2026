@@ -26,9 +26,13 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import org.frc5010.common.drive.GenericDrivetrain;
 import org.frc5010.common.drive.pose.PoseProvider;
+import org.frc5010.common.drive.pose.VisionIOInputsAutoLogged;
 
 /** Add your docs here. */
 public class QuestNavInterface implements PoseProvider {
+
+  /** Per-instance inputs — each QuestNav has its own object */
+  private final VisionIOInputsAutoLogged input = new VisionIOInputsAutoLogged();
 
   private String networkTableRoot = "questnav";
   private Supplier<ChassisSpeeds> robotVelocity = null;
@@ -70,6 +74,16 @@ public class QuestNavInterface implements PoseProvider {
     this.robotToQuest = robotToQuest;
     this.networkTableRoot = networkTableRoot;
     this.questNav = new QuestNav();
+  }
+
+  @Override
+  public VisionIOInputsAutoLogged getInput() {
+    return input;
+  }
+
+  @Override
+  public int getCameraIndex() {
+    return 0;
   }
 
   private Pose3d getRobotPoseFromQuestPose(Pose3d questPose) {
