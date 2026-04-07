@@ -199,7 +199,7 @@ public class LauncherIOReal implements LauncherIO {
                 .withGearRatio(30.0)
                 .withMotionConstraints(maxVelMechRotPerSec, maxAccelMechRotPerSecSq)
                 .withSeekingPID(255, 0, 50) // Initial values from turret.json
-                .withTrackingPID(255, 0, 50) // Start same, tune separately
+                .withTrackingPID(255, 0, 300) // Start same, tune separately
                 .withFeedforward(kS, kV, kA)
                 .withSeekingThreshold(Degrees.of(10).in(Rotations))
                 .withHysteresisBuffer(Degrees.of(3).in(Rotations))
@@ -574,7 +574,6 @@ public class LauncherIOReal implements LauncherIO {
   @Override
   public Command getTurretSeekingTuneCommand(GenericSubsystem launcher) {
     if (smartTurretController == null) return Commands.none();
-    return new frc.robot.rebuilt.commands.TurretSeekingTuneCommand(
-        smartTurretController, launcher);
+    return new frc.robot.rebuilt.commands.TurretSeekingTuneCommand(smartTurretController, launcher);
   }
 }

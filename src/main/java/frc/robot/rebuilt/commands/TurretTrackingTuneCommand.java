@@ -112,7 +112,10 @@ public class TurretTrackingTuneCommand extends Command {
     double newKV = SmartDashboard.getNumber(PREFIX + "Tracking kV (A/rps)", lastKV);
     double newKA = SmartDashboard.getNumber(PREFIX + "Tracking kA (A/rps2)", lastKA);
 
-    if (newKP != lastKP || newKI != lastKI || newKD != lastKD || newKV != lastKV
+    if (newKP != lastKP
+        || newKI != lastKI
+        || newKD != lastKD
+        || newKV != lastKV
         || newKA != lastKA) {
       Slot1Configs slot1 = new Slot1Configs();
       slot1.kP = newKP;

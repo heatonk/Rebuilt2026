@@ -56,9 +56,11 @@ public class TurretSeekingTuneCommand extends Command {
 
     // Target positions (degrees) — default to ±50% of range from center.
     SmartDashboard.putNumber(
-        PREFIX + "Target A (deg)", SmartDashboard.getNumber(PREFIX + "Target A (deg)", lowerDeg * 0.5));
+        PREFIX + "Target A (deg)",
+        SmartDashboard.getNumber(PREFIX + "Target A (deg)", lowerDeg * 0.5));
     SmartDashboard.putNumber(
-        PREFIX + "Target B (deg)", SmartDashboard.getNumber(PREFIX + "Target B (deg)", upperDeg * 0.5));
+        PREFIX + "Target B (deg)",
+        SmartDashboard.getNumber(PREFIX + "Target B (deg)", upperDeg * 0.5));
     SmartDashboard.putNumber(
         PREFIX + "Dwell Time (s)", SmartDashboard.getNumber(PREFIX + "Dwell Time (s)", 2.0));
 
@@ -112,8 +114,12 @@ public class TurretSeekingTuneCommand extends Command {
     double newKV = SmartDashboard.getNumber(PREFIX + "Seeking kV (A/rps)", lastKV);
     double newKA = SmartDashboard.getNumber(PREFIX + "Seeking kA (A/rps2)", lastKA);
 
-    if (newKP != lastKP || newKI != lastKI || newKD != lastKD || newKS != lastKS
-        || newKV != lastKV || newKA != lastKA) {
+    if (newKP != lastKP
+        || newKI != lastKI
+        || newKD != lastKD
+        || newKS != lastKS
+        || newKV != lastKV
+        || newKA != lastKA) {
       Slot0Configs slot0 = new Slot0Configs();
       slot0.kP = newKP;
       slot0.kI = newKI;
@@ -151,7 +157,8 @@ public class TurretSeekingTuneCommand extends Command {
     Logger.recordOutput(PREFIX + "TargetPositionDeg", targetDeg);
     Logger.recordOutput(PREFIX + "ActualPositionDeg", actualPos * 360.0);
     Logger.recordOutput(PREFIX + "PositionErrorDeg", positionError * 360.0);
-    Logger.recordOutput(PREFIX + "ActualVelocityRPS", controller.getActualVelocityRadPerSec() / (2.0 * Math.PI));
+    Logger.recordOutput(
+        PREFIX + "ActualVelocityRPS", controller.getActualVelocityRadPerSec() / (2.0 * Math.PI));
     Logger.recordOutput(PREFIX + "AtTargetA", atTargetA);
     Logger.recordOutput(PREFIX + "State", controller.getCurrentTurretState().name());
   }

@@ -50,6 +50,10 @@ public class AutoCommands {
     selectableCommand.addOption(
         "TUNE: Turret Tracking Sinusoidal Tuning",
         ((Launcher) subsystems.get(Constants.LAUNCHER)).getTurretTrackingTuneCommand());
+
+    selectableCommand.addOption(
+        "TUNE: Turret Seeking Tuning",
+        ((Launcher) subsystems.get(Constants.LAUNCHER)).getTurretSeekingTuneCommand());
   }
 
   public void configureBasicAutoCommands(LoggedDashboardChooser<Command> selectableCommand) {

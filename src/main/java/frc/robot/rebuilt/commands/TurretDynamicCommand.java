@@ -31,12 +31,12 @@ import org.littletonrobotics.junction.Logger;
  *
  * <ul>
  *   <li><b>kS_dynamic</b>: kinetic (dynamic) friction during motion. Computed from near-steady-
- *       state samples (|acceleration| below {@link #STEADY_STATE_ACCEL_THRESHOLD}) where
- *       {@code kS_dyn = sgn(v) * (current - kV * velocity)}. This is often different from the
- *       static kS measured by the quasistatic command.
+ *       state samples (|acceleration| below {@link #STEADY_STATE_ACCEL_THRESHOLD}) where {@code
+ *       kS_dyn = sgn(v) * (current - kV * velocity)}. This is often different from the static kS
+ *       measured by the quasistatic command.
  *   <li><b>kA</b>: inertia feedforward. Computed from transient samples (|acceleration| above
- *       {@link #MIN_ACCEL_ROT_PER_SEC_SQ}) using kS_dynamic in the residual:
- *       {@code (current - kS_dyn * sgn(v) - kV * v) = kA * acceleration}.
+ *       {@link #MIN_ACCEL_ROT_PER_SEC_SQ}) using kS_dynamic in the residual: {@code (current -
+ *       kS_dyn * sgn(v) - kV * v) = kA * acceleration}.
  * </ul>
  *
  * <p>kS_dynamic is written back to the SmartDashboard key {@code "Dynamic kS"} at the end of each
@@ -187,7 +187,8 @@ public class TurretDynamicCommand extends Command {
     }
 
     // Bidirectional pulsing: alternate polarity every PULSE_DURATION_SECS.
-    // Each direction change creates a fresh acceleration transient and near-zero-accel steady-state.
+    // Each direction change creates a fresh acceleration transient and near-zero-accel
+    // steady-state.
     double pulseElapsed = elapsed - SETTLE_DELAY_SECONDS;
     int pulseIndex = (int) (pulseElapsed / PULSE_DURATION_SECS);
     double appliedAmps = (pulseIndex % 2 == 0) ? stepAmps : -stepAmps;
@@ -283,8 +284,7 @@ public class TurretDynamicCommand extends Command {
 
     if (transientCount < 5 || Math.abs(sumAA) < 1e-12) {
       Logger.recordOutput(
-          PREFIX + "Status",
-          "Not enough transient samples for kA (" + transientCount + ")");
+          PREFIX + "Status", "Not enough transient samples for kA (" + transientCount + ")");
       System.out.println("[TurretDynamic] Not enough transient samples: " + transientCount);
       // Still output kS_dynamic even if kA failed.
       outputKSDynamic(kSDynamic, ksDynEstimates.size());
@@ -302,9 +302,16 @@ public class TurretDynamicCommand extends Command {
     Logger.recordOutput(PREFIX + "Total Sample Count", allSamples.size());
     Logger.recordOutput(PREFIX + "Status", "Complete");
 
-    System.out.println("[TurretDynamic] kS_dynamic = " + kSDynamic + " A  (" + ksDynEstimates.size() + " samples)");
-    System.out.println("[TurretDynamic] kA         = " + kA + " A/(rot/s^2)  (" + transientCount + " samples)");
-    System.out.println("[TurretDynamic] Used kV=" + inputKV + ", total samples=" + allSamples.size());
+    System.out.println(
+        "[TurretDynamic] kS_dynamic = "
+            + kSDynamic
+            + " A  ("
+            + ksDynEstimates.size()
+            + " samples)");
+    System.out.println(
+        "[TurretDynamic] kA         = " + kA + " A/(rot/s^2)  (" + transientCount + " samples)");
+    System.out.println(
+        "[TurretDynamic] Used kV=" + inputKV + ", total samples=" + allSamples.size());
 
     outputKSDynamic(kSDynamic, ksDynEstimates.size());
   }
