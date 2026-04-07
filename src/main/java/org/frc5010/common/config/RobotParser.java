@@ -19,6 +19,7 @@ import org.frc5010.common.config.json.RobotJson;
 import org.frc5010.common.config.json.VisionPropertiesJson;
 import org.frc5010.common.config.json.YAGSLDrivetrainJson;
 import org.frc5010.common.config.json.devices.LEDStripParser;
+import org.frc5010.common.config.json.devices.OrchestraParser;
 
 /**
  * Parses JSON configuration files to initialize and build a robot's subsystems.
@@ -107,6 +108,9 @@ public class RobotParser {
 
     // Parse LED strips
     LEDStripParser.parse(robotDirectory);
+
+    // Parse the orchestra configuration (if it exists)
+    OrchestraParser.parse(robotDirectory);
 
     // Read in the drivetrain
     switch (robotJson.driveType) {
