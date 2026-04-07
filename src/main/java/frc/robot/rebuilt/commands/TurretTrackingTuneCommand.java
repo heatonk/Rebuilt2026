@@ -35,7 +35,7 @@ public class TurretTrackingTuneCommand extends Command {
   private double lastKP = -1, lastKI = -1, lastKD = -1;
 
   private static final double SAFETY_MARGIN_ROT = 10.0 / 360.0; // 10 degrees
-  private static final String PREFIX = "TurretTrackTune/";
+  private static final String PREFIX = "TurretTrackTune";
 
   public TurretTrackingTuneCommand(SmartTurretController controller, GenericSubsystem requirement) {
     this.controller = controller;
