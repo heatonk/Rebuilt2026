@@ -29,7 +29,7 @@ import org.littletonrobotics.junction.Logger;
  * <p>Data is collected at ~250 Hz via a dedicated {@link Notifier}, not at the 50 Hz robot loop.
  * This provides ~5x more samples for significantly smoother regression data.
  *
- * <p>Results are logged under the "TurretQuasistatic" prefix.
+ * <p>Results are logged under the "TurretQuasistatic/" prefix.
  */
 public class TurretQuasistaticCommand extends Command {
 
@@ -69,7 +69,7 @@ public class TurretQuasistaticCommand extends Command {
   /** Sampling period for the high-frequency Notifier (4 ms = 250 Hz). */
   private static final double SAMPLING_PERIOD_SECONDS = 1.0 / 250.0;
 
-  private static final String PREFIX = "TurretQuasistatic";
+  private static final String PREFIX = "TurretQuasistatic/";
 
   public TurretQuasistaticCommand(
       SmartTurretController controller, GenericSubsystem requirement) {
@@ -142,7 +142,7 @@ public class TurretQuasistaticCommand extends Command {
 
     // 50 Hz dashboard telemetry for live viewing.
     Logger.recordOutput(PREFIX + "Current (A)", current);
-    Logger.recordOutput(PREFIX + "Velocity (rot/s)", velocitySignal.getValueAsDouble());
+    Logger.recordOutput(PREFIX + "Velocity (rot-s)", velocitySignal.getValueAsDouble());
     Logger.recordOutput(PREFIX + "Position (rot)", actualPos);
     Logger.recordOutput(PREFIX + "SampleCount", sampleQueue.size());
   }
@@ -206,7 +206,7 @@ public class TurretQuasistaticCommand extends Command {
     double kV = (n * sumIV - sumV * sumI) / det;
 
     Logger.recordOutput(PREFIX + "kS (Amps)", kS);
-    Logger.recordOutput(PREFIX + "kV (Amps per rot/s)", kV);
+    Logger.recordOutput(PREFIX + "kV (Amps per rot-s)", kV);
     Logger.recordOutput(PREFIX + "Status", "Complete (" + samples.size() + " samples)");
 
     System.out.println("[TurretQuasistatic] kS = " + kS + " A, kV = " + kV + " A/(rot/s)");

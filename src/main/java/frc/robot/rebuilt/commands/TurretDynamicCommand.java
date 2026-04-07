@@ -38,7 +38,7 @@ import org.littletonrobotics.junction.Logger;
  * {@code (current - kS - kV * velocity) = kA * acceleration}, then kA is determined via
  * least-squares regression on the acceleration transient samples.
  *
- * <p>Results are logged under the "TurretDynamic" prefix.
+ * <p>Results are logged under the "TurretDynamic/" prefix.
  */
 public class TurretDynamicCommand extends Command {
 
@@ -83,7 +83,7 @@ public class TurretDynamicCommand extends Command {
   /** Sampling period for the high-frequency Notifier (4 ms = 250 Hz). */
   private static final double SAMPLING_PERIOD_SECONDS = 1.0 / 250.0;
 
-  private static final String PREFIX = "TurretDynamic";
+  private static final String PREFIX = "TurretDynamic/";
 
   public TurretDynamicCommand(
       SmartTurretController controller, GenericSubsystem requirement) {
@@ -174,9 +174,9 @@ public class TurretDynamicCommand extends Command {
 
     // 50 Hz dashboard telemetry for live viewing.
     Logger.recordOutput(PREFIX + "Current (A)", stepAmps);
-    Logger.recordOutput(PREFIX + "Velocity (rot/s)", velocitySignal.getValueAsDouble());
+    Logger.recordOutput(PREFIX + "Velocity (rot-s)", velocitySignal.getValueAsDouble());
     Logger.recordOutput(
-        PREFIX + "Acceleration (rot/s^2)", accelerationSignal.getValueAsDouble());
+        PREFIX + "Acceleration (rot-s2)", accelerationSignal.getValueAsDouble());
     Logger.recordOutput(PREFIX + "Position (rot)", actualPos);
     Logger.recordOutput(PREFIX + "SampleCount", sampleQueue.size());
   }
@@ -232,9 +232,9 @@ public class TurretDynamicCommand extends Command {
 
     double kA = sumRA / sumAA;
 
-    Logger.recordOutput(PREFIX + "kA (Amps per rot/s^2)", kA);
+    Logger.recordOutput(PREFIX + "kA (Amps per rot-s2)", kA);
     Logger.recordOutput(PREFIX + "Input kS (Amps)", inputKS);
-    Logger.recordOutput(PREFIX + "Input kV (Amps per rot/s)", inputKV);
+    Logger.recordOutput(PREFIX + "Input kV (Amps per rot-s)", inputKV);
     Logger.recordOutput(PREFIX + "Status", "Complete (" + samples.size() + " samples)");
 
     System.out.println("[TurretDynamic] kA = " + kA + " A/(rot/s^2)");

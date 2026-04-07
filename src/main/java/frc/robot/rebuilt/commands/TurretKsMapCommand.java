@@ -56,7 +56,7 @@ public class TurretKsMapCommand extends Command {
   private static final double SETTLE_TIME_SECONDS = 0.5;
   private static final double MAX_PROBE_CURRENT_AMPS = 30.0;
   private static final int NUM_TEST_POSITIONS = 10;
-  private static final String PREFIX = "TurretKsMap";
+  private static final String PREFIX = "TurretKsMap/";
 
   private final InterpolatingDoubleTreeMap resultMapPositive = new InterpolatingDoubleTreeMap();
   private final InterpolatingDoubleTreeMap resultMapNegative = new InterpolatingDoubleTreeMap();
