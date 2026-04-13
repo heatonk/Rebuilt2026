@@ -54,20 +54,7 @@ public class TestCommands {
         .createAButton()
         .whileTrue(launcher.getFlyWheelSysIdCommand().finallyDo(() -> launcher.stopAllMotors()));
 
-    QuestNavInterface calibrationQuest = new QuestNavInterface(new Transform3d());
-    controller
-        .createYButton()
-        .whileTrue(
-            calibrationQuest.determineOffsetToRobotCenter(
-                (GenericDrivetrain) subsystems.get(ConfigConstants.DRIVETRAIN)));
-
-    controller
-        .createXButton()
-        .onTrue(
-            Commands.run(
-                () -> {
-                  calibrationQuest.resetPose(new Pose3d());
-                }));
+    
 
     // Shot tuning command – hold Y button to enter tuning mode
     // controller
