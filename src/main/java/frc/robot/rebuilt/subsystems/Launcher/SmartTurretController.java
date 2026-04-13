@@ -1,5 +1,7 @@
 package frc.robot.rebuilt.subsystems.Launcher;
 
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -8,7 +10,6 @@ import com.ctre.phoenix6.controls.PositionTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -107,7 +108,7 @@ public class SmartTurretController {
     fxConfig.Slot1.kP = config.getTrackingKP();
     fxConfig.Slot1.kI = config.getTrackingKI();
     fxConfig.Slot1.kD = config.getTrackingKD();
-    fxConfig.Slot1.kS = 0;
+    fxConfig.Slot1.kS = config.getKS();
     fxConfig.Slot1.kV = config.getKV();
     fxConfig.Slot1.kA = config.getKA();
 
@@ -201,36 +202,17 @@ public class SmartTurretController {
       }
     }
 
-    // Determine position-dependent kS.
-    double directionSign = Math.signum(currentTarget.positionMechRot() - actualPositionMechRot);
-    double effectiveKS = lookupKS(actualPositionMechRot, directionSign);
-
     switch (currentState) {
       case SEEKING:
-        double seekingFF = effectiveKS * directionSign;
-        seekingFF = applyFeedforwardSafetyPadding(actualPositionMechRot, seekingFF);
-        talonFX.setControl(
-            seekingRequest
-                .withPosition(currentTarget.positionMechRot())
-                .withFeedForward(seekingFF));
+        talonFX.setControl(seekingRequest.withPosition(currentTarget.positionMechRot()));
         break;
 
       case TRACKING:
-        double velMechRotPerSec = currentTarget.velocityRadPerSec() / (2.0 * Math.PI);
-
-        // Only inject the dynamic, position-dependent kS via external feedforward.
-        // kV and kA are in Slot1 and run at firmware frequency (1 kHz), fed by the
-        // Velocity parameter on the control request.
-        double velocitySign = Math.signum(velMechRotPerSec);
-        double ffAmps =
-            effectiveKS * (Math.abs(velMechRotPerSec) > 1e-3 ? velocitySign : directionSign);
-        ffAmps = applyFeedforwardSafetyPadding(actualPositionMechRot, ffAmps);
-
         talonFX.setControl(
             trackingRequest
                 .withPosition(currentTarget.positionMechRot())
-                .withVelocity(velMechRotPerSec)
-                .withFeedForward(ffAmps));
+                .withVelocity(RadiansPerSecond.of(currentTarget.velocityRadPerSec)));
+
         break;
     }
 

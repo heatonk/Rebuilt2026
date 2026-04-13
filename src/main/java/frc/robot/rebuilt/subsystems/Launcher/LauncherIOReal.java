@@ -269,7 +269,7 @@ public class LauncherIOReal implements LauncherIO {
             RPM.of(params.flywheelSpeed() * ShotCalculator.getFlywheelMultiplier());
         inputs.distanceToVirtualTarget = params.distanceToVirtualTarget();
         inputs.turretFeedforwardRadPerSec = params.solution().turretFeedforwardRadPerSec();
-        inputs.turretFeedforwardRadPerSecSq = 0.0;
+        inputs.turretFeedforwardAccelRadPerSecSq = 0.0;
       }
       inputs.robotToTarget = LauncherCommands.getRobotToTarget(targetPose.get());
 
@@ -290,8 +290,6 @@ public class LauncherIOReal implements LauncherIO {
         smartTurretController != null
             ? Rotations.of(smartTurretController.getGoalPositionMechRot())
             : turret.getMotorController().getMechanismPositionSetpoint().orElse(Degrees.of(0.0));
-
-
 
     inputs.flyWheelSpeedActual = flyWheel.getSpeed();
     inputs.hoodAngleActual = hood.getAngle();
