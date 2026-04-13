@@ -246,11 +246,6 @@ public class SmartTurretController {
    * to the constant kS from config if no position-dependent map is available.
    */
   private double lookupKS(double positionMechRot, double directionSign) {
-    InterpolatingDoubleTreeMap map =
-        directionSign >= 0 ? config.getKsMapPositive() : config.getKsMapNegative();
-    if (map != null) {
-      return map.get(positionMechRot);
-    }
     return config.getKS();
   }
 
