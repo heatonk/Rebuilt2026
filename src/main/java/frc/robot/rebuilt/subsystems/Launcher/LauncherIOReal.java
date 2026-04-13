@@ -268,6 +268,8 @@ public class LauncherIOReal implements LauncherIO {
         inputs.flyWheelSpeedCalculated =
             RPM.of(params.flywheelSpeed() * ShotCalculator.getFlywheelMultiplier());
         inputs.distanceToVirtualTarget = params.distanceToVirtualTarget();
+        inputs.turretFeedforwardRadPerSec = params.solution().turretFeedforwardRadPerSec();
+        inputs.turretFeedforwardRadPerSecSq = 0.0;
       }
       inputs.robotToTarget = LauncherCommands.getRobotToTarget(targetPose.get());
 
@@ -289,21 +291,7 @@ public class LauncherIOReal implements LauncherIO {
             ? Rotations.of(smartTurretController.getGoalPositionMechRot())
             : turret.getMotorController().getMechanismPositionSetpoint().orElse(Degrees.of(0.0));
 
-    // Compute numerical feedforward via differentiation of the desired turret angle.
-    // velocity = d(angle)/dt, acceleration = d(velocity)/dt, at 50Hz (20ms loop).
-    {
-      double currentDesiredAngleRad =
-          inputs.turretAngleCalculated.in(edu.wpi.first.units.Units.Radians);
-      double dt = 0.020; // 20ms robot loop period
-      double velocityRadPerSec = (currentDesiredAngleRad - previousTurretDesiredAngleRad) / dt;
-      double accelerationRadPerSecSq = (velocityRadPerSec - previousTurretVelocityRadPerSec) / dt;
 
-      inputs.turretFeedforwardRadPerSec = velocityRadPerSec;
-      inputs.turretFeedforwardAccelRadPerSecSq = accelerationRadPerSecSq;
-
-      previousTurretDesiredAngleRad = currentDesiredAngleRad;
-      previousTurretVelocityRadPerSec = velocityRadPerSec;
-    }
 
     inputs.flyWheelSpeedActual = flyWheel.getSpeed();
     inputs.hoodAngleActual = hood.getAngle();

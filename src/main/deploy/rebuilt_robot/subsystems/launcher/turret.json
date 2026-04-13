@@ -30,14 +30,14 @@
   "controlAlgorithm": "SIMPLE",
   "motorSystemId": {
     "feedBack": {
-      "p": 255,
+      "p": 1770.41578,
       "i": 0.0,
-      "d": 300
+      "d": 1477.68211
     },
     "feedForward": {
       "s": 23.164510145468732,
       "v": 0,
-      "a": 13.837686540692946
+      "a": 1.94789461763
     },
     "maxVelocity": {
       "val": 1080,
