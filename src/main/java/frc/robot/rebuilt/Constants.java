@@ -39,7 +39,7 @@ public class Constants {
   }
 
   public static class Indexer {
-    public static final double SPINDEXER_SPEED = 0.7;
+    public static final double SPINDEXER_SPEED = 0.90;
     public static final double TRANSFER_SPEED = 1.0;
     public static final double TRANSFER_CHURN = 0.25;
   }
