@@ -54,7 +54,7 @@ public class ShotCalculator {
   private Rotation2d minTurretAngle = Rotation2d.fromDegrees(-165.0);
   private Rotation2d maxTurretAngle = Rotation2d.fromDegrees(165.0);
   private Rotation2d feedforwardPaddingAngle = Rotation2d.fromDegrees(10.0);
-  private double settlingGain = 0.85;
+  private double settlingGain = 0.00;
   // Default turret motion constraints (overridden via setTurretMotionConstraints).
   // These represent the practical maximum velocity (360 °/s) and acceleration (720 °/s²)
   // until real SysId values are provided.

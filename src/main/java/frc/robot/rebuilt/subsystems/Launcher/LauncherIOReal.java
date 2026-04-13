@@ -177,7 +177,7 @@ public class LauncherIOReal implements LauncherIO {
       // Mechanism rot/s and rot/s^2; fallback values from turret.json maxVelocity/maxAcceleration.
       double maxVelMechRotPerSec = trapConstraints.map(c -> c.maxVelocity).orElse(1080.0 / 360.0);
       double maxAccelMechRotPerSecSq =
-          trapConstraints.map(c -> c.maxAcceleration).orElse(1000.0 / 360.0);
+          trapConstraints.map(c -> c.maxAcceleration).orElse(5080.0 / 360.0);
       double lowerLimitRot =
           turretConfig.getMechanismLowerLimit().orElse(Degrees.of(-150)).in(Rotations);
       double upperLimitRot =
@@ -201,8 +201,8 @@ public class LauncherIOReal implements LauncherIO {
                 .withSeekingPID(255, 0, 50) // Initial values from turret.json
                 .withTrackingPID(255, 0, 300) // Start same, tune separately
                 .withFeedforward(kS, kV, kA)
-                .withSeekingThreshold(Degrees.of(10).in(Rotations))
-                .withHysteresisBuffer(Degrees.of(3).in(Rotations))
+                .withSeekingThreshold(Degrees.of(30).in(Rotations))
+                .withHysteresisBuffer(Degrees.of(5).in(Rotations))
                 .withSoftLimits(lowerLimitRot, upperLimitRot)
                 .build();
 
