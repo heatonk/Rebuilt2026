@@ -3,29 +3,29 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 4.35787951807229,
-        "y": 7.411662650602409
+        "x": 2.7187228915662653,
+        "y": 7.324240963855422
       },
       "prevControl": null,
       "nextControl": {
-        "x": 5.35787951807229,
-        "y": 7.411662650602409
+        "x": 3.7187228915662653,
+        "y": 7.324240963855422
       },
       "isLocked": false,
-      "linkedName": "TLS"
+      "linkedName": "TL-Long"
     },
     {
       "anchor": {
-        "x": 6.1500240963855415,
-        "y": 7.204036144578313
+        "x": 6.204662650602408,
+        "y": 7.324240963855422
       },
       "prevControl": {
-        "x": 5.639750984998758,
-        "y": 7.508553969115587
+        "x": 5.61694243289291,
+        "y": 7.411960399334451
       },
       "nextControl": {
-        "x": 6.827542168674698,
-        "y": 6.799710843373494
+        "x": 6.936819277108433,
+        "y": 7.214963855421687
       },
       "isLocked": false,
       "linkedName": null
@@ -44,7 +44,16 @@
       "linkedName": "CTR-QTRL"
     }
   ],
-  "rotationTargets": [],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.6190871369294697,
+      "rotationDegrees": 0.0
+    },
+    {
+      "waypointRelativePos": 1.4655601659750637,
+      "rotationDegrees": -85.29264819406744
+    }
+  ],
   "constraintZones": [
     {
       "name": "Constraints Zone",
