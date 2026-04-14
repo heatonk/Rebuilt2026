@@ -60,7 +60,7 @@ public class Rebuilt extends GenericRobot {
     intakecommands = new IntakeCommands(subsystems);
     indexerCommands = new IndexerCommands(subsystems);
     autocommands = new AutoCommands(subsystems);
-    OrchestraManager.loadMusic("sea2");
+    OrchestraManager.loadMusic("raiders");
   }
 
   @Override

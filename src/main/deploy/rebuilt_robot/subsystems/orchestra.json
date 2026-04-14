@@ -24,6 +24,10 @@
   ],
   "music": [
     {
+      "name": "raiders",
+      "path": "music/raiders.chrp"
+    },
+    {
       "name": "mariachi",
       "path": "music/mariachi.chrp"
     },
