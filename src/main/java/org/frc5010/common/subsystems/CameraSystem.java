@@ -54,6 +54,10 @@ public abstract class CameraSystem extends GenericSubsystem {
   protected TargetModel targetModel = new TargetModel(0.3556);
   /** Whether to view game pieces in simulation */
   protected boolean viewGamePieces = true;
+  /** Cached game piece A list to detect changes between cycles */
+  private List<Pose3d> cachedGpas = List.of();
+  /** Cached game piece B list to detect changes between cycles */
+  private List<Pose3d> cachedGpbs = List.of();
 
   /**
    * Creates a new CameraSystem with the specified camera.
@@ -88,25 +92,31 @@ public abstract class CameraSystem extends GenericSubsystem {
     if (!camera.canViewGamePieces()) {
       return;
     }
-    // Update game piece A targets in simulation
+    // Update game piece A targets only when the list has changed
     List<Pose3d> gpas =
         SimulatedArena.getInstance().getGamePiecesByType(Constants.Simulation.gamePieceA).stream()
             .map(it -> it.getPose3d())
             .collect(Collectors.toList());
-    SimulatedCamera.visionSim.removeVisionTargets("GPA");
-    for (Pose3d gpa : gpas) {
-      VisionTargetSim simTarget = new VisionTargetSim(gpa, targetModel);
-      SimulatedCamera.visionSim.addVisionTargets("GPA", simTarget);
+    if (!gpas.equals(cachedGpas)) {
+      cachedGpas = gpas;
+      SimulatedCamera.visionSim.removeVisionTargets("GPA");
+      for (Pose3d gpa : gpas) {
+        VisionTargetSim simTarget = new VisionTargetSim(gpa, targetModel);
+        SimulatedCamera.visionSim.addVisionTargets("GPA", simTarget);
+      }
     }
-    // Update game piece B targets in simulation
+    // Update game piece B targets only when the list has changed
     List<Pose3d> gpbs =
         SimulatedArena.getInstance().getGamePiecesByType(Constants.Simulation.gamePieceB).stream()
             .map(it -> it.getPose3d())
             .collect(Collectors.toList());
-    SimulatedCamera.visionSim.removeVisionTargets("GPB");
-    for (Pose3d gpb : gpbs) {
-      VisionTargetSim simTarget = new VisionTargetSim(gpb, targetModel);
-      SimulatedCamera.visionSim.addVisionTargets("GPB", simTarget);
+    if (!gpbs.equals(cachedGpbs)) {
+      cachedGpbs = gpbs;
+      SimulatedCamera.visionSim.removeVisionTargets("GPB");
+      for (Pose3d gpb : gpbs) {
+        VisionTargetSim simTarget = new VisionTargetSim(gpb, targetModel);
+        SimulatedCamera.visionSim.addVisionTargets("GPB", simTarget);
+      }
     }
   }
 

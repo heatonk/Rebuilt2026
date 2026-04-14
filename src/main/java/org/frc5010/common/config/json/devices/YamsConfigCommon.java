@@ -149,6 +149,7 @@ public class YamsConfigCommon {
       case "nova":
       case "thriftynova":
       case "thrifty_nova":
+        break;
       default:
         motorConfig.withOpenLoopRampRate(UnitsParser.parseTime(motorSystemId.openLoopRamp));
         break;

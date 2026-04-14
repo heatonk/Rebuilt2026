@@ -125,16 +125,14 @@ public class GenericSubsystem extends SubsystemBase
   @Override
   public void periodic() {
     DashBoard.notifyListeners();
-    devices.values().stream()
-        .forEach(
-            it -> {
-              if (it instanceof GenericFunctionalMotor) {
-                ((GenericFunctionalMotor) it).periodicUpdate();
-              }
-              if (it instanceof SmartMechanism) {
-                ((SmartMechanism) it).updateTelemetry();
-              }
-            });
+    for (Object it : devices.values()) {
+      if (it instanceof GenericFunctionalMotor) {
+        ((GenericFunctionalMotor) it).periodicUpdate();
+      }
+      if (it instanceof SmartMechanism) {
+        ((SmartMechanism) it).updateTelemetry();
+      }
+    }
   }
 
   /**
@@ -143,16 +141,14 @@ public class GenericSubsystem extends SubsystemBase
    */
   @Override
   public void simulationPeriodic() {
-    devices.values().stream()
-        .forEach(
-            it -> {
-              if (it instanceof GenericFunctionalMotor) {
-                ((GenericFunctionalMotor) it).simulationUpdate();
-              }
-              if (it instanceof SmartMechanism) {
-                ((SmartMechanism) it).simIterate();
-              }
-            });
+    for (Object it : devices.values()) {
+      if (it instanceof GenericFunctionalMotor) {
+        ((GenericFunctionalMotor) it).simulationUpdate();
+      }
+      if (it instanceof SmartMechanism) {
+        ((SmartMechanism) it).simIterate();
+      }
+    }
   }
 
   /**
