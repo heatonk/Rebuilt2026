@@ -24,7 +24,8 @@ import frc.robot.rebuilt.Rebuilt;
 import frc.robot.rebuilt.subsystems.Launcher.TurretControlPhysics.AimingSolution;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.function.DoubleFunction;
+import java.util.function.BiFunction;
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import lombok.experimental.ExtensionMethod;
 import org.frc5010.common.constants.Constants;
@@ -53,15 +54,16 @@ public class ShotCalculator {
   private Rotation2d minTurretAngle = Rotation2d.fromDegrees(-165.0);
   private Rotation2d maxTurretAngle = Rotation2d.fromDegrees(165.0);
   private Rotation2d feedforwardPaddingAngle = Rotation2d.fromDegrees(10.0);
-  private double settlingGain = 0.85;
+  private double settlingGain = 0.00;
   // Default turret motion constraints (overridden via setTurretMotionConstraints).
   // These represent the practical maximum velocity (360 °/s) and acceleration (720 °/s²)
   // until real SysId values are provided.
   private double turretMaxVelocityRadPerSec = Math.toRadians(360.0);
   private double turretMaxAccelRadPerSecSq = Math.toRadians(720.0);
-  private DoubleFunction<Double> settlingTimeFunction =
-      TurretControlPhysics.trapezoidalSettlingTimeFunction(
+  private BiFunction<Double, Double, Double> settlingTimeFunction =
+      TurretControlPhysics.velocityAwareSettlingTimeFunction(
           turretMaxVelocityRadPerSec, turretMaxAccelRadPerSecSq);
+  private DoubleSupplier turretVelocitySupplier = () -> 0.0;
   private final String targetName = "Target";
   private final String lookAhead = "Lookahead";
   private final String virtualTarget = "VirtualTarget";
@@ -430,7 +432,8 @@ public class ShotCalculator {
     turretControlPhysics = null;
   }
 
-  public void setSettlingTimeFunction(DoubleFunction<Double> function, double newSettlingGain) {
+  public void setSettlingTimeFunction(
+      BiFunction<Double, Double, Double> function, double newSettlingGain) {
     if (function != null) {
       settlingTimeFunction = function;
     }
@@ -454,10 +457,22 @@ public class ShotCalculator {
     turretMaxVelocityRadPerSec = maxVelocityRadPerSec;
     turretMaxAccelRadPerSecSq = maxAccelRadPerSecSq;
     settlingTimeFunction =
-        TurretControlPhysics.trapezoidalSettlingTimeFunction(
+        TurretControlPhysics.velocityAwareSettlingTimeFunction(
             turretMaxVelocityRadPerSec, turretMaxAccelRadPerSecSq);
     settlingGain = newSettlingGain;
     turretControlPhysics = null;
+  }
+
+  /**
+   * Sets the supplier for the current turret angular velocity. This is used by the velocity-aware
+   * settling time function to account for turret momentum when predicting time-to-arrival.
+   *
+   * @param supplier a {@link DoubleSupplier} returning the current turret velocity in rad/s
+   */
+  public void setTurretVelocitySupplier(DoubleSupplier supplier) {
+    if (supplier != null) {
+      turretVelocitySupplier = supplier;
+    }
   }
 
   public ShootingParameters getParameters(
@@ -489,10 +504,12 @@ public class ShotCalculator {
                 turretRelativeAngle));
 
     TurretControlPhysics physics = getTurretControlPhysics(turretRelativePosition);
+    double currentTurretVelocityRadPerSec = turretVelocitySupplier.getAsDouble();
     TurretControlPhysics.AimingSolution solution =
         physics.solve(
             target,
             turretRelativeAngle,
+            currentTurretVelocityRadPerSec,
             (timeSinceStartSeconds, lookaheadSeconds) -> {
               // Linear field-frame pose extrapolation: no twist, just straight-line translation
               // in the field frame plus proportional heading change.

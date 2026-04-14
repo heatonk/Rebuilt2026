@@ -18,6 +18,7 @@ import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.hardware.CANcoder;
+import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -77,12 +78,14 @@ public class LauncherIOReal implements LauncherIO {
   Angle turretLowLimit = Degrees.of(-90);
   Angle turretHighLimit = Degrees.of(90);
 
-  /**
-   * Turret motor kV in V/(rot/s), read from the YAMS {@link
-   * yams.motorcontrollers.SmartMotorControllerConfig#getSimpleFeedforward()} at construction time
-   * so that the feedforward voltage conversion stays in sync with the tuned gains.
-   */
-  protected double turretKv = 0.0;
+  /** 2-state turret controller: SEEKING (MotionMagic) and TRACKING (Position + FF). */
+  protected SmartTurretController smartTurretController;
+
+  /** Previous turret desired angle (rad) for numerical feedforward differentiation. */
+  private double previousTurretDesiredAngleRad = 0.0;
+
+  /** Previous turret velocity feedforward (rad/s) for numerical acceleration computation. */
+  private double previousTurretVelocityRadPerSec = 0.0;
 
   public LauncherIOReal(Map<String, Object> devices, Map<String, GenericSubsystem> subsystems) {
     this.devices = devices;
@@ -166,28 +169,48 @@ public class LauncherIOReal implements LauncherIO {
     SmartDashboard.putNumber("EasyCRT/CRT Error Rot", easyCrtSolver.getLastErrorRotations());
     turret.getMotor().setEncoderPosition(calculatedAngle);
 
-    // Read kV directly from the YAMS SmartMotorControllerConfig (populated from turret.json).
-    // If the YAMS config doesn't carry a SimpleMotorFeedforward (e.g. old config), fall back to
-    // reading the live TalonFX Slot0 so the value is still hardware-consistent.
-    turretKv =
-        turret
-            .getMotorController()
-            .getConfig()
-            .getSimpleFeedforward()
-            .map(ff -> ff.getKv())
-            .orElseGet(
-                () -> {
-                  try {
-                    Object rawController = turret.getMotorController().getMotorController();
-                    if (rawController instanceof com.ctre.phoenix6.hardware.TalonFX talonFX) {
-                      var cfg = new com.ctre.phoenix6.configs.TalonFXConfiguration();
-                      talonFX.getConfigurator().refresh(cfg);
-                      if (cfg.Slot0.kV > 0.0) return cfg.Slot0.kV;
-                    }
-                  } catch (Exception ignored) {
-                  }
-                  return 0.0;
-                });
+    // Create the 2-state SmartTurretController (replaces TurretProfileController).
+    // Uses MotionMagicTorqueCurrentFOC for seeking and PositionTorqueCurrentFOC for tracking.
+    {
+      var turretConfig = turret.getMotorController().getConfig();
+      var trapConstraints = turretConfig.getTrapezoidProfile();
+      // Mechanism rot/s and rot/s^2; fallback values from turret.json maxVelocity/maxAcceleration.
+      double maxVelMechRotPerSec = trapConstraints.map(c -> c.maxVelocity).orElse(1080.0 / 360.0);
+      double maxAccelMechRotPerSecSq =
+          trapConstraints.map(c -> c.maxAcceleration).orElse(5080.0 / 360.0);
+      double lowerLimitRot =
+          turretConfig.getMechanismLowerLimit().orElse(Degrees.of(-150)).in(Rotations);
+      double upperLimitRot =
+          turretConfig.getMechanismUpperLimit().orElse(Degrees.of(150)).in(Rotations);
+
+      Object rawController = turret.getMotorController().getMotorController();
+      if (rawController instanceof com.ctre.phoenix6.hardware.TalonFX talonFXRaw) {
+        // Load feedforward from YAMS mechanism config (populated from turret.json motorSystemId).
+        // Turret is a Pivot so getArmFeedforward() contains the characterised kS/kV/kA in SI units.
+        // Fallback values match turret.json in case the YAMS FF was not set.
+        ArmFeedforward yamsFf = turretConfig.getArmFeedforward().orElse(null);
+        double kS = yamsFf != null ? yamsFf.getKs() : 23.1645;
+        double kV = yamsFf != null ? yamsFf.getKv() : 0.0;
+        double kA = yamsFf != null ? yamsFf.getKa() : 0.5134;
+        SmartTurretConfig smartConfig =
+            new SmartTurretConfig.Builder()
+                .withTalonFX(talonFXRaw)
+                .withYAMSController(turret.getMotorController())
+                .withGearRatio(30.0)
+                .withMotionConstraints(maxVelMechRotPerSec, maxAccelMechRotPerSecSq)
+                .withSeekingPID(255, 0, 50) // Initial values from turret.json
+                .withTrackingPID(255, 0, 300) // Start same, tune separately
+                .withFeedforward(kS, kV, kA)
+                .withSeekingThreshold(Degrees.of(30).in(Rotations))
+                .withHysteresisBuffer(Degrees.of(5).in(Rotations))
+                .withSoftLimits(lowerLimitRot, upperLimitRot)
+                .build();
+
+        smartTurretController = new SmartTurretController(smartConfig);
+        // Reset controller to the CRT-solved initial position.
+        smartTurretController.reset(calculatedAngle.in(Rotations), 0);
+      }
+    }
 
     turret.min().or(turret.max()).onTrue(Commands.runOnce(() -> turret.getMotor().setDutyCycle(0)));
   }
@@ -246,6 +269,10 @@ public class LauncherIOReal implements LauncherIO {
             RPM.of(params.flywheelSpeed() * ShotCalculator.getFlywheelMultiplier());
         inputs.distanceToVirtualTarget = params.distanceToVirtualTarget();
         inputs.turretFeedforwardRadPerSec = params.solution().turretFeedforwardRadPerSec();
+        inputs.turretFeedforwardAccelRadPerSecSq =
+            (inputs.turretFeedforwardRadPerSec - previousTurretVelocityRadPerSec)
+                / org.frc5010.common.constants.Constants.loopPeriodSecs;
+        previousTurretVelocityRadPerSec = inputs.turretFeedforwardRadPerSec;
       }
       inputs.robotToTarget = LauncherCommands.getRobotToTarget(targetPose.get());
 
@@ -260,8 +287,12 @@ public class LauncherIOReal implements LauncherIO {
             .orElse(RPM.of(0.0));
     inputs.hoodAngleDesired =
         hood.getMotorController().getMechanismPositionSetpoint().orElse(Degrees.of(0.0));
+    // Read turret desired angle from the SmartTurretController's goal, not YAMS (which is
+    // bypassed).
     inputs.turretAngleDesired =
-        turret.getMotorController().getMechanismPositionSetpoint().orElse(Degrees.of(0.0));
+        smartTurretController != null
+            ? Rotations.of(smartTurretController.getGoalPositionMechRot())
+            : turret.getMotorController().getMechanismPositionSetpoint().orElse(Degrees.of(0.0));
 
     inputs.flyWheelSpeedActual = flyWheel.getSpeed();
     inputs.hoodAngleActual = hood.getAngle();
@@ -311,6 +342,18 @@ public class LauncherIOReal implements LauncherIO {
     double maxAccelRadPerSecSq =
         trapConstraints.map(c -> c.maxAcceleration * 2.0 * Math.PI).orElse(Math.toRadians(360.0));
     shotCalculator.setTurretMotionConstraints(maxVelRadPerSec, maxAccelRadPerSecSq, 0.85);
+
+    // Provide the turret motor's actual velocity to the shot calculator for
+    // velocity-aware settling time estimation. Uses encoder velocity (not profile velocity)
+    // to avoid a feedback loop between the solver and the controller.
+    if (smartTurretController != null) {
+      shotCalculator.setTurretVelocitySupplier(smartTurretController::getActualVelocityRadPerSec);
+    }
+  }
+
+  @Override
+  public SmartTurretController getSmartTurretController() {
+    return smartTurretController;
   }
 
   /** Sets the flywheel motor's duty cycle */
@@ -335,7 +378,7 @@ public class LauncherIOReal implements LauncherIO {
     LEDStrip.changeSegmentPattern(ConfigConstants.ALL_LEDS, LEDStrip.getSolidPattern(Color.kGreen));
   }
 
-  /** Sets the angle of the turret based on the motor request */
+  /** Sets the angle of the turret via the SmartTurretController (zero feedforward). */
   public void setTurretRotation(Angle angle) {
     if (angle.gt(turretHighLimit)) {
       SmartDashboard.putBoolean("Launcher/Turret Limit", true);
@@ -346,20 +389,23 @@ public class LauncherIOReal implements LauncherIO {
     } else {
       SmartDashboard.putBoolean("Launcher/Turret Limit", false);
     }
-    turret.getMotorController().setPosition(angle);
+    if (smartTurretController != null) {
+      smartTurretController.setTarget(angle, 0.0, 0.0);
+    } else {
+      turret.getMotorController().setPosition(angle);
+    }
   }
 
   /**
-   * Sets the turret angle with an additional velocity feedforward injected into the MotionMagic
-   * request. The feedforward is expressed in mechanism rad/s (as produced by the shot solver) and
-   * is converted to volts using the tuned kV: {@code ffVolts = turretKv * (ffRadPerSec / 2π)}.
+   * Sets the turret angle with velocity and acceleration feedforward for the SmartTurretController.
    *
-   * <p>Accessing the raw {@link com.ctre.phoenix6.hardware.TalonFX} through the YAMS layer allows
-   * us to reuse the tuned MotionMagic profile while still injecting the solver's kinematic
-   * feedforward on every update.
+   * @param angle desired turret mechanism angle
+   * @param feedforwardRadPerSec angular velocity feedforward in rad/s (mechanism units)
+   * @param accelerationRadPerSecSq angular acceleration feedforward in rad/s^2 (mechanism units)
    */
   @Override
-  public void setTurretRotationWithFeedforward(Angle angle, double feedforwardRadPerSec) {
+  public void setTurretRotationWithFeedforward(
+      Angle angle, double feedforwardRadPerSec, double accelerationRadPerSecSq) {
     if (angle.gt(turretHighLimit)) {
       SmartDashboard.putBoolean("Launcher/Turret Limit", true);
       angle = turretHighLimit;
@@ -370,18 +416,8 @@ public class LauncherIOReal implements LauncherIO {
       SmartDashboard.putBoolean("Launcher/Turret Limit", false);
     }
 
-    // Convert mechanism feedforward (rad/s) to motor voltage: V = kV * (rad/s / 2π)
-    double feedforwardVolts = turretKv * (feedforwardRadPerSec / (2.0 * Math.PI));
-
-    // Send MotionMagicVoltage with feedforward directly to the TalonFX obtained through YAMS.
-    Object rawController = turret.getMotorController().getMotorController();
-    if (rawController instanceof com.ctre.phoenix6.hardware.TalonFX talonFX) {
-      turret.getMotorController().setPosition(angle);
-      talonFX.setControl(
-          new com.ctre.phoenix6.controls.MotionMagicVoltage(
-                  angle.in(edu.wpi.first.units.Units.Rotations))
-              .withFeedForward(feedforwardVolts));
-
+    if (smartTurretController != null) {
+      smartTurretController.setTarget(angle, feedforwardRadPerSec, accelerationRadPerSecSq);
     } else {
       // Fallback: YAMS setPosition without feedforward
       turret.getMotorController().setPosition(angle);
@@ -496,5 +532,37 @@ public class LauncherIOReal implements LauncherIO {
         8,
         3,
         3);
+  }
+
+  @Override
+  public Command getTurretQuasistaticCommand(GenericSubsystem launcher) {
+    if (smartTurretController == null) return Commands.none();
+    return new frc.robot.rebuilt.commands.TurretQuasistaticCommand(smartTurretController, launcher);
+  }
+
+  @Override
+  public Command getTurretDynamicCommand(GenericSubsystem launcher) {
+    if (smartTurretController == null) return Commands.none();
+    return new frc.robot.rebuilt.commands.TurretDynamicCommand(smartTurretController, launcher);
+  }
+
+  @Override
+  public Command getTurretKsMapCommand(GenericSubsystem launcher) {
+    if (smartTurretController == null) return Commands.none();
+    return new frc.robot.rebuilt.commands.TurretKsMapCommand(
+        smartTurretController, turretLowLimit, turretHighLimit, launcher);
+  }
+
+  @Override
+  public Command getTurretTrackingTuneCommand(GenericSubsystem launcher) {
+    if (smartTurretController == null) return Commands.none();
+    return new frc.robot.rebuilt.commands.TurretTrackingTuneCommand(
+        smartTurretController, launcher);
+  }
+
+  @Override
+  public Command getTurretSeekingTuneCommand(GenericSubsystem launcher) {
+    if (smartTurretController == null) return Commands.none();
+    return new frc.robot.rebuilt.commands.TurretSeekingTuneCommand(smartTurretController, launcher);
   }
 }

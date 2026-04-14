@@ -38,6 +38,22 @@ public class AutoCommands {
                 subsystems.get(org.frc5010.common.config.ConfigConstants.DRIVETRAIN),
             2.0,
             0.5));
+    selectableCommand.addOption(
+        "PRO: Turret Quasistatic (kS, kV)",
+        ((Launcher) subsystems.get(Constants.LAUNCHER)).getTurretQuasistaticCommand());
+    selectableCommand.addOption(
+        "PRO: Turret Dynamic (kA)",
+        ((Launcher) subsystems.get(Constants.LAUNCHER)).getTurretDynamicCommand());
+    selectableCommand.addOption(
+        "TUNE: Turret kS Map Generation",
+        ((Launcher) subsystems.get(Constants.LAUNCHER)).getTurretKsMapCommand());
+    selectableCommand.addOption(
+        "TUNE: Turret Tracking Sinusoidal Tuning",
+        ((Launcher) subsystems.get(Constants.LAUNCHER)).getTurretTrackingTuneCommand());
+
+    selectableCommand.addOption(
+        "TUNE: Turret Seeking Tuning",
+        ((Launcher) subsystems.get(Constants.LAUNCHER)).getTurretSeekingTuneCommand());
   }
 
   public void configureBasicAutoCommands(LoggedDashboardChooser<Command> selectableCommand) {

@@ -13,6 +13,7 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -32,6 +33,9 @@ public class Launcher extends GenericSubsystem {
   private final LauncherIOInputsAutoLogged inputs = new LauncherIOInputsAutoLogged();
   public static Transform3d robotToTurret = new Transform3d();
   private Map<String, GenericSubsystem> subsystems;
+  private SmartTurretController smartTurretController;
+
+  private static final double PROFILE_PERIOD_SECONDS = 0.005; // 200 Hz
 
   /** Creates a new Launcher. */
   public Launcher(Map<String, GenericSubsystem> subsystems) {
@@ -52,6 +56,17 @@ public class Launcher extends GenericSubsystem {
     }
 
     io.configureShotCalculator(ShotCalculator.getInstance());
+
+    // Register the SmartTurretController's high-frequency stepping loop.
+    // This runs at 200 Hz (5 ms) via a Notifier, evaluating state transitions and
+    // sending control requests to the TalonFX.
+    smartTurretController = io.getSmartTurretController();
+    if (smartTurretController != null) {
+      Notifier profileNotifier =
+          new Notifier(() -> smartTurretController.step(PROFILE_PERIOD_SECONDS));
+      profileNotifier.setName("SmartTurret");
+      profileNotifier.startPeriodic(PROFILE_PERIOD_SECONDS);
+    }
   }
 
   /**
@@ -119,6 +134,26 @@ public class Launcher extends GenericSubsystem {
     return io.getTurretCharacterizationCommand(this);
   }
 
+  public Command getTurretQuasistaticCommand() {
+    return io.getTurretQuasistaticCommand(this);
+  }
+
+  public Command getTurretDynamicCommand() {
+    return io.getTurretDynamicCommand(this);
+  }
+
+  public Command getTurretKsMapCommand() {
+    return io.getTurretKsMapCommand(this);
+  }
+
+  public Command getTurretTrackingTuneCommand() {
+    return io.getTurretTrackingTuneCommand(this);
+  }
+
+  public Command getTurretSeekingTuneCommand() {
+    return io.getTurretSeekingTuneCommand(this);
+  }
+
   public Translation2d getRobotTarget() {
     return io.determineTarget().get();
   }
@@ -141,7 +176,9 @@ public class Launcher extends GenericSubsystem {
         () -> {
           io.setHoodAngle(inputs.hoodAngleCalculated);
           io.setTurretRotationWithFeedforward(
-              inputs.turretAngleCalculated, inputs.turretFeedforwardRadPerSec);
+              inputs.turretAngleCalculated,
+              inputs.turretFeedforwardRadPerSec,
+              inputs.turretFeedforwardAccelRadPerSecSq);
           io.setFlyWheelVelocity(inputs.flyWheelSpeedCalculated);
         });
   }
@@ -151,7 +188,9 @@ public class Launcher extends GenericSubsystem {
         () -> {
           io.setHoodAngleLow();
           io.setTurretRotationWithFeedforward(
-              inputs.turretAngleCalculated, inputs.turretFeedforwardRadPerSec);
+              inputs.turretAngleCalculated,
+              inputs.turretFeedforwardRadPerSec,
+              inputs.turretFeedforwardAccelRadPerSecSq);
           io.setFlyWheelVelocity(inputs.flyWheelSpeedCalculated);
         });
   }
@@ -161,7 +200,9 @@ public class Launcher extends GenericSubsystem {
         () -> {
           io.setHoodAngle(hood.getMotorController().getConfig().getMechanismLowerLimit().get());
           io.setTurretRotationWithFeedforward(
-              inputs.turretAngleCalculated, inputs.turretFeedforwardRadPerSec);
+              inputs.turretAngleCalculated,
+              inputs.turretFeedforwardRadPerSec,
+              inputs.turretFeedforwardAccelRadPerSecSq);
           io.setFlyWheelVelocity(RPM.of(speed));
         });
   }
