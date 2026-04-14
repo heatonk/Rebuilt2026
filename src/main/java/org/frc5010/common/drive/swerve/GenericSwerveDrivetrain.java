@@ -120,18 +120,25 @@ public class GenericSwerveDrivetrain extends GenericDrivetrain {
         ppRobotConfigSupplier.get(), // The robot configuration
         () -> {
           // Boolean supplier that controls when the path will be mirrored for the red
-          // alliance
-          // This will flip the path being followed to the red side of the field.
+          // alliance.
           // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
-          var alliance = GenericRobot.getAlliance();
-          SmartDashboard.putString("YAGSL Alliance", alliance.toString());
-          return alliance == DriverStation.Alliance.Red;
+          return GenericRobot.getAlliance() == DriverStation.Alliance.Red;
         },
         this // Reference to this subsystem to set requirements
         );
 
-    // Preload PathPlanner Path finding
+    // Preload PathPlanner Path finding.
     // IF USING CUSTOM PATHFINDER ADD BEFORE THIS LINE
+    warmupPathfinding();
+  }
+
+  /**
+   * Schedules the PathPlanner pathfinding warmup command. Safe to call during robotInit() because
+   * the command is decorated with ignoringDisable(true), which lets it run while the robot is
+   * disabled. Calling this early prevents the ~180 ms overrun that occurs when warmup finishes
+   * mid-match the first time a PathfindingCommand is instantiated.
+   */
+  public void warmupPathfinding() {
     CommandScheduler.getInstance().schedule(PathfindingCommand.warmupCommand());
   }
 
@@ -144,18 +151,18 @@ public class GenericSwerveDrivetrain extends GenericDrivetrain {
   public void updateGlassWidget() {
     GenericSwerveModuleInfo[] modules = swerveDrive.getModulesInfo();
     for (int moduleKey = 0; moduleKey < modules.length; moduleKey++) {
-      double turningDeg = modules[moduleKey].steerRelativeDegrees();
-      double absEncDeg = modules[moduleKey].steerAbsoluteDegrees();
+      double turningDeg = modules[moduleKey].steerRelativeDegrees;
+      double absEncDeg = modules[moduleKey].steerAbsoluteDegrees;
       // This method will be called once per scheduler run
       absEncDials.get(moduleKey).setAngle(absEncDeg + 90);
       motorDials.get(moduleKey).setAngle(turningDeg + 90);
       motorDials
           .get(moduleKey)
-          .setLength(0.1 * modules[moduleKey].steerVelocityDegreesPerSecond() + 0.02);
+          .setLength(0.1 * modules[moduleKey].steerVelocityDegreesPerSecond + 0.02);
       expectDials
           .get(moduleKey)
-          .setLength(0.1 * modules[moduleKey].driveVelocityMetersPerSecond() + 0.02);
-      expectDials.get(moduleKey).setAngle(modules[moduleKey].expectedSteerDegrees() + 90);
+          .setLength(0.1 * modules[moduleKey].driveVelocityMetersPerSecond + 0.02);
+      expectDials.get(moduleKey).setAngle(modules[moduleKey].expectedSteerDegrees + 90);
     }
   }
 
@@ -572,9 +579,7 @@ public class GenericSwerveDrivetrain extends GenericDrivetrain {
     if (Double.isNaN(xInput)
         || Double.isNaN(yInput)
         || Double.isNaN(turnSpdFunction.getAsDouble())) {
-      SmartDashboard.putBoolean("Controller Overide", true);
-    } else {
-      SmartDashboard.putBoolean("Controller Overide", false);
+      // Input is NaN — fall through to previous-value substitution below
     }
 
     xInput = Double.isNaN(xInput) ? previousLeftXInput : xInput;

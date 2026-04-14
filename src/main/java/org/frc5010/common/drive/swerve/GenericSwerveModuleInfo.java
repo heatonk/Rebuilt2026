@@ -7,32 +7,41 @@ package org.frc5010.common.drive.swerve;
 import org.frc5010.common.drive.swerve.akit.Module;
 import swervelib.SwerveModule;
 
-/** Add your docs here. */
-public record GenericSwerveModuleInfo(
-    double steerAbsoluteDegrees,
-    double steerRelativeDegrees,
-    double driveRelativePositionMeters,
-    double driveVelocityMetersPerSecond,
-    double steerVelocityDegreesPerSecond,
-    double expectedSteerDegrees) {
+/**
+ * Mutable container for swerve module telemetry — reused each cycle to avoid per-call allocation.
+ * Use {@link #update(Module)} / {@link #update(SwerveModule)} to refresh values in-place.
+ */
+public class GenericSwerveModuleInfo {
+  public double steerAbsoluteDegrees;
+  public double steerRelativeDegrees;
+  public double driveRelativePositionMeters;
+  public double driveVelocityMetersPerSecond;
+  public double steerVelocityDegreesPerSecond;
+  public double expectedSteerDegrees;
 
-  public GenericSwerveModuleInfo(SwerveModule module) {
-    this(
-        module.getAbsolutePosition(),
-        module.getRelativePosition(),
-        module.getDriveMotor().getPosition(),
-        module.getDriveMotor().getVelocity(),
-        module.getAngleMotor().getVelocity(),
-        module.getState().angle.getDegrees());
+  public GenericSwerveModuleInfo() {}
+
+  /** Update all fields from a YAGSL {@link SwerveModule} — zero allocation after first call. */
+  public void update(SwerveModule module) {
+    steerAbsoluteDegrees = module.getAbsolutePosition();
+    steerRelativeDegrees = module.getRelativePosition();
+    driveRelativePositionMeters = module.getDriveMotor().getPosition();
+    driveVelocityMetersPerSecond = module.getDriveMotor().getVelocity();
+    steerVelocityDegreesPerSecond = module.getAngleMotor().getVelocity();
+    expectedSteerDegrees = module.getState().angle.getDegrees();
   }
 
-  public GenericSwerveModuleInfo(Module module) {
-    this(
-        module.getAngle().getDegrees(),
-        module.getAngle().getDegrees(),
-        module.getPosition().distanceMeters,
-        module.getVelocityMetersPerSec(),
-        0.0,
-        module.getAngle().getDegrees());
+  /**
+   * Update all fields from an AKit {@link Module} — zero allocation after first call. Reads {@code
+   * inputs} values directly to avoid the allocating {@link Module#getPosition()} call.
+   */
+  public void update(Module module) {
+    double angleDeg = module.getAngle().getDegrees();
+    steerAbsoluteDegrees = angleDeg;
+    steerRelativeDegrees = angleDeg;
+    driveRelativePositionMeters = module.getPositionMeters();
+    driveVelocityMetersPerSecond = module.getVelocityMetersPerSec();
+    steerVelocityDegreesPerSecond = 0.0;
+    expectedSteerDegrees = angleDeg;
   }
 }

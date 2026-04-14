@@ -12,10 +12,13 @@ import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import java.util.ArrayList;
 import java.util.List;
 import org.frc5010.common.drive.pose.PoseProvider;
+import org.frc5010.common.drive.pose.VisionIOInputsAutoLogged;
 import org.frc5010.common.vision.VisionConstants;
 
 /** A generic camera interface */
 public abstract class GenericCamera implements PoseProvider {
+  /** Per-instance inputs — each camera has its own object so observations are not overwritten */
+  protected final VisionIOInputsAutoLogged input = new VisionIOInputsAutoLogged();
   /** The list of updaters that will be called every time the camera is updated */
   protected List<Runnable> updaters = new ArrayList<>();
   /** The robot-to-camera transform */
@@ -55,6 +58,18 @@ public abstract class GenericCamera implements PoseProvider {
     visionLayout.addDouble("Target Pitch", this::getTargetPitch);
     visionLayout.addDouble("Target Area", this::getTargetArea);
     visionLayout.addDouble("Latency", this::getCaptureTime);
+  }
+
+  /** {@inheritDoc} Returns this camera's own per-instance inputs object. */
+  @Override
+  public VisionIOInputsAutoLogged getInput() {
+    return input;
+  }
+
+  /** {@inheritDoc} Returns this camera's column index, used for std-dev scaling. */
+  @Override
+  public int getCameraIndex() {
+    return colIndex;
   }
 
   /**

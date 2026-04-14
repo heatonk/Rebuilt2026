@@ -605,9 +605,14 @@ public class YAGSLSwerveDrivetrain extends SwerveDriveFunctions {
   @Override
   public GenericSwerveModuleInfo[] getModulesInfo() {
     SwerveModule[] modules = swerveDrive.getModules();
-    if (null == moduleInfos) moduleInfos = new GenericSwerveModuleInfo[modules.length];
+    if (null == moduleInfos) {
+      moduleInfos = new GenericSwerveModuleInfo[modules.length];
+      for (int i = 0; i < modules.length; i++) {
+        moduleInfos[i] = new GenericSwerveModuleInfo();
+      }
+    }
     for (int i = 0; i < modules.length; i++) {
-      moduleInfos[i] = new GenericSwerveModuleInfo(modules[i]);
+      moduleInfos[i].update(modules[i]);
     }
     return moduleInfos;
   }
