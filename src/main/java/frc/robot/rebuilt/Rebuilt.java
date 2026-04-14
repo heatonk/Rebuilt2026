@@ -23,6 +23,7 @@ import org.frc5010.common.arch.GenericRobot;
 import org.frc5010.common.config.ConfigConstants;
 import org.frc5010.common.drive.GenericDrivetrain;
 import org.frc5010.common.sensors.Controller;
+import org.frc5010.common.utils.OrchestraManager;
 import org.frc5010.common.utils.geometry.AllianceFlipUtil;
 
 /** This is an example robot class. */
@@ -59,6 +60,12 @@ public class Rebuilt extends GenericRobot {
     intakecommands = new IntakeCommands(subsystems);
     indexerCommands = new IndexerCommands(subsystems);
     autocommands = new AutoCommands(subsystems);
+    OrchestraManager.loadMusic("raiders");
+  }
+
+  @Override
+  public void disabledInit() {
+    OrchestraManager.play();
   }
 
   @Override
@@ -89,6 +96,7 @@ public class Rebuilt extends GenericRobot {
   @Override
   /** Assigns default commands for each subsystem */
   public void setupDefaultCommands(Controller driver, Controller operator) {
+    OrchestraManager.stop();
     // This is part of auto init, so a good place to run this
     FieldRegions.setupFieldRegions();
     drivetrain.setDefaultCommand(drivetrain.createDefaultCommand(driver));
