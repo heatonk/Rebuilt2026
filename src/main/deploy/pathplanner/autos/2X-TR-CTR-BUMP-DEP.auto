@@ -7,7 +7,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "TR-CTR-QTRLong"
+            "pathName": "TR-CTRD"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "CTRD-BA"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "BA-TR"
           }
         },
         {
@@ -19,7 +31,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "QTRLong-HP"
+            "pathName": "TR-CTR-QTRLong"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "QTR-BUMP"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "BA-DEP"
           }
         },
         {
@@ -32,6 +56,6 @@
     }
   },
   "resetOdom": true,
-  "folder": "Orbit",
+  "folder": "Right",
   "choreoAuto": false
 }
