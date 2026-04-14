@@ -12,6 +12,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.rebuilt.commands.LauncherCommands;
 import frc.robot.rebuilt.subsystems.Indexer.Indexer;
 import java.util.Optional;
@@ -67,8 +68,13 @@ public interface LauncherIO {
     public double turretVelocity = 0.0;
     public double flyWheelMotorOutput = 0.0;
 
-    /** Kinematic feedforward for the turret from the aiming solver (rad/s, field-relative). */
+    /** Kinematic feedforward for the turret (rad/s), computed via numerical differentiation. */
     public double turretFeedforwardRadPerSec = 0.0;
+
+    /**
+     * Acceleration feedforward for the turret (rad/s^2), computed via numerical differentiation.
+     */
+    public double turretFeedforwardAccelRadPerSecSq = 0.0;
 
     public Translation2d robotToTarget = new Translation2d();
 
@@ -91,14 +97,16 @@ public interface LauncherIO {
   public void setTurretRotation(Angle angle);
 
   /**
-   * Sets the turret to the given angle while simultaneously applying a kinematic feedforward
-   * velocity. The feedforward is passed directly to the underlying motor controller's closed-loop
-   * request so the controller does not need to derive it from the position error alone.
+   * Sets the turret to the given angle while simultaneously applying kinematic feedforward velocity
+   * and acceleration. The feedforward values are passed directly to the underlying motor
+   * controller's closed-loop request.
    *
    * @param angle desired turret mechanism angle
    * @param feedforwardRadPerSec angular velocity feedforward in rad/s (mechanism units)
+   * @param accelerationRadPerSecSq angular acceleration feedforward in rad/s^2 (mechanism units)
    */
-  public default void setTurretRotationWithFeedforward(Angle angle, double feedforwardRadPerSec) {
+  public default void setTurretRotationWithFeedforward(
+      Angle angle, double feedforwardRadPerSec, double accelerationRadPerSecSq) {
     setTurretRotation(angle);
   }
 
@@ -127,9 +135,33 @@ public interface LauncherIO {
 
   public default void configureShotCalculator(ShotCalculator shotCalculator) {}
 
+  public default SmartTurretController getSmartTurretController() {
+    return null;
+  }
+
   public default void updateSimulation(Launcher launcher, Indexer indexer) {}
 
   public boolean isNearTrench();
 
   public Optional<Translation2d> determineTarget();
+
+  public default Command getTurretQuasistaticCommand(GenericSubsystem launcher) {
+    return Commands.none();
+  }
+
+  public default Command getTurretDynamicCommand(GenericSubsystem launcher) {
+    return Commands.none();
+  }
+
+  public default Command getTurretKsMapCommand(GenericSubsystem launcher) {
+    return Commands.none();
+  }
+
+  public default Command getTurretTrackingTuneCommand(GenericSubsystem launcher) {
+    return Commands.none();
+  }
+
+  public default Command getTurretSeekingTuneCommand(GenericSubsystem launcher) {
+    return Commands.none();
+  }
 }

@@ -64,11 +64,17 @@
           "data": {
             "name": "launcherPrep"
           }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "launcherLow"
+          }
         }
       ]
     }
   },
   "resetOdom": true,
-  "folder": null,
+  "folder": "Left",
   "choreoAuto": false
 }

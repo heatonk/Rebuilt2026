@@ -399,8 +399,7 @@ public class AkitDriveCommands {
                                       double avgVelocity = 0.0;
                                       for (int i = 0; i < 4; i++) {
                                         avgVelocity +=
-                                            drive.getModulesInfo()[i]
-                                                .driveVelocityMetersPerSecond();
+                                            drive.getModulesInfo()[i].driveVelocityMetersPerSecond;
                                       }
                                       avgVelocity /= 4.0;
                                       double error = Math.abs(targetVelocity - avgVelocity);
@@ -497,7 +496,7 @@ public class AkitDriveCommands {
                                   double avgAngleError = 0.0;
                                   for (int i = 0; i < 4; i++) {
                                     double currentAngle =
-                                        drive.getModulesInfo()[i].steerAbsoluteDegrees();
+                                        drive.getModulesInfo()[i].steerAbsoluteDegrees;
                                     double error = Math.abs(targetDegrees - currentAngle);
                                     // Handle angle wrapping (shortest path)
                                     if (error > 180.0) {

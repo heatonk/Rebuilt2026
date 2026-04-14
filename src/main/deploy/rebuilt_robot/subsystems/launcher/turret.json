@@ -5,7 +5,7 @@
     "motorType": "KrakenX44",
     "canId": 18,
     "inverted": true,
-    "logLevel": "LOW",
+    "logLevel": "HIGH",
     "canBus": "canivore",
     "robotToMotor": {
       "x": {
@@ -27,24 +27,24 @@
     },
     "movementPlane": "XY"
   },
-  "controlAlgorithm": "PROFILED",
+  "controlAlgorithm": "SIMPLE",
   "motorSystemId": {
     "feedBack": {
-      "p": 225,
+      "p": 1770.41578,
       "i": 0.0,
-      "d": 50
+      "d": 1477.68211
     },
     "feedForward": {
-      "s": 0.56547,
-      "v": 1.637,
-      "a": 0.53217
+      "s": 23.164510145468732,
+      "v": 0,
+      "a": 1.94789461763
     },
     "maxVelocity": {
       "val": 1080,
       "uom": "deg/s"
     },
     "maxAcceleration": {
-      "val": 1000,
+      "val": 10800,
       "uom": "deg/s^2"
     }
   },

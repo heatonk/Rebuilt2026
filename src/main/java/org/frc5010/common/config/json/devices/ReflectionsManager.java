@@ -29,7 +29,7 @@ public class ReflectionsManager {
           put(VENDOR.REV, "com.revrobotics.spark.SparkBase");
           put(VENDOR.PHOENIX5, "com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX");
           put(VENDOR.PHOENIX6, "com.ctre.phoenix6.hardware.TalonFXS");
-          put(VENDOR.THRIFTYBOT, "com.thethriftybot.ThriftyNova");
+          put(VENDOR.THRIFTYBOT, "com.thethriftybot.devices.ThriftyNova");
           put(VENDOR.YAMS, "yams.motorcontrollers.SmartMotorController");
         }
       };

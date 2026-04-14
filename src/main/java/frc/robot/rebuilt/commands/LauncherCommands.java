@@ -221,8 +221,9 @@ public class LauncherCommands {
         .whileTrue(turretForwardPresetStateCommand())
         .onFalse(shouldIdleCommand());
 
-    Trigger isTrenchTrigger = new Trigger(() -> launcher.isNearTrench());
-    isTrenchTrigger.onTrue(shouldAutoHammerTimeCommand()).onFalse(shouldEscapeHammerTimeCommand());
+    // This allowed auto-hammer time
+    // Trigger isTrenchTrigger = new Trigger(() -> launcher.isNearTrench());
+    // isTrenchTrigger.onTrue(shouldAutoHammerTimeCommand()).onFalse(shouldEscapeHammerTimeCommand());
 
     // operator
     //     .createUpPovButton()
