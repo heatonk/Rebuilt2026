@@ -427,7 +427,13 @@ public class TurretControlPhysics {
         settlingTimeFunction.apply(angleErrorRadians, currentTurretVelocityRadPerSec)
             * settlingTimeGain;
 
-    RobotState stateAtFire = predictor.predict(0.0, estimatedSettlingTime);
+    // Cap prediction lookahead to prevent heading over-extrapolation during fast rotation.
+    // Linear heading prediction (heading += omega * dt) becomes unreliable beyond ~0.15s
+    // and causes the solved turret goal to jump discontinuously when robot angular velocity
+    // changes.
+    double predictedSettlingTime = Math.min(estimatedSettlingTime, 0.15);
+
+    RobotState stateAtFire = predictor.predict(0.0, predictedSettlingTime);
     Rotation2d headingAtFire = stateAtFire.pose().getRotation();
     Translation2d turretOffsetAtFire = turretOffsetRobotFrame.rotateBy(headingAtFire);
 

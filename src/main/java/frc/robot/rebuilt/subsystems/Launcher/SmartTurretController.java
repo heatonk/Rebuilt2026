@@ -104,11 +104,12 @@ public class SmartTurretController {
     // kV and kA run at firmware frequency (1 kHz) for the best temporal alignment with PID.
     // The Velocity field on the control request provides the reference for kV.
     // kS is set to 0 in the slot because it is position-dependent and injected externally
-    // via withFeedForward() each cycle.
+    // via withFeedForward() each cycle. This prevents chattering from velocity-sign-based kS
+    // flipping at near-zero velocity.
     fxConfig.Slot1.kP = config.getTrackingKP();
     fxConfig.Slot1.kI = config.getTrackingKI();
     fxConfig.Slot1.kD = config.getTrackingKD();
-    fxConfig.Slot1.kS = config.getKS();
+    fxConfig.Slot1.kS = 0;
     fxConfig.Slot1.kV = config.getKV();
     fxConfig.Slot1.kA = config.getKA();
 
@@ -208,10 +209,23 @@ public class SmartTurretController {
         break;
 
       case TRACKING:
+        // Compute position-error-directed kS feedforward externally.
+        // Unlike firmware kS (which keys on velocity sign and chatters at zero),
+        // this keys on position-error sign so it always pushes toward the target.
+        // Inside the deadband, kS is zeroed to let the turret settle without oscillation.
+        double signedError = currentTarget.positionMechRot() - actualPositionMechRot;
+        double ksFeedforward;
+        if (positionError < config.getTrackingDeadbandRotations()) {
+          ksFeedforward = 0.0;
+        } else {
+          ksFeedforward = Math.signum(signedError) * config.getKS();
+        }
+
         talonFX.setControl(
             trackingRequest
                 .withPosition(currentTarget.positionMechRot())
-                .withVelocity(RadiansPerSecond.of(currentTarget.velocityRadPerSec)));
+                .withVelocity(RadiansPerSecond.of(currentTarget.velocityRadPerSec))
+                .withFeedForward(ksFeedforward));
 
         break;
     }
@@ -221,14 +235,6 @@ public class SmartTurretController {
     Logger.recordOutput("SmartTurret/PositionErrorRot", positionError);
     Logger.recordOutput("SmartTurret/ActualPositionMechRot", actualPositionMechRot);
     Logger.recordOutput("SmartTurret/TargetPositionMechRot", currentTarget.positionMechRot());
-  }
-
-  /**
-   * Looks up the effective kS for the given turret position and direction of movement. Falls back
-   * to the constant kS from config if no position-dependent map is available.
-   */
-  private double lookupKS(double positionMechRot, double directionSign) {
-    return config.getKS();
   }
 
   /**

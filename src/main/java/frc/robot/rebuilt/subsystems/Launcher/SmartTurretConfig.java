@@ -1,7 +1,6 @@
 package frc.robot.rebuilt.subsystems.Launcher;
 
 import com.ctre.phoenix6.hardware.TalonFX;
-import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import yams.motorcontrollers.SmartMotorController;
 
 /**
@@ -55,15 +54,15 @@ public class SmartTurretConfig {
   private final double lowerLimitRotations;
   private final double upperLimitRotations;
 
-  // Position-dependent kS maps (nullable — if null, uses constant kS)
-  private final InterpolatingDoubleTreeMap ksMapPositive;
-  private final InterpolatingDoubleTreeMap ksMapNegative;
-
   // Peak torque current limit (Amps)
   private final double peakTorqueCurrentAmps;
 
   // Feedforward safety padding near limits (mechanism rotations)
   private final double feedforwardPaddingRotations;
+
+  // Tracking-mode kS deadband (mechanism rotations).
+  // When |positionError| < this value, external kS feedforward is zeroed to prevent chattering.
+  private final double trackingDeadbandRotations;
 
   private SmartTurretConfig(Builder builder) {
     this.talonFX = builder.talonFX;
@@ -86,10 +85,9 @@ public class SmartTurretConfig {
     this.hysteresisBufferRotations = builder.hysteresisBufferRotations;
     this.lowerLimitRotations = builder.lowerLimitRotations;
     this.upperLimitRotations = builder.upperLimitRotations;
-    this.ksMapPositive = builder.ksMapPositive;
-    this.ksMapNegative = builder.ksMapNegative;
     this.peakTorqueCurrentAmps = builder.peakTorqueCurrentAmps;
     this.feedforwardPaddingRotations = builder.feedforwardPaddingRotations;
+    this.trackingDeadbandRotations = builder.trackingDeadbandRotations;
   }
 
   public TalonFX getTalonFX() {
@@ -175,20 +173,16 @@ public class SmartTurretConfig {
     return upperLimitRotations;
   }
 
-  public InterpolatingDoubleTreeMap getKsMapPositive() {
-    return ksMapPositive;
-  }
-
-  public InterpolatingDoubleTreeMap getKsMapNegative() {
-    return ksMapNegative;
-  }
-
   public double getPeakTorqueCurrentAmps() {
     return peakTorqueCurrentAmps;
   }
 
   public double getFeedforwardPaddingRotations() {
     return feedforwardPaddingRotations;
+  }
+
+  public double getTrackingDeadbandRotations() {
+    return trackingDeadbandRotations;
   }
 
   public static class Builder {
@@ -214,10 +208,9 @@ public class SmartTurretConfig {
     private double hysteresisBufferRotations = 3.0 / 360.0;
     private double lowerLimitRotations = -150.0 / 360.0;
     private double upperLimitRotations = 150.0 / 360.0;
-    private InterpolatingDoubleTreeMap ksMapPositive;
-    private InterpolatingDoubleTreeMap ksMapNegative;
     private double peakTorqueCurrentAmps = 240.0;
     private double feedforwardPaddingRotations = 10.0 / 360.0; // 10 degrees
+    private double trackingDeadbandRotations = 0.25 / 360.0; // 0.25 degrees
 
     public Builder withTalonFX(TalonFX talonFX) {
       this.talonFX = talonFX;
@@ -296,13 +289,6 @@ public class SmartTurretConfig {
       return this;
     }
 
-    public Builder withKsMaps(
-        InterpolatingDoubleTreeMap positive, InterpolatingDoubleTreeMap negative) {
-      this.ksMapPositive = positive;
-      this.ksMapNegative = negative;
-      return this;
-    }
-
     public Builder withPeakTorqueCurrent(double peakAmps) {
       this.peakTorqueCurrentAmps = peakAmps;
       return this;
@@ -310,6 +296,11 @@ public class SmartTurretConfig {
 
     public Builder withFeedforwardPadding(double feedforwardPaddingRotations) {
       this.feedforwardPaddingRotations = feedforwardPaddingRotations;
+      return this;
+    }
+
+    public Builder withTrackingDeadband(double trackingDeadbandRotations) {
+      this.trackingDeadbandRotations = trackingDeadbandRotations;
       return this;
     }
 
