@@ -14,30 +14,32 @@ import org.frc5010.common.config.json.devices.OrchestraConfigJson;
 public class OrchestraManager {
   private static Orchestra orchestra;
   private static Map<String, String> musicMap;
+  private static OrchestraConfigJson musicConfigJson;
 
-  public static void init(OrchestraConfigJson musicConfigJson) {
+  public static void init(OrchestraConfigJson configJson) {
     orchestra = new Orchestra();
     musicMap = new HashMap<>();
+    musicConfigJson = configJson;
     for (OrchestraConfigJson.MusicEntry entry : musicConfigJson.music) {
       musicMap.put(entry.name, entry.path);
-    }
-    for (int id : musicConfigJson.rioIds) {
-      TalonFX motor = new TalonFX(id);
-      AudioConfigs config = new AudioConfigs().withAllowMusicDurDisable(true);
-      motor.getConfigurator().apply(config, 0);
-      orchestra.addInstrument(motor);
-    }
-    CANBus canivoreBus = new CANBus("canivore");
-    for (int id : musicConfigJson.canivoreIds) {
-      TalonFX motor = new TalonFX(id, canivoreBus);
-      AudioConfigs config = new AudioConfigs().withAllowMusicDurDisable(true);
-      motor.getConfigurator().apply(config, 0);
-      orchestra.addInstrument(motor, 0);
     }
   }
 
   public static void loadMusic(String musicFileName) {
     if (null != orchestra) {
+      for (int id : musicConfigJson.rioIds) {
+        TalonFX motor = new TalonFX(id);
+        AudioConfigs config = new AudioConfigs().withAllowMusicDurDisable(true);
+        motor.getConfigurator().apply(config, 0);
+        orchestra.addInstrument(motor);
+      }
+      CANBus canivoreBus = new CANBus("canivore");
+      for (int id : musicConfigJson.canivoreIds) {
+        TalonFX motor = new TalonFX(id, canivoreBus);
+        AudioConfigs config = new AudioConfigs().withAllowMusicDurDisable(true);
+        motor.getConfigurator().apply(config, 0);
+        orchestra.addInstrument(motor, 0);
+      }
       orchestra.loadMusic(
           Filesystem.getDeployDirectory().toPath().resolve(musicMap.get(musicFileName)).toString());
     }
