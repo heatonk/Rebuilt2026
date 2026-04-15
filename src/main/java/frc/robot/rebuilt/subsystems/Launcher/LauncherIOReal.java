@@ -201,8 +201,8 @@ public class LauncherIOReal implements LauncherIO {
                 .withSeekingPID(255, 0, 50) // Initial values from turret.json
                 .withTrackingPID(500, 0, 200) // Start same, tune separately
                 .withFeedforward(kS, kV, kA)
-                .withSeekingThreshold(Degrees.of(5).in(Rotations))
-                .withHysteresisBuffer(Degrees.of(10).in(Rotations))
+                .withSeekingThreshold(Degrees.of(8).in(Rotations))
+                .withHysteresisBuffer(Degrees.of(12).in(Rotations))
                 .withSoftLimits(lowerLimitRot, upperLimitRot)
                 .build();
 
