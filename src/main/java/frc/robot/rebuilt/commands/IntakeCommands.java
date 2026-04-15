@@ -218,7 +218,6 @@ public class IntakeCommands {
     return Commands.runOnce(
             () -> {
               intake.setCurrentState(IntakeState.RETRACTING);
-              LauncherCommands.shouldIdleCommand();
             },
             intake)
         .andThen(() -> intake.runSpintake(0), intake)

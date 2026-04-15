@@ -17,9 +17,11 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.FieldConstants;
+import frc.robot.rebuilt.commands.IntakeCommands.IntakeState;
 import frc.robot.rebuilt.subsystems.Launcher.Launcher;
 import frc.robot.rebuilt.subsystems.Launcher.ShotCalculator;
 import frc.robot.rebuilt.subsystems.Launcher.ShotCalculator.ShootingParameters;
+import frc.robot.rebuilt.subsystems.intake.Intake;
 import java.util.Map;
 import org.frc5010.common.arch.GenericSubsystem;
 import org.frc5010.common.arch.StateMachine;
@@ -43,6 +45,7 @@ public class LauncherCommands {
   private State autoHammerTimeState;
   private State escapeHammerTimeState;
   private static Launcher launcher;
+  private static Intake intake;
   private static GenericDrivetrain drivetrain;
   private Map<String, GenericSubsystem> subsystems;
   private static Translation2d hubTarget = FieldConstants.Hub.topCenterPoint.toTranslation2d();
@@ -91,8 +94,9 @@ public class LauncherCommands {
   public LauncherCommands(Map<String, GenericSubsystem> subsystems) {
     this.subsystems = subsystems;
     launcher = (Launcher) subsystems.get(Constants.LAUNCHER);
-    launcher.setCurrentState(LauncherState.IDLE);
-    launcher.setRequestedState(LauncherState.IDLE);
+    intake = (Intake) subsystems.get(Constants.INTAKE);
+    launcher.setCurrentState(LauncherState.HAMMERTIME);
+    launcher.setRequestedState(LauncherState.HAMMERTIME);
 
     drivetrain = (GenericDrivetrain) this.subsystems.get(ConfigConstants.DRIVETRAIN);
     configureStateMachine();
@@ -115,7 +119,7 @@ public class LauncherCommands {
     autoHammerTimeState = stateMachine.addState("AUTO-HAMMER-TIME", autoHammerTimeStateCommand());
     escapeHammerTimeState =
         stateMachine.addState("ESCAPE-HAMMER-TIME", escapeHammerTimeStateCommand());
-    stateMachine.setInitialState(idleState);
+    stateMachine.setInitialState(hammerTimeState);
     idleState.switchTo(lowState).when(() -> launcher.isRequested(LauncherState.LOW_SPEED));
     idleState.switchTo(prepState).when(() -> launcher.isRequested(LauncherState.PREP));
     idleState.switchTo(presetState).when(() -> launcher.isRequested(LauncherState.PRESET));
@@ -191,9 +195,9 @@ public class LauncherCommands {
   public void configureButtonBindings(Controller driver, Controller operator) {
 
     // driver.createAButton().onTrue(shouldPrepCommand());
-    driver.createBButton().whileTrue(shouldPrepCommand()).onFalse(shouldHammerTimeCommand());
+    driver.createBButton().whileTrue(shouldPrepCommand()).onFalse(shouldLowCommand());
 
-    driver.createAButton().onTrue(shouldLowCommand()).onFalse(shouldHammerTimeCommand());
+    driver.createAButton().onTrue(shouldLowCommand()).onFalse(shouldLowCommand());
 
     operator
         .createLeftPovButton()
@@ -202,28 +206,38 @@ public class LauncherCommands {
         .createRightPovButton()
         .onTrue(Commands.runOnce(() -> ShotCalculator.incrementFlywheelMultiplier(0.01)));
 
-    operator
-        .createAButton()
-        .whileTrue(towerPresetStateCommand())
-        .onFalse(shouldHammerTimeCommand());
+    operator.createAButton().whileTrue(towerPresetStateCommand()).onFalse(shouldLowCommand());
 
     operator
         .createBButton()
         .whileTrue(rightCornerPresetStateCommandr())
-        .onFalse(shouldHammerTimeCommand());
+        .onFalse(shouldLowCommand());
 
-    operator
-        .createXButton()
-        .whileTrue(leftCornerPresetStateCommand())
-        .onFalse(shouldHammerTimeCommand());
+    operator.createXButton().whileTrue(leftCornerPresetStateCommand()).onFalse(shouldLowCommand());
     operator
         .createYButton()
         .whileTrue(turretForwardPresetStateCommand())
-        .onFalse(shouldIdleCommand());
+        .onFalse(shouldLowCommand());
 
     // This allowed auto-hammer time
     // Trigger isTrenchTrigger = new Trigger(() -> launcher.isNearTrench());
     // isTrenchTrigger.onTrue(shouldAutoHammerTimeCommand()).onFalse(shouldEscapeHammerTimeCommand());
+
+    // When intake is retracting or retracted, force turret to HAMMERTIME (hopper arm interferes)
+    Trigger intakeUpTrigger =
+        new Trigger(
+            () ->
+                intake.isCurrent(IntakeState.RETRACTING)
+                    || intake.isCurrent(IntakeState.RETRACTED));
+    intakeUpTrigger.onTrue(shouldHammerTimeCommand());
+
+    // When intake deploys away from turret, return to LOW_SPEED
+    Trigger intakeDeployingTrigger =
+        new Trigger(
+            () ->
+                (intake.isCurrent(IntakeState.DEPLOYING) || intake.isCurrent(IntakeState.INTAKING))
+                    && launcher.isCurrent(LauncherState.HAMMERTIME));
+    intakeDeployingTrigger.onTrue(shouldLowCommand());
 
     // operator
     //     .createUpPovButton()
