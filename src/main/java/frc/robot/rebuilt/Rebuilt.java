@@ -4,6 +4,7 @@
 
 package frc.robot.rebuilt;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.rebuilt.commands.AutoCommands;
@@ -66,6 +67,12 @@ public class Rebuilt extends GenericRobot {
   @Override
   public void disabledInit() {
     OrchestraManager.play();
+  }
+
+  @Override
+  public void disabledPeriodic() {
+    super.disabledPeriodic();
+    SmartDashboard.putBoolean("Orchestra Playing", OrchestraManager.isPlaying());
   }
 
   @Override
