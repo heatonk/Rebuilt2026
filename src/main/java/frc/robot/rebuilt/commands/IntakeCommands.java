@@ -176,7 +176,7 @@ public class IntakeCommands {
                 .andThen(
                     Commands.runOnce(
                         () -> {
-                          intake.runHopper(-0.1);
+                          intake.runHopper(-0.35);
                         })))
         .alongWith(
             Commands.run(
