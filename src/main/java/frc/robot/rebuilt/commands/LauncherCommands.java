@@ -193,9 +193,6 @@ public class LauncherCommands {
   }
 
   public void configureButtonBindings(Controller driver, Controller operator) {
-    driver
-        .createUpPovButton()
-        .onTrue(Commands.runOnce(() -> launcher.zeroTurret(), launcher).ignoringDisable(true));
 
     // driver.createAButton().onTrue(shouldPrepCommand());
     driver.createBButton().whileTrue(shouldPrepCommand()).onFalse(shouldLowCommand());

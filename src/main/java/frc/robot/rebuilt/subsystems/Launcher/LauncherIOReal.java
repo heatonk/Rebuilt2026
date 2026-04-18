@@ -54,8 +54,10 @@ import yams.units.EasyCRT;
 import yams.units.EasyCRTConfig;
 
 /** Add your docs here. */
-public class LauncherIOReal implements LauncherIO {
-  protected static final Angle HARD_STOP = Radians.of(2.9283693240736888);
+public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
+  protected static final Angle HARD_STOP = Radians.of(2.9437091319525455);
+  protected static final double encoder40Offset = 0.362060546875;
+  protected static final double encoder36Offset = 0.226806640625;
   protected Map<String, Object> devices;
   protected Pivot turret;
   protected Arm hood;
@@ -135,7 +137,8 @@ public class LauncherIOReal implements LauncherIO {
                 /* encoder1Pinion */ 40,
                 /* encoder2Pinion */ 36)
             .withAbsoluteEncoderOffsets( // -0.474609375
-                Rotations.of(0.3515625), Rotations.of(0.24536)) // set after mechanical zero
+                Rotations.of(encoder40Offset),
+                Rotations.of(encoder36Offset)) // set after mechanical zero
             .withMechanismRange(Degrees.of(-168), Degrees.of(173)) // -360 deg to +720 deg
             .withMatchTolerance(Rotations.of(0.06)) // ~1.08 deg at encoder2 for the example ratio
             .withAbsoluteEncoderInversions(true, false)

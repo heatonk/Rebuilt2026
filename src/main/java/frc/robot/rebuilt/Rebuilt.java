@@ -4,6 +4,7 @@
 
 package frc.robot.rebuilt;
 
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -62,6 +63,16 @@ public class Rebuilt extends GenericRobot {
     indexerCommands = new IndexerCommands(subsystems);
     autocommands = new AutoCommands(subsystems);
     OrchestraManager.loadMusic("raiders");
+
+    if (driver.isPresent()) {
+      driver
+          .get()
+          .createUpPovButton()
+          .onTrue(
+              Commands.runOnce(() -> launcher.zeroTurret(), launcher)
+                  .onlyIf(() -> DriverStation.isDisabled())
+                  .ignoringDisable(true));
+    }
   }
 
   @Override
