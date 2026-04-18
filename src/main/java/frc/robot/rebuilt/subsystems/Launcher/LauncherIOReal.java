@@ -18,7 +18,6 @@ import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.CANBus;
-import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.hardware.CANcoder;
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -569,8 +568,6 @@ public class LauncherIOReal implements LauncherIO {
 
   @Override
   public void zeroTurret() {
-    StatusSignal<Angle> angleReading = crtEncoder40.getAbsolutePosition();
-    Angle actualAngle = (Rotations.of(0.3203125)).plus(angleReading.getValue()).div(9);
-    turret.getMotor().setEncoderPosition(actualAngle);
+    turret.getMotor().setEncoderPosition(HARD_STOP);
   }
 }
