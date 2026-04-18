@@ -10,6 +10,7 @@ import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Radian;
+import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.Second;
@@ -55,7 +56,7 @@ import yams.units.EasyCRTConfig;
 
 /** Add your docs here. */
 public class LauncherIOReal implements LauncherIO {
-
+  protected static final Angle HARD_STOP = Radians.of(2.9283693240736888);
   protected Map<String, Object> devices;
   protected Pivot turret;
   protected Arm hood;
@@ -135,7 +136,7 @@ public class LauncherIOReal implements LauncherIO {
                 /* encoder1Pinion */ 40,
                 /* encoder2Pinion */ 36)
             .withAbsoluteEncoderOffsets( // -0.474609375
-                Rotations.of(0.3616), Rotations.of(0.2268)) // set after mechanical zero
+                Rotations.of(0.3515625), Rotations.of(0.24536)) // set after mechanical zero
             .withMechanismRange(Degrees.of(-168), Degrees.of(173)) // -360 deg to +720 deg
             .withMatchTolerance(Rotations.of(0.06)) // ~1.08 deg at encoder2 for the example ratio
             .withAbsoluteEncoderInversions(true, false)
@@ -569,7 +570,7 @@ public class LauncherIOReal implements LauncherIO {
   @Override
   public void zeroTurret() {
     StatusSignal<Angle> angleReading = crtEncoder40.getAbsolutePosition();
-    Angle actualAngle = (Rotations.of(0.3616).div(9)).plus(angleReading.getValue());
-    turret.setAngle(actualAngle);
+    Angle actualAngle = (Rotations.of(0.3203125)).plus(angleReading.getValue()).div(9);
+    turret.getMotor().setEncoderPosition(actualAngle);
   }
 }
