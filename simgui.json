@@ -207,6 +207,8 @@
       "/SmartDashboard/navX-Sensor[4]": "Gyro",
       "/SmartDashboard/pinion/mechanism": "Mechanism2d",
       "/SmartDashboard/spintake/mechanism": "Mechanism2d",
+      "/SmartDashboard/spintake_inner/mechanism": "Mechanism2d",
+      "/SmartDashboard/spintake_outer/mechanism": "Mechanism2d",
       "/SmartDashboard/transfer/mechanism": "Mechanism2d",
       "/SmartDashboard/turret/mechanism": "Mechanism2d",
       "/SmartDashboard/turretmotor/mechanism": "Mechanism2d",
@@ -1177,18 +1179,6 @@
     },
     "transitory": {
       "AdvantageKit": {
-        "Drive": {
-          "open": true
-        },
-        "Indexer": {
-          "open": true
-        },
-        "Intake": {
-          "open": true
-        },
-        "Launcher": {
-          "open": true
-        },
         "Vision": {
           "Camera left": {
             "open": true
@@ -1340,6 +1330,7 @@
       "Subscribers": {
         "open": true
       }
-    }
+    },
+    "visible": true
   }
 }

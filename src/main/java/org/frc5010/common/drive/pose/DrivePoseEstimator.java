@@ -33,9 +33,18 @@ import org.frc5010.common.subsystems.LEDStripSegment;
 import org.frc5010.common.telemetry.DisplayBoolean;
 import org.frc5010.common.vision.AprilTags;
 import org.frc5010.common.vision.VisionConstants;
+import org.littletonrobotics.junction.AutoLog;
+import org.littletonrobotics.junction.Logger;
 
 /** A class to handle estimating the pose of the robot */
 public class DrivePoseEstimator extends GenericSubsystem {
+
+  @AutoLog
+  public static class DrivePoseEstimatorInputs {
+    public Pose2d pose2d = new Pose2d();
+    public Pose3d pose3d = new Pose3d();
+  }
+
   /** The pose tracker */
   protected GenericPose poseTracker;
   /** The field2d object for displaying the pose */
@@ -59,6 +68,8 @@ public class DrivePoseEstimator extends GenericSubsystem {
   private static double CONFIDENCE_RESET_THRESHOLD = 0.025;
   private boolean activateAcceptorUpdates = true;
   private boolean poseAcceptable = false;
+
+  private DrivePoseEstimatorInputsAutoLogged inputs = new DrivePoseEstimatorInputsAutoLogged();
 
   public static enum State {
     DISABLED_FIELD(ProviderType.FIELD_BASED),
@@ -184,7 +195,7 @@ public class DrivePoseEstimator extends GenericSubsystem {
    */
   public Pose2d getCurrentPose() {
     // return poseProviders.get(0).getRobotPose().get().toPose2d();
-    return poseTracker.getCurrentPose();
+    return inputs.pose2d;
   }
 
   /**
@@ -213,6 +224,11 @@ public class DrivePoseEstimator extends GenericSubsystem {
     return pose3dArray;
   }
 
+  private void updateInputs(DrivePoseEstimatorInputsAutoLogged input) {
+    input.pose3d = getCurrentPose3d();
+    input.pose2d = poseTracker.getCurrentPose();
+  }
+
   @Override
   public void periodic() {
     for (int i = 0; i < poseProviders.size(); i++) {
@@ -225,6 +241,8 @@ public class DrivePoseEstimator extends GenericSubsystem {
     // Re-cache after vision fusion so field2d and consumers see the vision-fused pose.
     cachedPose3d = new Pose3d(poseTracker.getCurrentPose());
     field2d.setRobotPose(getCurrentPose());
+    updateInputs(inputs);
+    Logger.processInputs("PoseEstimator", inputs);
   }
 
   private void resetProviderPoses(Pose2d pose) {

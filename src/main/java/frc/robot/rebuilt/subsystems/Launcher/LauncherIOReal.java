@@ -134,8 +134,7 @@ public class LauncherIOReal implements LauncherIO {
                 /* encoder1Pinion */ 40,
                 /* encoder2Pinion */ 36)
             .withAbsoluteEncoderOffsets( // -0.474609375
-                Rotations.of(0.27392578125),
-                Rotations.of(0.32373046875)) // set after mechanical zero
+                Rotations.of(0.3616), Rotations.of(0.2268)) // set after mechanical zero
             .withMechanismRange(Degrees.of(-168), Degrees.of(173)) // -360 deg to +720 deg
             .withMatchTolerance(Rotations.of(0.06)) // ~1.08 deg at encoder2 for the example ratio
             .withAbsoluteEncoderInversions(true, false)
@@ -189,7 +188,7 @@ public class LauncherIOReal implements LauncherIO {
         // Turret is a Pivot so getArmFeedforward() contains the characterised kS/kV/kA in SI units.
         // Fallback values match turret.json in case the YAMS FF was not set.
         ArmFeedforward yamsFf = turretConfig.getArmFeedforward().orElse(null);
-        double kS = yamsFf != null ? yamsFf.getKs() : 30;
+        double kS = yamsFf != null ? yamsFf.getKs() : 12;
         double kV = yamsFf != null ? yamsFf.getKv() : 0.0;
         double kA = yamsFf != null ? yamsFf.getKa() : 2.0;
         SmartTurretConfig smartConfig =
