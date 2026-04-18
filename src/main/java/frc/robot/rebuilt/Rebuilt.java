@@ -64,10 +64,10 @@ public class Rebuilt extends GenericRobot {
     autocommands = new AutoCommands(subsystems);
     OrchestraManager.loadMusic("raiders");
 
-    if (driver.isPresent()) {
-      driver
+    if (operator.isPresent()) {
+      operator
           .get()
-          .createUpPovButton()
+          .createStartButton()
           .onTrue(
               Commands.runOnce(() -> launcher.zeroTurret(), launcher)
                   .onlyIf(() -> DriverStation.isDisabled())
