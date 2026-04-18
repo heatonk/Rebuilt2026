@@ -17,6 +17,7 @@ import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.CANBus;
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.hardware.CANcoder;
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -563,5 +564,12 @@ public class LauncherIOReal implements LauncherIO {
   public Command getTurretSeekingTuneCommand(GenericSubsystem launcher) {
     if (smartTurretController == null) return Commands.none();
     return new frc.robot.rebuilt.commands.TurretSeekingTuneCommand(smartTurretController, launcher);
+  }
+
+  @Override
+  public void zeroTurret() {
+    StatusSignal<Angle> angleReading = crtEncoder40.getAbsolutePosition();
+    Angle actualAngle = (Rotations.of(0.3616).div(9)).plus(angleReading.getValue());
+    turret.setAngle(actualAngle);
   }
 }

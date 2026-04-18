@@ -4,6 +4,7 @@
 
 package frc.robot.rebuilt;
 
+import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -104,6 +105,9 @@ public class Rebuilt extends GenericRobot {
   /** Assigns default commands for each subsystem */
   public void setupDefaultCommands(Controller driver, Controller operator) {
     OrchestraManager.stop();
+    if (RobotState.isAutonomous()) {
+      launcher.zeroTurret();
+    }
     // This is part of auto init, so a good place to run this
     FieldRegions.setupFieldRegions();
     drivetrain.setDefaultCommand(drivetrain.createDefaultCommand(driver));
