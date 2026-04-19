@@ -10,7 +10,7 @@
   "roll": 0,
   "pitch": -30,
   "yaw": 175,
-   "targetFiducialIds": [
+  "targetFiducialIds": [
     1,
     2,
     3,
