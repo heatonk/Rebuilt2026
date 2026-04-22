@@ -23,7 +23,9 @@ import frc.robot.rebuilt.commands.LauncherCommands.LauncherState;
 import java.util.Map;
 import java.util.function.Supplier;
 import org.frc5010.common.arch.GenericSubsystem;
+import org.frc5010.common.motors.function.GenericFunctionalMotor;
 import org.littletonrobotics.junction.Logger;
+import yams.mechanisms.SmartMechanism;
 import yams.mechanisms.positional.Arm;
 import yams.mechanisms.positional.Pivot;
 
@@ -88,7 +90,15 @@ public class Launcher extends GenericSubsystem {
    */
   @Override
   public void simulationPeriodic() {
-    super.simulationPeriodic();
+    for (var entry : devices.entrySet()) {
+      Object device = entry.getValue();
+      if (device instanceof GenericFunctionalMotor genericMotor) {
+        genericMotor.simulationUpdate();
+      }
+      if (device instanceof SmartMechanism mechanism && !entry.getKey().equals("turret")) {
+        mechanism.simIterate();
+      }
+    }
     io.updateSimulation(this, Rebuilt.indexer);
   }
 
