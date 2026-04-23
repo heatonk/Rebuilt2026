@@ -310,4 +310,14 @@ public class LauncherIOSim extends LauncherIOReal {
         .map(it -> it.getSimulatedDriveTrainPose())
         .orElse(Rebuilt.drivetrain.getPoseEstimator().getCurrentPose());
   }
+
+  /**
+   * In simulation, use the physics-engine ground-truth pose for all shot calculations and zone
+   * checks, bypassing the pose estimator (which may drift due to vision corrections or timing
+   * differences between the physics update and the odometry update).
+   */
+  @Override
+  protected Pose2d getRobotPoseForCalculations() {
+    return getSimulationRobotPose();
+  }
 }

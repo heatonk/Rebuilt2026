@@ -32,7 +32,6 @@ import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.rebuilt.Constants;
-import frc.robot.rebuilt.Rebuilt;
 import frc.robot.rebuilt.commands.IntakeCommands.IntakeState;
 import frc.robot.rebuilt.commands.LauncherCommands;
 import frc.robot.rebuilt.subsystems.intake.Intake;
@@ -261,7 +260,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
               .getParameters(
                   robotToTurret,
                   Rotation2d.fromDegrees(getTurretAngle().in(Degrees)),
-                  () -> Rebuilt.drivetrain.getPoseEstimator().getCurrentPose(),
+                  this::getRobotPoseForCalculations,
                   () -> targetPose.get());
       if (params != null) {
         inputs.isValidCalculation = params.isValid();
@@ -538,9 +537,18 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
     return FieldRegions.isNearTrench(currentX, currentY);
   }
 
+  /**
+   * Returns the robot pose used for shot calculations and zone detection.
+   *
+   * <p>Overridden in {@code LauncherIOSim} to return the physics-engine ground-truth pose instead
+   * of the pose estimator, which may diverge in simulation due to vision corrections or timing.
+   */
+  protected Pose2d getRobotPoseForCalculations() {
+    return drivetrain.getPoseEstimator().getCurrentPose();
+  }
+
   public Optional<Translation2d> determineTarget() {
-    Pose2d current = drivetrain.getPoseEstimator().getCurrentPose();
-    return FieldRegions.determineTargetPose(current);
+    return FieldRegions.determineTargetPose(getRobotPoseForCalculations());
   }
 
   public Command getFlyWheelSysIdCommand(GenericSubsystem launcher) {
