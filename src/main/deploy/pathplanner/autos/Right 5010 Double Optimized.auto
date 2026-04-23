@@ -7,13 +7,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "TL-CTL-QTL"
+            "pathName": "TR-CTR-QTR"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "QTL-TL"
+            "pathName": "QTR-TR"
           }
         },
         {
@@ -37,7 +37,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "TL-CTL-QTL-BL-L"
+            "pathName": "TR-CTR-QTR-BR-HP Longer"
           }
         },
         {
@@ -50,6 +50,6 @@
     }
   },
   "resetOdom": true,
-  "folder": "Left",
+  "folder": "Right",
   "choreoAuto": false
 }
