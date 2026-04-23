@@ -5,16 +5,23 @@
 package frc.robot.rebuilt.subsystems.intake;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Radians;
 
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.rebuilt.Rebuilt;
 import frc.robot.rebuilt.commands.IntakeCommands;
 import frc.robot.rebuilt.commands.IntakeCommands.IntakeState;
 import org.frc5010.common.arch.GenericSubsystem;
 import org.frc5010.common.sensors.Controller;
+import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class Intake extends GenericSubsystem {
@@ -142,5 +149,26 @@ public class Intake extends GenericSubsystem {
 
   public boolean isHopperAtGoal() {
     return inputs.hopperAtGoal;
+  }
+
+  /**
+   * Returns the field-relative 3D pose of the hopper arm for AdvantageScope visualization. Log key:
+   * {@code Intake/ComponentPoses}.
+   *
+   * <p>The hopper pivot is modelled as mounted on the side of the robot. It rotates about the
+   * robot-local X axis (roll) as the arm deploys/retracts. The mount offset below is a placeholder
+   * — adjust the X/Y/Z values to match the actual hopper pivot position from intake.json.
+   */
+  @AutoLogOutput(key = "Intake/ComponentPoses")
+  public Pose3d[] getComponentPoses() {
+    Pose3d robotPose = Rebuilt.drivetrain.getPoseEstimator().getCurrentPose3d();
+    // Hopper pivot: offset 0.35 m to the left (+Y) and 0.3 m up (+Z) from robot center.
+    // Rolls about the robot-local X axis by the hopper angle (0° = deployed, 120° = retracted).
+    Pose3d hopperPose =
+        robotPose.transformBy(
+            new Transform3d(
+                new Translation3d(0.0, 0.35, 0.3),
+                new Rotation3d(inputs.hopperAngleActual.in(Radians), 0, 0)));
+    return new Pose3d[] {hopperPose};
   }
 }
