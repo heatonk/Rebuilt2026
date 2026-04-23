@@ -118,8 +118,8 @@ public class LauncherIOSim extends LauncherIOReal {
     /** Creates ballistic configuration for the shot calculator */
     ShotCalculator.BallisticConfig config =
         new ShotCalculator.BallisticConfig(
-            1.0,
-            6.0,
+            0.5,
+            100.0,
             0.1,
             minHoodAngle,
             maxHoodAngle,

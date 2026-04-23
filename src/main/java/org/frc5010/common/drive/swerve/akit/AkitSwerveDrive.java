@@ -18,6 +18,7 @@ import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -36,6 +37,7 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -554,6 +556,17 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
         "FieldSimulation/RobotPosition", driveSimulation.getSimulatedDriveTrainPose());
     Logger.recordOutput(
         "FieldSimulation/Fuel", SimulatedArena.getInstance().getGamePiecesArrayByType("Fuel"));
+
+    // Keep the pose estimator synchronized with the MapleSim physics ground truth.
+    // addVisionMeasurement uses the Kalman filter update path: it does NOT clear odometry
+    // buffers or reset the gyro-to-heading relationship (unlike resetPosition), so there are
+    // no velocity discontinuities in the swerve drive.
+    // The 1e-3 std devs give near-perfect confidence in the physics pose, ensuring
+    // getHeading() (used by field-oriented drive) always reflects the true sim heading.
+    poseEstimator.addVisionMeasurement(
+        driveSimulation.getSimulatedDriveTrainPose(),
+        Timer.getFPGATimestamp(),
+        VecBuilder.fill(1e-3, 1e-3, 1e-3));
   }
 
   @Override
