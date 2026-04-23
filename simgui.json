@@ -1124,6 +1124,16 @@
           "visible": true
         }
       },
+      "/SmartDashboard/PathPlanner": {
+        "window": {
+          "visible": true
+        }
+      },
+      "/SmartDashboard/Rebuilt/Auto Modes": {
+        "window": {
+          "visible": true
+        }
+      },
       "/SmartDashboard/VisionSystemSim-main/Sim Field": {
         "bottom": 1914,
         "height": 8.069275856018066,
