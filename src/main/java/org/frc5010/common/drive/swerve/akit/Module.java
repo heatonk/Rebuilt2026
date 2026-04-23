@@ -87,7 +87,11 @@ public class Module {
   public void runSetpoint(SwerveModuleState state) {
     // Optimize velocity setpoint
     state.optimize(getAngle());
-    state.cosineScale(Robot.isSimulation() ? inputs.turnAbsolutePosition : inputs.turnPosition);
+
+    // In simulation, prioritize responsive chassis motion over cosine-based speed suppression.
+    if (!Robot.isSimulation()) {
+      state.cosineScale(inputs.turnPosition);
+    }
 
     // Apply setpoints
     io.setDriveVelocity(state.speedMetersPerSecond / constants.WheelRadius);

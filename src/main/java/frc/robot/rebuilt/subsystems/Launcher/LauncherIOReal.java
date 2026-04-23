@@ -45,17 +45,20 @@ import org.frc5010.common.drive.GenericDrivetrain;
 import org.frc5010.common.motors.SystemIdentification;
 import org.frc5010.common.subsystems.LEDStrip;
 import org.frc5010.common.vision.AprilTags;
-import yams.mechanisms.config.SensorConfig;
 import yams.mechanisms.positional.Arm;
 import yams.mechanisms.positional.Pivot;
 import yams.mechanisms.velocity.FlyWheel;
-import yams.motorcontrollers.simulation.Sensor;
+import yams.motorcontrollers.SmartMotorController.ClosedLoopControllerSlot;
 import yams.units.EasyCRT;
 import yams.units.EasyCRTConfig;
 
 /** Add your docs here. */
 public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   protected static final Angle HARD_STOP = Radians.of(2.9437091319525455);
+  protected static final double TURRET_GEAR_RATIO = 30.0;
+  protected static final double CRT_DRIVE_GEAR_TEETH = 12.0;
+  protected static final double CRT_ENCODER_40_TEETH = 40.0;
+  protected static final double CRT_ENCODER_36_TEETH = 36.0;
   protected static final double encoder40Offset = 0.362060546875;
   protected static final double encoder36Offset = 0.226806640625;
   protected Map<String, Object> devices;
@@ -65,8 +68,6 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   protected FlyWheel flyWheel;
   protected CANcoder crtEncoder40;
   protected CANcoder crtEncoder36;
-  protected final Sensor crtSensor40;
-  protected final Sensor crtSensor36;
   protected EasyCRT easyCrtSolver;
   /** Initializes the launcher hardware, encoders, simulated sensors, and angle solver */
   EasyCRTConfig easyCrt;
@@ -91,6 +92,13 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   private double previousTurretVelocityRadPerSec = 0.0;
 
   public LauncherIOReal(Map<String, Object> devices, Map<String, GenericSubsystem> subsystems) {
+    this(devices, subsystems, true);
+  }
+
+  protected LauncherIOReal(
+      Map<String, Object> devices,
+      Map<String, GenericSubsystem> subsystems,
+      boolean enableSmartTurretController) {
     this.devices = devices;
     drivetrain = (GenericDrivetrain) subsystems.get(ConfigConstants.DRIVETRAIN);
     intake = (Intake) subsystems.get(Constants.INTAKE);
@@ -114,25 +122,13 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
     CANBus canivoreBus = new CANBus("canivore");
     crtEncoder40 = new CANcoder(21, canivoreBus);
     crtEncoder36 = new CANcoder(22, canivoreBus);
-    double sensor40Sim = 0.391;
-    double sensor36Sim = 0.274;
-    crtSensor40 =
-        new SensorConfig("CRT sensor 40")
-            .withField("angle", () -> crtEncoder40.getAbsolutePosition().getValueAsDouble(), 0.0)
-            .withSimulatedValue("angle", Seconds.of(0), Seconds.of(0.5), sensor40Sim)
-            .getSensor();
-    crtSensor36 =
-        new SensorConfig("CRT sensor 36")
-            .withField("angle", () -> crtEncoder36.getAbsolutePosition().getValueAsDouble(), 0.0)
-            .withSimulatedValue("angle", Seconds.of(0), Seconds.of(0.5), sensor36Sim)
-            .getSensor();
 
     easyCrt =
         new EasyCRTConfig(
-                () -> Rotations.of(crtSensor40.getAsDouble("angle")),
-                () -> Rotations.of(crtSensor36.getAsDouble("angle")))
+                () -> Rotations.of(crtEncoder40.getAbsolutePosition().getValueAsDouble()),
+                () -> Rotations.of(crtEncoder36.getAbsolutePosition().getValueAsDouble()))
             .withCommonDriveGear(
-                /* commonRatio (mech:drive) */ 30.0,
+                /* commonRatio (mech:drive) */ TURRET_GEAR_RATIO,
                 /* driveGearTeeth */ 12,
                 /* encoder1Pinion */ 40,
                 /* encoder2Pinion */ 36)
@@ -174,7 +170,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
 
     // Create the 2-state SmartTurretController (replaces TurretProfileController).
     // Uses MotionMagicTorqueCurrentFOC for seeking and PositionTorqueCurrentFOC for tracking.
-    {
+    if (enableSmartTurretController) {
       var turretConfig = turret.getMotorController().getConfig();
       var trapConstraints = turretConfig.getTrapezoidProfile();
       // Mechanism rot/s and rot/s^2; fallback values from turret.json maxVelocity/maxAcceleration.
@@ -191,7 +187,8 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
         // Load feedforward from YAMS mechanism config (populated from turret.json motorSystemId).
         // Turret is a Pivot so getArmFeedforward() contains the characterised kS/kV/kA in SI units.
         // Fallback values match turret.json in case the YAMS FF was not set.
-        ArmFeedforward yamsFf = turretConfig.getArmFeedforward().orElse(null);
+        ArmFeedforward yamsFf =
+            turretConfig.getArmFeedforward(ClosedLoopControllerSlot.SLOT_0).orElse(null);
         double kS = yamsFf != null ? yamsFf.getKs() : 12;
         double kV = yamsFf != null ? yamsFf.getKv() : 0.0;
         double kA = yamsFf != null ? yamsFf.getKa() : 2.0;
@@ -199,7 +196,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
             new SmartTurretConfig.Builder()
                 .withTalonFX(talonFXRaw)
                 .withYAMSController(turret.getMotorController())
-                .withGearRatio(30.0)
+                .withGearRatio(TURRET_GEAR_RATIO)
                 .withMotionConstraints(maxVelMechRotPerSec, maxAccelMechRotPerSecSq)
                 .withSeekingPID(255, 0, 50) // Initial values from turret.json
                 .withTrackingPID(550, 0, 200) // Start same, tune separately
@@ -224,7 +221,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
     return ShotCalculator.getInstance()
         .getParameters(
             robotToTurret,
-            Rotation2d.fromDegrees(turret.getAngle().in(Degrees)),
+            Rotation2d.fromDegrees(getTurretAngle().in(Degrees)),
             robotPoseSupplier,
             targetPositionSupplier);
   }
@@ -232,9 +229,11 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   @Override()
   /** Updating launcher sensor data, calculates shot parameters, and populates input telemetry */
   public void updateInputs(LauncherIOInputs inputs) {
-    SmartDashboard.putNumber("EasyCRT/Encoder 40", crtSensor40.getAsDouble("angle"));
+    SmartDashboard.putNumber(
+        "EasyCRT/Encoder 40", crtEncoder40.getAbsolutePosition().getValueAsDouble());
     SmartDashboard.putNumber("EasyCRT/Enc 2", easyCrt.getAbsoluteEncoder2Angle().in(Degrees));
-    SmartDashboard.putNumber("EasyCRT/Encoder 36", crtSensor36.getAsDouble("angle"));
+    SmartDashboard.putNumber(
+        "EasyCRT/Encoder 36", crtEncoder36.getAbsolutePosition().getValueAsDouble());
     SmartDashboard.putNumber("EasyCRT/Enc 1", easyCrt.getAbsoluteEncoder1Angle().in(Degrees));
     SmartDashboard.putNumber(
         "Distance to tag 27",
@@ -261,7 +260,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
           ShotCalculator.getInstance()
               .getParameters(
                   robotToTurret,
-                  Rotation2d.fromDegrees(turret.getAngle().in(Degrees)),
+                  Rotation2d.fromDegrees(getTurretAngle().in(Degrees)),
                   () -> Rebuilt.drivetrain.getPoseEstimator().getCurrentPose(),
                   () -> targetPose.get());
       if (params != null) {
@@ -299,7 +298,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
 
     inputs.flyWheelSpeedActual = flyWheel.getSpeed();
     inputs.hoodAngleActual = hood.getAngle();
-    inputs.turretAngleActual = turret.getAngle();
+    inputs.turretAngleActual = getTurretAngle();
 
     inputs.flyWheelSpeedError = inputs.flyWheelSpeedActual.minus(inputs.flyWheelSpeedDesired);
     inputs.hoodAngleError = inputs.hoodAngleActual.minus(inputs.hoodAngleDesired).in(Degrees);
@@ -313,8 +312,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
         Math.abs(inputs.turretAngleError) <= Constants.Launcher.TURRET_ANGLE_TOLERANCE_DEGREES;
 
     inputs.hoodVelocity = hood.getMotorController().getMechanismVelocity().in(Degrees.per(Second));
-    inputs.turretVelocity =
-        turret.getMotorController().getMechanismVelocity().in(Degrees.per(Second));
+    inputs.turretVelocity = getTurretVelocityDegreesPerSecond();
     inputs.flyWheelMotorOutput = flyWheel.getMotor().getStatorCurrent().in(Amps);
     isNearTrench();
   }
@@ -351,12 +349,29 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
     // to avoid a feedback loop between the solver and the controller.
     if (smartTurretController != null) {
       shotCalculator.setTurretVelocitySupplier(smartTurretController::getActualVelocityRadPerSec);
+    } else {
+      shotCalculator.setTurretVelocitySupplier(
+          () -> Math.toRadians(getTurretVelocityDegreesPerSecond()));
     }
   }
 
   @Override
   public SmartTurretController getSmartTurretController() {
     return smartTurretController;
+  }
+
+  protected Angle getTurretAngle() {
+    if (smartTurretController != null) {
+      return Rotations.of(smartTurretController.getActualPositionMechRot());
+    }
+    return turret.getAngle();
+  }
+
+  protected double getTurretVelocityDegreesPerSecond() {
+    if (smartTurretController != null) {
+      return Math.toDegrees(smartTurretController.getActualVelocityRadPerSec());
+    }
+    return turret.getMotorController().getMechanismVelocity().in(Degrees.per(Second));
   }
 
   /** Sets the flywheel motor's duty cycle */

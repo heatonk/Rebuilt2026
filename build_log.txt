@@ -1,0 +1,13 @@
+
+> Task :eventDeploy
+Not running deploy task, skipping commit
+
+> Task :createVersionFile
+createVersionFile called. Path /Users/adamkoltuniuk/Documents/Github/Rebuilt2026/src/main/java/frc/robot
+
+> Task :generateEffectiveLombokConfig UP-TO-DATE
+> Task :spotlessInternalRegisterDependencies UP-TO-DATE
+> Task :spotlessGroovyGradle UP-TO-DATE
+> Task :spotlessGroovyGradleApply UP-TO-DATE
+> Task :spotlessJava
+> Task :spotlessJavaApply

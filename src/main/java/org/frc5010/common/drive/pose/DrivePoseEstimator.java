@@ -194,8 +194,7 @@ public class DrivePoseEstimator extends GenericSubsystem {
    * @return the current pose
    */
   public Pose2d getCurrentPose() {
-    // return poseProviders.get(0).getRobotPose().get().toPose2d();
-    return inputs.pose2d;
+    return poseTracker.getCurrentPose();
   }
 
   /**
@@ -234,6 +233,15 @@ public class DrivePoseEstimator extends GenericSubsystem {
     for (int i = 0; i < poseProviders.size(); i++) {
       poseProviders.get(i).update();
     }
+    var simulatedGroundTruthPose = getSimulationGroundTruthPose();
+    if (simulatedGroundTruthPose.isPresent()) {
+      Pose2d simPose = simulatedGroundTruthPose.get();
+      cachedPose3d = new Pose3d(simPose);
+      field2d.setRobotPose(simPose);
+      updateInputs(inputs);
+      Logger.processInputs("PoseEstimator", inputs);
+      return;
+    }
     // Refresh cached pose BEFORE updatePoseObservationFromProviders() so that getCurrentPose3d()
     // returns the current cycle's odometry pose for the acceptor distance check and pose reset.
     cachedPose3d = new Pose3d(poseTracker.getCurrentPose());
@@ -243,6 +251,10 @@ public class DrivePoseEstimator extends GenericSubsystem {
     field2d.setRobotPose(getCurrentPose());
     updateInputs(inputs);
     Logger.processInputs("PoseEstimator", inputs);
+  }
+
+  private java.util.Optional<Pose2d> getSimulationGroundTruthPose() {
+    return GenericDrivetrain.getMapleSimDrive().map(it -> it.getSimulatedDriveTrainPose());
   }
 
   private void resetProviderPoses(Pose2d pose) {

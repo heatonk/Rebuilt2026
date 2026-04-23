@@ -547,7 +547,9 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
   }
 
   public void updateSimulation() {
-    SimulatedArena.getInstance().simulationPeriodic();
+    // NOTE: SimulatedArena.simulationPeriodic() is called by GenericDrivetrain.simulationPeriodic()
+    // (via super.simulationPeriodic() in GenericSwerveDrivetrain). Calling it again here would
+    // run double the physics sub-ticks per robot loop, causing incorrect dynamics.
     Logger.recordOutput(
         "FieldSimulation/RobotPosition", driveSimulation.getSimulatedDriveTrainPose());
     Logger.recordOutput(
