@@ -1120,14 +1120,6 @@
           "visible": true
         }
       },
-<<<<<<< HEAD
-=======
-      "/SmartDashboard/PathPlanner": {
-        "window": {
-          "visible": true
-        }
-      },
->>>>>>> StateNewAutos
       "/SmartDashboard/Rebuilt/Auto Modes": {
         "window": {
           "visible": true

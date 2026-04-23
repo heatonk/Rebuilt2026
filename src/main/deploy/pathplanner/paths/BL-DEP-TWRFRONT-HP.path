@@ -36,7 +36,7 @@
         "y": 5.271818181818182
       },
       "prevControl": {
-        "x": -0.022117386116737192,
+        "x": -0.022117386116737414,
         "y": 5.662536469802621
       },
       "nextControl": {
@@ -121,7 +121,7 @@
   "folder": "Center",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 180.0
+    "rotation": -90.0
   },
   "useDefaultConstraints": true
 }

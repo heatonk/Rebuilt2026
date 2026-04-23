@@ -37,7 +37,7 @@
       },
       "prevControl": {
         "x": 0.51,
-        "y": 4.451011184841526
+        "y": 4.451011184841528
       },
       "nextControl": {
         "x": 0.51,
@@ -100,9 +100,14 @@
     },
     {
       "name": "launcherPrep",
-      "waypointRelativePos": 0.8088888888888881,
-      "endWaypointRelativePos": 3.0,
-      "command": null
+      "waypointRelativePos": 2.402214022140218,
+      "endWaypointRelativePos": null,
+      "command": {
+        "type": "named",
+        "data": {
+          "name": "launcherPrep"
+        }
+      }
     }
   ],
   "globalConstraints": {
@@ -121,7 +126,7 @@
   "folder": "Center",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 180.0
+    "rotation": -90.0
   },
   "useDefaultConstraints": true
 }

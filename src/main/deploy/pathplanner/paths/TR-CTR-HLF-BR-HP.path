@@ -104,7 +104,7 @@
         "y": 2.8394090909090903
       },
       "nextControl": {
-        "x": 0.5751032460741344,
+        "x": 0.5751032460741345,
         "y": 1.9922001961816544
       },
       "isLocked": false,
@@ -193,7 +193,12 @@
       "name": "launcherPrep",
       "waypointRelativePos": 4.915555555555553,
       "endWaypointRelativePos": null,
-      "command": null
+      "command": {
+        "type": "named",
+        "data": {
+          "name": "launcherPrep"
+        }
+      }
     }
   ],
   "globalConstraints": {

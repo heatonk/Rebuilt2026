@@ -198,15 +198,25 @@
     },
     {
       "name": "launcherPrep",
-      "waypointRelativePos": 4.977777777777778,
+      "waypointRelativePos": 5.131611316113161,
       "endWaypointRelativePos": null,
-      "command": null
+      "command": {
+        "type": "named",
+        "data": {
+          "name": "launcherPrep"
+        }
+      }
     },
     {
       "name": "launcherLow",
       "waypointRelativePos": 6.896296296296306,
       "endWaypointRelativePos": null,
-      "command": null
+      "command": {
+        "type": "named",
+        "data": {
+          "name": "launcherLow"
+        }
+      }
     }
   ],
   "globalConstraints": {
