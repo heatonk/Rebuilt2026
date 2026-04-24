@@ -170,4 +170,8 @@ public interface LauncherIO {
   public default boolean isTurretAtZero() {
     return false;
   }
+
+  public default Supplier<Boolean> getTurretZeroButtonSupplier() {
+    return () -> false;
+  }
 }

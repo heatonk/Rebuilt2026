@@ -69,9 +69,7 @@ public class Rebuilt extends GenericRobot {
       operator
           .get()
           .createStartButton()
-          .onTrue(
-              launcher.zeroTurretCommand()
-                  .onlyIf(() -> DriverStation.isDisabled()));
+          .onTrue(launcher.zeroTurretCommand());
     }
   }
 

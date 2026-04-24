@@ -67,6 +67,9 @@ public class Launcher extends GenericSubsystem {
       profileNotifier.setName("SmartTurret");
       profileNotifier.startPeriodic(PROFILE_PERIOD_SECONDS);
     }
+
+    new edu.wpi.first.wpilibj2.command.button.Trigger(io.getTurretZeroButtonSupplier())
+        .onTrue(zeroTurretCommand());
   }
 
   /**
@@ -439,6 +442,11 @@ public class Launcher extends GenericSubsystem {
                 .ignoringDisable(true))
         .beforeStarting(() -> frc.robot.rebuilt.Rebuilt.isZeroingBurst = true)
         .finallyDo(() -> frc.robot.rebuilt.Rebuilt.isZeroingBurst = false)
+        .onlyIf(
+            () ->
+                edu.wpi.first.wpilibj.DriverStation.isDisabled()
+                    && !(frc.robot.rebuilt.Rebuilt.hasEverEnabled()
+                        && edu.wpi.first.wpilibj.DriverStation.isFMSAttached()))
         .ignoringDisable(true);
   }
 }
