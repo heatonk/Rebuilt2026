@@ -19,7 +19,7 @@
       "simulate": false
     },
     "rebuilt_robot": {
-      "id": "TBD",
+      "id": "00:80:2F:43:05:95",
       "robotClass": "frc.robot.rebuilt.Rebuilt",
       "simulate": true,
       "competition": true

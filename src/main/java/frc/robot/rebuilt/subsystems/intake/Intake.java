@@ -146,6 +146,5 @@ public class Intake extends GenericSubsystem {
 
   public boolean isHopperAtPosition(Angle angle) {
     return io.isHopperAtLocation(angle);
-
   }
 }

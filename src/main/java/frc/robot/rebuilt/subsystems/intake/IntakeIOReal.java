@@ -162,13 +162,13 @@ public class IntakeIOReal implements IntakeIO {
     }
   }
 
-
   public double getDegreesDifference(Angle angleOne, Angle angleTwo) {
     return MathUtil.inputModulus(angleOne.minus(angleTwo).in(Degrees), -180, 180);
   }
-  public boolean isHopperAtLocation(Angle location) {
-    return getDegreesDifference(intakeHopper.getMotorController().getMechanismPosition(), location) <  Constants.Intake.HOPPER_ANGLE_TOLERANCE;
 
+  public boolean isHopperAtLocation(Angle location) {
+    return getDegreesDifference(intakeHopper.getMotorController().getMechanismPosition(), location)
+        < Constants.Intake.HOPPER_ANGLE_TOLERANCE;
   }
 
   /** updates the input structure with the current hopper and intake speed */
@@ -184,7 +184,8 @@ public class IntakeIOReal implements IntakeIO {
         intakeHopper.getMotorController().getMechanismPositionSetpoint().orElse(Degrees.of(0));
     inputs.hopperAngleError = inputs.hopperAngleDesired.minus(inputs.hopperAngleActual).in(Degrees);
     inputs.hopperAtGoal =
-        MathUtil.inputModulus(inputs.hopperAngleError, -180, 180) < Constants.Intake.HOPPER_ANGLE_TOLERANCE;
+        MathUtil.inputModulus(inputs.hopperAngleError, -180, 180)
+            < Constants.Intake.HOPPER_ANGLE_TOLERANCE;
     inputs.speed = spintakeOuter.getMotor().getDutyCycle();
     inputs.hopperAmps = intakeHopper.getMotor().getStatorCurrent().in(Amps);
     // inputs.speed = spintakeLead.getMotor().getDutyCycle();
