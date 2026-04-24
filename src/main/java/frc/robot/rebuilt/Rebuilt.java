@@ -43,6 +43,7 @@ public class Rebuilt extends GenericRobot {
   public static IntakeCommands intakecommands;
   public static IndexerCommands indexerCommands;
   public static TestCommands testCommands;
+  public static boolean isZeroingBurst = false;
   private boolean isButtonsConfigured = false;
   private boolean isAltButtonsConfigured = false;
 
@@ -69,9 +70,8 @@ public class Rebuilt extends GenericRobot {
           .get()
           .createStartButton()
           .onTrue(
-              Commands.runOnce(() -> launcher.zeroTurret(), launcher)
-                  .onlyIf(() -> DriverStation.isDisabled())
-                  .ignoringDisable(true));
+              launcher.zeroTurretCommand()
+                  .onlyIf(() -> DriverStation.isDisabled()));
     }
   }
 
@@ -84,6 +84,17 @@ public class Rebuilt extends GenericRobot {
   public void disabledPeriodic() {
     super.disabledPeriodic();
     SmartDashboard.putBoolean("Orchestra Playing", OrchestraManager.isPlaying());
+    if (launcher != null && !isZeroingBurst) {
+      if (launcher.isTurretAtZero()) {
+        org.frc5010.common.subsystems.LEDStrip.changeSegmentPattern(
+            org.frc5010.common.config.ConfigConstants.ALL_LEDS,
+            org.frc5010.common.subsystems.LEDStrip.getSolidPattern(edu.wpi.first.wpilibj.util.Color.kGreen));
+      } else {
+        org.frc5010.common.subsystems.LEDStrip.changeSegmentPattern(
+            org.frc5010.common.config.ConfigConstants.ALL_LEDS,
+            org.frc5010.common.subsystems.LEDStrip.getSolidPattern(chooseAllianceWpiColor()));
+      }
+    }
   }
 
   @Override

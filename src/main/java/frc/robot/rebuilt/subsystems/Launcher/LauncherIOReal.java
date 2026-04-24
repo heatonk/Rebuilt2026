@@ -117,7 +117,21 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
                 () -> {
                   return !(Rebuilt.hasEverEnabled() && DriverStation.isFMSAttached());
                 })
-            .onTrue(Commands.runOnce(() -> zeroTurret()));
+            .onTrue(
+                Commands.sequence(
+                        Commands.runOnce(() -> zeroTurret()),
+                        Commands.run(
+                                () ->
+                                    LEDStrip.changeSegmentPattern(
+                                        ConfigConstants.ALL_LEDS,
+                                        LEDStrip.getBlinkingPattern(
+                                            LEDStrip.getSolidPattern(Color.kGreen),
+                                            edu.wpi.first.units.Units.Seconds.of(0.1))))
+                            .withTimeout(1.5)
+                            .ignoringDisable(true))
+                    .beforeStarting(() -> frc.robot.rebuilt.Rebuilt.isZeroingBurst = true)
+                    .finallyDo(() -> frc.robot.rebuilt.Rebuilt.isZeroingBurst = false)
+                    .ignoringDisable(true));
 
     hood = (Arm) devices.get("hood");
     flyWheel = (FlyWheel) devices.get("flywheel");
@@ -590,5 +604,10 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   @Override
   public void zeroTurret() {
     turret.getMotor().setEncoderPosition(HARD_STOP);
+  }
+
+  @Override
+  public boolean isTurretAtZero() {
+    return Math.abs(turret.getAngle().in(Degrees) - HARD_STOP.in(Degrees)) < 2.0;
   }
 }

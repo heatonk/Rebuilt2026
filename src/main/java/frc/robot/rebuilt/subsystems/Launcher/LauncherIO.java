@@ -166,4 +166,8 @@ public interface LauncherIO {
   }
 
   public void zeroTurret();
+
+  public default boolean isTurretAtZero() {
+    return false;
+  }
 }

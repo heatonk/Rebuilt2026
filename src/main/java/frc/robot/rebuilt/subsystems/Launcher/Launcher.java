@@ -419,4 +419,26 @@ public class Launcher extends GenericSubsystem {
   public void zeroTurret() {
     io.zeroTurret();
   }
+
+  public boolean isTurretAtZero() {
+    return io.isTurretAtZero();
+  }
+
+  public Command zeroTurretCommand() {
+    return Commands.sequence(
+            Commands.runOnce(() -> zeroTurret(), this),
+            Commands.run(
+                    () ->
+                        org.frc5010.common.subsystems.LEDStrip.changeSegmentPattern(
+                            org.frc5010.common.config.ConfigConstants.ALL_LEDS,
+                            org.frc5010.common.subsystems.LEDStrip.getBlinkingPattern(
+                                org.frc5010.common.subsystems.LEDStrip.getSolidPattern(
+                                    edu.wpi.first.wpilibj.util.Color.kGreen),
+                                edu.wpi.first.units.Units.Seconds.of(0.1))))
+                .withTimeout(1.5)
+                .ignoringDisable(true))
+        .beforeStarting(() -> frc.robot.rebuilt.Rebuilt.isZeroingBurst = true)
+        .finallyDo(() -> frc.robot.rebuilt.Rebuilt.isZeroingBurst = false)
+        .ignoringDisable(true);
+  }
 }
