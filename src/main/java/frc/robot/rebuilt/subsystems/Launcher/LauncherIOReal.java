@@ -27,10 +27,13 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.Rebuilt;
 import frc.robot.rebuilt.commands.IntakeCommands.IntakeState;
@@ -77,6 +80,8 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   protected Intake intake;
 
   protected static Translation2d robotToTurret;
+  private DigitalInput turretZeroButton;
+  private Trigger turretZeroTrigger;
 
   Angle turretLowLimit = Degrees.of(-90);
   Angle turretHighLimit = Degrees.of(90);
@@ -102,6 +107,17 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
             .getRelativePosition()
             .get()
             .toTranslation2d();
+
+    turretZeroButton = new DigitalInput(0);
+
+    turretZeroTrigger =
+        new Trigger(turretZeroButton::get)
+            .and(DriverStation::isDisabled)
+            .and(
+                () -> {
+                  return !(Rebuilt.hasEverEnabled() && DriverStation.isFMSAttached());
+                })
+            .onTrue(Commands.runOnce(() -> zeroTurret()));
 
     hood = (Arm) devices.get("hood");
     flyWheel = (FlyWheel) devices.get("flywheel");
@@ -202,7 +218,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
                 .withGearRatio(30.0)
                 .withMotionConstraints(maxVelMechRotPerSec, maxAccelMechRotPerSecSq)
                 .withSeekingPID(255, 0, 50) // Initial values from turret.json
-                .withTrackingPID(550, 0, 200) // Start same, tune separately
+                .withTrackingPID(650, 0, 50) // Start same, tune separately
                 .withFeedforward(kS, kV, kA)
                 .withSeekingThreshold(Degrees.of(8).in(Rotations))
                 .withHysteresisBuffer(Degrees.of(12).in(Rotations))
@@ -236,6 +252,8 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
     SmartDashboard.putNumber("EasyCRT/Enc 2", easyCrt.getAbsoluteEncoder2Angle().in(Degrees));
     SmartDashboard.putNumber("EasyCRT/Encoder 36", crtSensor36.getAsDouble("angle"));
     SmartDashboard.putNumber("EasyCRT/Enc 1", easyCrt.getAbsoluteEncoder1Angle().in(Degrees));
+    org.littletonrobotics.junction.Logger.recordOutput(
+        "Turret Zero Button", turretZeroButton.get());
     SmartDashboard.putNumber(
         "Distance to tag 27",
         drivetrain
