@@ -34,6 +34,8 @@ public class Launcher extends GenericSubsystem {
   public static Transform3d robotToTurret = new Transform3d();
   private Map<String, GenericSubsystem> subsystems;
   private SmartTurretController smartTurretController;
+  private SmartHoodController smartHoodController;
+  private SmartFlywheelController smartFlywheelController;
 
   private static final double PROFILE_PERIOD_SECONDS = 0.005; // 200 Hz
 
@@ -61,10 +63,17 @@ public class Launcher extends GenericSubsystem {
     // This runs at 200 Hz (5 ms) via a Notifier, evaluating state transitions and
     // sending control requests to the TalonFX.
     smartTurretController = io.getSmartTurretController();
-    if (smartTurretController != null) {
+    smartHoodController = io.getSmartHoodController();
+    smartFlywheelController = io.getSmartFlywheelController();
+
+    if (smartTurretController != null || smartHoodController != null || smartFlywheelController != null) {
       Notifier profileNotifier =
-          new Notifier(() -> smartTurretController.step(PROFILE_PERIOD_SECONDS));
-      profileNotifier.setName("SmartTurret");
+          new Notifier(() -> {
+              if (smartTurretController != null) smartTurretController.step(PROFILE_PERIOD_SECONDS);
+              if (smartHoodController != null) smartHoodController.step(PROFILE_PERIOD_SECONDS);
+              if (smartFlywheelController != null) smartFlywheelController.step(PROFILE_PERIOD_SECONDS);
+          });
+      profileNotifier.setName("SmartLauncherControllers");
       profileNotifier.startPeriodic(PROFILE_PERIOD_SECONDS);
     }
   }
@@ -132,6 +141,10 @@ public class Launcher extends GenericSubsystem {
 
   public Command getTurretCharacterizationCommand() {
     return io.getTurretCharacterizationCommand(this);
+  }
+
+  public Command getFlywheelCharacterizationCommand() {
+    return io.getFlywheelCharacterizationCommand(this);
   }
 
   public Command getTurretQuasistaticCommand() {

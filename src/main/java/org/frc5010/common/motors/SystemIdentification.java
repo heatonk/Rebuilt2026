@@ -15,6 +15,8 @@ import edu.wpi.first.units.measure.MutAngle;
 import edu.wpi.first.units.measure.MutAngularVelocity;
 import edu.wpi.first.units.measure.MutVoltage;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.units.measure.Current;
+import static edu.wpi.first.units.Units.Amps;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -38,6 +40,7 @@ import yams.motorcontrollers.SmartMotorController;
 public class SystemIdentification {
   /** Tracks the voltage being applied to a motor */
   private static final MutVoltage m_appliedVoltage = new MutVoltage(0, 0, Volts);
+  private static final edu.wpi.first.units.measure.MutCurrent m_appliedCurrent = new edu.wpi.first.units.measure.MutCurrent(0, 0, Amps);
   /** Tracks the distance travelled of a position motor */
   private static final MutAngle m_distance = new MutAngle(0, 0, Rotations);
   /** Tracks the velocity of a positional motor */
@@ -131,6 +134,29 @@ public class SystemIdentification {
                   .angularPosition(m_anglePosition.mut_replace(encoder.getPosition(), Degrees))
                   .angularVelocity(
                       m_angVelocity.mut_replace(encoder.getVelocity(), DegreesPerSecond));
+            },
+            subsystemBase));
+  }
+
+  public static SysIdRoutine torqueCurrentSysIdRoutine(
+      SmartMotorController motor, String motorName, SubsystemBase subsystemBase) {
+
+    return new SysIdRoutine(
+        new Config(Volts.of(1).div(Seconds.of(1)), Volts.of(10), Seconds.of(10)), // Note: Volts measure is interpreted as Amps
+        new SysIdRoutine.Mechanism(
+            (Voltage current) ->
+                motor.getMotorController().setControl(new com.ctre.phoenix6.controls.TorqueCurrentFOC(current.in(Volts))),
+            log -> {
+              motor.updateTelemetry();
+              motor.simIterate();
+              if (motor.getMotorController() instanceof com.ctre.phoenix6.hardware.TalonFX talonFX) {
+                  log.motor(motorName)
+                      .voltage(
+                          m_appliedVoltage.mut_replace(
+                              talonFX.getTorqueCurrent().getValueAsDouble(), Volts)) // Log as voltage so SysId tool accepts it, but value is Amps
+                      .angularPosition(m_distance.mut_replace(motor.getMechanismPosition()))
+                      .angularVelocity(m_velocity.mut_replace(motor.getMechanismVelocity()));
+              }
             },
             subsystemBase));
   }
@@ -229,6 +255,76 @@ public class SystemIdentification {
                   SmartDashboard.putNumber("Characterization/Feedforward/kS", kS);
                   SmartDashboard.putNumber("Characterization/Feedforward/kV", kV);
                   SmartDashboard.putNumber("Characterization/Feedforward/kA", kA);
+                }));
+  }
+
+  /**
+   * Measures the velocity feedforward constants for the motors using TorqueCurrentFOC.
+   *
+   * <p>This command should only be used in torque current control mode.
+   *
+   * @param subsystem the swerve drivetrain subsystem to characterize
+   * @param characterizer consumer that accepts current values to apply to motors
+   * @param velocitySupplier supplier that returns the current velocity for measurement
+   * @return a command that performs feedforward characterization and logs results
+   */
+  public static Command torqueCurrentFeedforwardCharacterization(
+      GenericSubsystem subsystem,
+      Consumer<Current> characterizer,
+      Supplier<Double> velocitySupplier) {
+    List<Double> velocitySamples = new LinkedList<>();
+    List<Double> currentSamples = new LinkedList<>();
+    List<Double> timeSamples = new LinkedList<>();
+    Timer timer = new Timer();
+
+    return Commands.sequence(
+        // Reset data
+        Commands.runOnce(
+            () -> {
+              velocitySamples.clear();
+              currentSamples.clear();
+              timeSamples.clear();
+            }),
+
+        // Allow modules to orient
+        Commands.run(
+                () -> {
+                  characterizer.accept(Amps.of(0.0));
+                },
+                subsystem)
+            .withTimeout(FF_START_DELAY),
+
+        // Start timer
+        Commands.runOnce(timer::restart),
+
+        // Accelerate and gather data
+        Commands.run(
+                () -> {
+                  double current = timer.get() * FF_RAMP_RATE * 5.0; // Ramp faster for Amps (e.g. 0.5 A/s)
+                  characterizer.accept(Amps.of(current));
+                  velocitySamples.add(velocitySupplier.get());
+                  currentSamples.add(current);
+                  timeSamples.add(timer.get());
+                },
+                subsystem)
+
+            // When cancelled, calculate and print results
+            .finallyDo(
+                () -> {
+                  double[] coefficients =
+                      computeFeedforwardCoefficients(velocitySamples, currentSamples, timeSamples);
+                  double kS = coefficients[0];
+                  double kV = coefficients[1];
+                  double kA = coefficients[2];
+
+                  NumberFormat formatter = new DecimalFormat("#0.00000");
+                  System.out.println("********** TorqueCurrent FF Characterization Results **********");
+                  System.out.println("\tkS (Amps): " + formatter.format(kS));
+                  System.out.println("\tkV (Amps / (rad/s)): " + formatter.format(kV));
+                  System.out.println("\tkA (Amps / (rad/s^2)): " + formatter.format(kA));
+                  SmartDashboard.putNumber("Characterization/TorqueCurrentFeedforward/kS", kS);
+                  SmartDashboard.putNumber("Characterization/TorqueCurrentFeedforward/kV", kV);
+                  SmartDashboard.putNumber("Characterization/TorqueCurrentFeedforward/kA", kA);
                 }));
   }
 

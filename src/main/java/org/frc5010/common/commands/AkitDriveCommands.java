@@ -26,6 +26,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
@@ -256,6 +257,24 @@ public class AkitDriveCommands {
                   SmartDashboard.putNumber("Characterization/Feedforward/kS", kS);
                   SmartDashboard.putNumber("Characterization/Feedforward/kV", kV);
                 }));
+  }
+
+  /**
+   * Measures the velocity feedforward constants for the drive motors using TorqueCurrentFOC.
+   *
+   * <p>This command should only be used in torque current control mode.
+   *
+   * @param subsystem the swerve drivetrain subsystem to characterize
+   * @param characterizer consumer that accepts current values to apply to drive motors
+   * @param velocitySupplier supplier that returns the current velocity for measurement
+   * @return a command that performs feedforward characterization and logs results
+   */
+  public static Command torqueCurrentFeedforwardCharacterization(
+      GenericSubsystem subsystem,
+      Consumer<Current> characterizer,
+      Supplier<Double> velocitySupplier) {
+    return org.frc5010.common.motors.SystemIdentification.torqueCurrentFeedforwardCharacterization(
+        subsystem, characterizer, velocitySupplier);
   }
 
   /**
