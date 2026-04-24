@@ -431,17 +431,20 @@ public class Launcher extends GenericSubsystem {
     return Commands.sequence(
             Commands.runOnce(() -> zeroTurret(), this),
             Commands.run(
-                    () ->
+                    () -> {
+                        org.frc5010.common.utils.OrchestraManager.playTone(261.63);
                         org.frc5010.common.subsystems.LEDStrip.changeSegmentPattern(
                             org.frc5010.common.config.ConfigConstants.ALL_LEDS,
-                            org.frc5010.common.subsystems.LEDStrip.getBlinkingPattern(
-                                org.frc5010.common.subsystems.LEDStrip.getSolidPattern(
-                                    edu.wpi.first.wpilibj.util.Color.kGreen),
-                                edu.wpi.first.units.Units.Seconds.of(0.1))))
+                            org.frc5010.common.subsystems.LEDStrip.getRainbowPattern(2.0));
+                    })
                 .withTimeout(1.5)
                 .ignoringDisable(true))
         .beforeStarting(() -> frc.robot.rebuilt.Rebuilt.isZeroingBurst = true)
-        .finallyDo(() -> frc.robot.rebuilt.Rebuilt.isZeroingBurst = false)
+        .finallyDo(
+            () -> {
+              frc.robot.rebuilt.Rebuilt.isZeroingBurst = false;
+              org.frc5010.common.utils.OrchestraManager.stopTone();
+            })
         .onlyIf(
             () ->
                 edu.wpi.first.wpilibj.DriverStation.isDisabled()
