@@ -67,6 +67,9 @@ public class Launcher extends GenericSubsystem {
       profileNotifier.setName("SmartTurret");
       profileNotifier.startPeriodic(PROFILE_PERIOD_SECONDS);
     }
+
+    new edu.wpi.first.wpilibj2.command.button.Trigger(io.getTurretZeroButtonSupplier())
+        .onTrue(zeroTurretCommand());
   }
 
   /**
@@ -418,5 +421,35 @@ public class Launcher extends GenericSubsystem {
 
   public void zeroTurret() {
     io.zeroTurret();
+  }
+
+  public boolean isTurretAtZero() {
+    return io.isTurretAtZero();
+  }
+
+  public Command zeroTurretCommand() {
+    return Commands.sequence(
+            Commands.runOnce(() -> zeroTurret(), this),
+            Commands.run(
+                    () -> {
+                      org.frc5010.common.utils.OrchestraManager.playTone(261.63);
+                      org.frc5010.common.subsystems.LEDStrip.changeSegmentPattern(
+                          org.frc5010.common.config.ConfigConstants.ALL_LEDS,
+                          org.frc5010.common.subsystems.LEDStrip.getRainbowPattern(2.0));
+                    })
+                .withTimeout(1.5)
+                .ignoringDisable(true))
+        .beforeStarting(() -> frc.robot.rebuilt.Rebuilt.isZeroingBurst = true)
+        .finallyDo(
+            () -> {
+              frc.robot.rebuilt.Rebuilt.isZeroingBurst = false;
+              org.frc5010.common.utils.OrchestraManager.stopTone();
+            })
+        .onlyIf(
+            () ->
+                edu.wpi.first.wpilibj.DriverStation.isDisabled()
+                    && !(frc.robot.rebuilt.Rebuilt.hasEverEnabled()
+                        && edu.wpi.first.wpilibj.DriverStation.isFMSAttached()))
+        .ignoringDisable(true);
   }
 }
