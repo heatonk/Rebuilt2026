@@ -69,6 +69,11 @@ public class ShotCalculator {
   private final String virtualTarget = "VirtualTarget";
   private final String turret = "Turret";
 
+  public enum ShotProfile {
+    NORMAL,
+    SHUTTLE
+  }
+
   public static ShotCalculator getInstance() {
     if (instance == null) instance = new ShotCalculator();
     return instance;
@@ -87,6 +92,10 @@ public class ShotCalculator {
   // Cache parameters
   private ShootingParameters latestParameters = null;
   public static double flywheelMultiplier = 1.05;
+
+  private static ShotTables normalShotTables = createDefaultTables();
+  private static ShotTables shuttleShotTables = copyShotTables(normalShotTables);
+  private ShotProfile activeShotProfile = ShotProfile.NORMAL;
 
   private static double minDistance;
   private static double maxDistance;
@@ -142,8 +151,9 @@ public class ShotCalculator {
       double hoodAngleReferenceRadians) {}
 
   static {
-    applyShotTables(createDefaultTables());
+    applyShotTables(normalShotTables);
   }
+
   /** Creates default hood angle, flywheel speeds, and time of light tables */
   public static ShotTables createDefaultTables() {
     final double offset = 0.5969;
@@ -182,6 +192,20 @@ public class ShotCalculator {
         0.7,
         100.0,
         0.03);
+  }
+
+  public static ShotTables copyShotTables(ShotTables source) {
+    if (source == null) {
+      return createDefaultTables();
+    }
+
+    return new ShotTables(
+        new TreeMap<>(source.hoodAngles()),
+        new TreeMap<>(source.flywheelSpeeds()),
+        new TreeMap<>(source.timeOfFlightSeconds()),
+        source.minDistanceMeters(),
+        source.maxDistanceMeters(),
+        source.phaseDelaySeconds());
   }
 
   public static ShotTables createBallisticTables(BallisticConfig config) {
@@ -398,7 +422,32 @@ public class ShotCalculator {
   }
 
   public void setShotTables(ShotTables tables) {
-    applyShotTables(tables);
+    normalShotTables = tables != null ? tables : createDefaultTables();
+    if (activeShotProfile == ShotProfile.NORMAL) {
+      applyShotTables(normalShotTables);
+    }
+    latestParameters = null;
+    turretControlPhysics = null;
+  }
+
+  public void setShuttleShotTables(ShotTables tables) {
+    shuttleShotTables = tables != null ? tables : copyShotTables(normalShotTables);
+    if (activeShotProfile == ShotProfile.SHUTTLE) {
+      applyShotTables(shuttleShotTables);
+    }
+    latestParameters = null;
+    turretControlPhysics = null;
+  }
+
+  public void useShotProfile(ShotProfile shotProfile) {
+    ShotProfile requestedProfile = shotProfile != null ? shotProfile : ShotProfile.NORMAL;
+    if (activeShotProfile == requestedProfile) {
+      return;
+    }
+
+    activeShotProfile = requestedProfile;
+    applyShotTables(
+        activeShotProfile == ShotProfile.SHUTTLE ? shuttleShotTables : normalShotTables);
     latestParameters = null;
     turretControlPhysics = null;
   }
