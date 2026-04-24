@@ -74,7 +74,8 @@ public class OrchestraManager {
 
   public static void playTone(double frequencyHz) {
     if (motors != null) {
-      com.ctre.phoenix6.controls.MusicTone tone = new com.ctre.phoenix6.controls.MusicTone(frequencyHz);
+      com.ctre.phoenix6.controls.MusicTone tone =
+          new com.ctre.phoenix6.controls.MusicTone(frequencyHz);
       for (TalonFX motor : motors) {
         motor.setControl(tone);
       }

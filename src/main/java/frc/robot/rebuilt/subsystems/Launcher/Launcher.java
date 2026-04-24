@@ -432,10 +432,10 @@ public class Launcher extends GenericSubsystem {
             Commands.runOnce(() -> zeroTurret(), this),
             Commands.run(
                     () -> {
-                        org.frc5010.common.utils.OrchestraManager.playTone(261.63);
-                        org.frc5010.common.subsystems.LEDStrip.changeSegmentPattern(
-                            org.frc5010.common.config.ConfigConstants.ALL_LEDS,
-                            org.frc5010.common.subsystems.LEDStrip.getRainbowPattern(2.0));
+                      org.frc5010.common.utils.OrchestraManager.playTone(261.63);
+                      org.frc5010.common.subsystems.LEDStrip.changeSegmentPattern(
+                          org.frc5010.common.config.ConfigConstants.ALL_LEDS,
+                          org.frc5010.common.subsystems.LEDStrip.getRainbowPattern(2.0));
                     })
                 .withTimeout(1.5)
                 .ignoringDisable(true))
