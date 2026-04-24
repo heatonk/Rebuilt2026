@@ -20,7 +20,7 @@
   "controlAlgorithm": "PROFILED",
   "motorSystemId": {
     "feedBack": {
-      "p": 100,
+      "p": 10,
       "i": 0.0,
       "d": 0.0
     },
@@ -31,11 +31,11 @@
       "g": 0.65
     },
     "maxVelocity": {
-      "val": 1080,
+      "val": 2160,
       "uom": "deg/s"
     },
     "maxAcceleration": {
-      "val": 540,
+      "val": 1080,
       "uom": "deg/s^2"
     }
   },

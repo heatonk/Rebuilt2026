@@ -40,6 +40,8 @@ public interface IntakeIO {
 
   public boolean isHopperStalling();
 
+  public boolean isHopperAtLocation(Angle location);
+
   public void runHopper(double speed);
 
   public boolean isNearTrench();
