@@ -16,6 +16,11 @@
       "$ref": "./motor-system-id.schema.json",
       "description": "PID and feedforward control parameters"
     },
+    "useTorqueCurrentFOCMotionMagic": {
+      "type": "boolean",
+      "description": "Use TalonFX MotionMagicTorqueCurrentFOC for arm position requests on real hardware so slot gains are interpreted in amps",
+      "default": false
+    },
     "length": {
       "$ref": "./unit-value.schema.json",
       "description": "Effective length of the arm"
