@@ -4,7 +4,6 @@
 
 package frc.robot.rebuilt;
 
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -43,6 +42,7 @@ public class Rebuilt extends GenericRobot {
   public static IntakeCommands intakecommands;
   public static IndexerCommands indexerCommands;
   public static TestCommands testCommands;
+  public static boolean isZeroingBurst = false;
   private boolean isButtonsConfigured = false;
   private boolean isAltButtonsConfigured = false;
 
@@ -62,16 +62,10 @@ public class Rebuilt extends GenericRobot {
     intakecommands = new IntakeCommands(subsystems);
     indexerCommands = new IndexerCommands(subsystems);
     autocommands = new AutoCommands(subsystems);
-    OrchestraManager.loadMusic("raiders");
+    // OrchestraManager.loadMusic("raiders");
 
     if (operator.isPresent()) {
-      operator
-          .get()
-          .createStartButton()
-          .onTrue(
-              Commands.runOnce(() -> launcher.zeroTurret(), launcher)
-                  .onlyIf(() -> DriverStation.isDisabled())
-                  .ignoringDisable(true));
+      operator.get().createStartButton().onTrue(launcher.zeroTurretCommand());
     }
   }
 
@@ -84,6 +78,18 @@ public class Rebuilt extends GenericRobot {
   public void disabledPeriodic() {
     super.disabledPeriodic();
     SmartDashboard.putBoolean("Orchestra Playing", OrchestraManager.isPlaying());
+    if (launcher != null && !isZeroingBurst) {
+      if (launcher.isTurretAtZero()) {
+        org.frc5010.common.subsystems.LEDStrip.changeSegmentPattern(
+            org.frc5010.common.config.ConfigConstants.ALL_LEDS,
+            org.frc5010.common.subsystems.LEDStrip.getSolidPattern(
+                edu.wpi.first.wpilibj.util.Color.kGreen));
+      } else {
+        org.frc5010.common.subsystems.LEDStrip.changeSegmentPattern(
+            org.frc5010.common.config.ConfigConstants.ALL_LEDS,
+            org.frc5010.common.subsystems.LEDStrip.getSolidPattern(chooseAllianceWpiColor()));
+      }
+    }
   }
 
   @Override

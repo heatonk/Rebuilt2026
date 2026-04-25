@@ -27,10 +27,12 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.Rebuilt;
 import frc.robot.rebuilt.commands.IntakeCommands.IntakeState;
@@ -38,6 +40,7 @@ import frc.robot.rebuilt.commands.LauncherCommands;
 import frc.robot.rebuilt.subsystems.intake.Intake;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import org.frc5010.common.arch.GenericSubsystem;
 import org.frc5010.common.config.ConfigConstants;
@@ -56,8 +59,8 @@ import yams.units.EasyCRTConfig;
 /** Add your docs here. */
 public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   protected static final Angle HARD_STOP = Radians.of(2.9437091319525455);
-  protected static final double encoder40Offset = 0.362060546875;
-  protected static final double encoder36Offset = 0.226806640625;
+  protected static final double encoder40Offset = 0.4423828125;
+  protected static final double encoder36Offset = -0.095947265625;
   protected Map<String, Object> devices;
   protected Pivot turret;
   protected Arm hood;
@@ -77,6 +80,8 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   protected Intake intake;
 
   protected static Translation2d robotToTurret;
+  private DigitalInput turretZeroButton;
+  private Trigger turretZeroTrigger;
 
   Angle turretLowLimit = Degrees.of(-90);
   Angle turretHighLimit = Degrees.of(90);
@@ -102,6 +107,8 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
             .getRelativePosition()
             .get()
             .toTranslation2d();
+
+    turretZeroButton = new DigitalInput(0);
 
     hood = (Arm) devices.get("hood");
     flyWheel = (FlyWheel) devices.get("flywheel");
@@ -201,10 +208,10 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
                 .withYAMSController(turret.getMotorController())
                 .withGearRatio(30.0)
                 .withMotionConstraints(maxVelMechRotPerSec, maxAccelMechRotPerSecSq)
-                .withSeekingPID(255, 0, 50) // Initial values from turret.json
-                .withTrackingPID(550, 0, 200) // Start same, tune separately
+                .withSeekingPID(650, 0, 50) // Initial values from turret.json
+                .withTrackingPID(650, 0, 50) // Start same, tune separately
                 .withFeedforward(kS, kV, kA)
-                .withSeekingThreshold(Degrees.of(8).in(Rotations))
+                .withSeekingThreshold(Degrees.of(100).in(Rotations))
                 .withHysteresisBuffer(Degrees.of(12).in(Rotations))
                 .withSoftLimits(lowerLimitRot, upperLimitRot)
                 .build();
@@ -236,6 +243,8 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
     SmartDashboard.putNumber("EasyCRT/Enc 2", easyCrt.getAbsoluteEncoder2Angle().in(Degrees));
     SmartDashboard.putNumber("EasyCRT/Encoder 36", crtSensor36.getAsDouble("angle"));
     SmartDashboard.putNumber("EasyCRT/Enc 1", easyCrt.getAbsoluteEncoder1Angle().in(Degrees));
+    org.littletonrobotics.junction.Logger.recordOutput(
+        "Turret Zero Button", turretZeroButton.get());
     SmartDashboard.putNumber(
         "Distance to tag 27",
         drivetrain
@@ -572,5 +581,15 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   @Override
   public void zeroTurret() {
     turret.getMotor().setEncoderPosition(HARD_STOP);
+  }
+
+  @Override
+  public boolean isTurretAtZero() {
+    return Math.abs(turret.getAngle().in(Degrees) - HARD_STOP.in(Degrees)) < 2.0;
+  }
+
+  @Override
+  public BooleanSupplier getTurretZeroButtonSupplier() {
+    return turretZeroButton::get;
   }
 }

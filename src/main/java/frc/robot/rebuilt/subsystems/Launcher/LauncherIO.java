@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.rebuilt.commands.LauncherCommands;
 import frc.robot.rebuilt.subsystems.Indexer.Indexer;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import org.frc5010.common.arch.GenericSubsystem;
 import org.littletonrobotics.junction.AutoLog;
@@ -166,4 +167,12 @@ public interface LauncherIO {
   }
 
   public void zeroTurret();
+
+  public default boolean isTurretAtZero() {
+    return false;
+  }
+
+  public default BooleanSupplier getTurretZeroButtonSupplier() {
+    return () -> false;
+  }
 }
