@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.commands.IntakeCommands;
 import frc.robot.rebuilt.commands.IntakeCommands.IntakeState;
 import org.frc5010.common.arch.GenericSubsystem;
@@ -83,6 +84,17 @@ public class Intake extends GenericSubsystem {
   public void periodic() {
     super.periodic();
     io.updateInputs(inputs);
+
+    // Auto-rezero: if the hopper has been zeroed and angle drifts negative
+    // (past the physical hard stop at 0°), reset the encoder and hold at 0 via PID.
+    if (inputs.hopperZeroed
+        && inputs.hopperAngleActual.in(Degrees) < Constants.Intake.HOPPER_AUTO_REZERO_THRESHOLD) {
+      io.setHopperPosition(Degrees.of(0));
+      Logger.recordOutput("Intake/AutoRezeroTriggered", true);
+    } else {
+      Logger.recordOutput("Intake/AutoRezeroTriggered", false);
+    }
+
     Logger.processInputs("Intake", inputs);
   }
 
@@ -138,6 +150,19 @@ public class Intake extends GenericSubsystem {
 
   public void setHopperPosition(Angle angle) {
     io.setHopperPosition(angle);
+  }
+
+  /** Zeroes the hopper encoder to 0° (the deployed/hard-stop position). */
+  public void zeroHopper() {
+    io.setHopperPosition(Degrees.of(0));
+  }
+
+  public boolean isHopperZeroed() {
+    return inputs.hopperZeroed;
+  }
+
+  public void setHopperZeroed(boolean zeroed) {
+    inputs.hopperZeroed = zeroed;
   }
 
   public boolean isHopperAtGoal() {

@@ -17,7 +17,9 @@ import org.frc5010.common.sensors.Controller;
 
 public class IntakeCommands {
   static Intake intake;
-  static boolean positionFound = false;
+  /** Tracks whether the hopper has been zeroed at least once this match. */
+  static boolean hopperZeroed = false;
+
   Map<String, GenericSubsystem> subsystems;
   StateMachine intakeStateMachine = new StateMachine("IntakeStateMachine");
 
@@ -137,8 +139,7 @@ public class IntakeCommands {
     return Commands.runOnce(
             () -> {
               intake.setCurrentState(IntakeState.INTAKING);
-              positionFound = true;
-              intake.setHopperPosition(Degrees.of(0));
+              intake.setHopperZeroed(hopperZeroed);
             },
             intake)
         .andThen(
@@ -146,11 +147,16 @@ public class IntakeCommands {
                 () -> {
                   double runSpeed = speed.get().getAsDouble();
 
-                  if (intake.getHopperAngle().gt(Degrees.of(5))
+                  if (!hopperZeroed) {
+                    // Not yet zeroed — nudge down with duty cycle
+                    intake.runHopper(Constants.Intake.HOPPER_FIRST_DEPLOY_DUTY);
+                  } else if (intake.getHopperAngle().gt(Degrees.of(5))
                       || runSpeed > Constants.Intake.INTAKE_IN
                       || RobotState.isAutonomous()) {
-                    intake.runHopper(-0.15);
+                    // Still settling or forcing — duty cycle nudge
+                    intake.runHopper(Constants.Intake.HOPPER_FIRST_DEPLOY_DUTY);
                   } else {
+                    // Zeroed and at position — PID hold at 0° instead of constant duty cycle
                     intake.setDesiredHopperAngle(Constants.Intake.HOPPER_DEPLOYED_ANGLE);
                   }
                   intake.runSpintake(runSpeed);
@@ -166,7 +172,11 @@ public class IntakeCommands {
     return Commands.runOnce(
             () -> {
               intake.setCurrentState(IntakeState.DEPLOYING);
-              intake.setHopperPosition(Constants.Intake.HOPPER_RETRACTED_ANGLE);
+              if (!hopperZeroed) {
+                // First deploy: initialize encoder to retracted angle so PID has a
+                // meaningful reference, then drive down to 0.
+                intake.setHopperPosition(Constants.Intake.HOPPER_RETRACTED_ANGLE);
+              }
             },
             intake)
         .andThen(
@@ -174,9 +184,22 @@ public class IntakeCommands {
                 .setDesiredHopperAngle(Constants.Intake.HOPPER_DEPLOYED_ANGLE)
                 .until(() -> intake.isHopperAtPosition(Constants.Intake.HOPPER_DEPLOYED_ANGLE))
                 .andThen(
+                    Commands.run(
+                            () -> {
+                              // Duty cycle nudge to seat against the hard stop
+                              intake.runHopper(Constants.Intake.HOPPER_DEPLOY_NUDGE_DUTY);
+                            })
+                        .until(() -> intake.isHopperStalling())
+                        .withTimeout(1.5)) // safety timeout
+                .andThen(
                     Commands.runOnce(
                         () -> {
-                          intake.runHopper(-0.35);
+                          if (!hopperZeroed) {
+                            // First time hitting the stop — zero the encoder
+                            intake.zeroHopper();
+                            hopperZeroed = true;
+                            intake.setHopperZeroed(true);
+                          }
                         })))
         .alongWith(
             Commands.run(
@@ -245,9 +268,17 @@ public class IntakeCommands {
   public Command operatorHopperDownCommand() {
     return Commands.run(
             () -> {
-              intake.runHopper(-.2);
+              intake.runHopper(Constants.Intake.HOPPER_FIRST_DEPLOY_DUTY);
             })
         .until(() -> intake.isHopperStalling())
+        .andThen(
+            Commands.runOnce(
+                () -> {
+                  // Explicit re-zero on operator failsafe
+                  intake.zeroHopper();
+                  hopperZeroed = true;
+                  intake.setHopperZeroed(true);
+                }))
         .andThen(intakingCommand(intakeSpeed));
   }
 

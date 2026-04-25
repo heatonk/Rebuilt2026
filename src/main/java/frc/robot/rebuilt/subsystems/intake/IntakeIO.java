@@ -21,6 +21,7 @@ public interface IntakeIO {
     public Angle hopperAngleDesired = Degrees.of(0);
     public double hopperAngleError = 0.0;
     public boolean hopperAtGoal = true;
+    public boolean hopperZeroed = false;
     public int simulatedGamepieces = 0;
   }
 
