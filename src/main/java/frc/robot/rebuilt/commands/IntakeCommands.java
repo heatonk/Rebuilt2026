@@ -59,9 +59,10 @@ public class IntakeCommands {
     stateToCommand.forEach(
         (state, cmd) -> new Trigger(() -> intake.isRequested(state)).onTrue(cmd));
 
-    // Not moving trigger senses if the hopper has hit the bumper hard stop for 0.5 sec
-    Trigger hopperNotMovingAndLowish =
-        new Trigger(() -> intake.isHopperStalling()).debounce(Constants.Intake.HOPPER_STALL_TIME);
+    // Treat the hard stop as low movement plus stall current, not current alone.
+    Trigger hopperHardStopped =
+        new Trigger(() -> intake.isHopperHardStopDetected())
+            .debounce(Constants.Intake.HOPPER_STALL_TIME);
 
     /** Trigger the deploying command */
     new Trigger(
@@ -74,7 +75,14 @@ public class IntakeCommands {
             () ->
                 intake.isRequested(IntakeState.INTAKING)
                     && intake.isCurrent(IntakeState.DEPLOYING)
-                    && (intake.isDeployed() || hopperNotMovingAndLowish.getAsBoolean()))
+                    && (intake.isDeployed()
+                        || (isHopperZeroed()
+                            && intake
+                                .getHopperAngle()
+                                .lt(
+                                    Degrees.of(
+                                        Constants.Intake.HOPPER_DEPLOY_STOP_REZERO_MAX_ANGLE))
+                            && hopperHardStopped.getAsBoolean())))
         .onTrue(intakingCommand(intakeSpeed));
 
     /** Trigger the retracting command */
@@ -138,6 +146,7 @@ public class IntakeCommands {
   public static Command intakingCommand(Supplier<DoubleSupplier> speed) {
     return Commands.runOnce(
             () -> {
+              hopperZeroed = isHopperZeroed();
               intake.setCurrentState(IntakeState.INTAKING);
               intake.setHopperZeroed(hopperZeroed);
             },
@@ -147,8 +156,12 @@ public class IntakeCommands {
                 () -> {
                   double runSpeed = speed.get().getAsDouble();
 
-                  if (!hopperZeroed) {
-                    // Not yet zeroed — nudge down with duty cycle
+                  if (!isHopperZeroed() && intake.isHopperHardStopDetected()) {
+                    markHopperZeroed();
+                  }
+
+                  if (!isHopperZeroed()) {
+                    // First deploy homes open-loop until it sees the deployed hard stop.
                     intake.runHopper(Constants.Intake.HOPPER_FIRST_DEPLOY_DUTY);
                   } else if (intake.getHopperAngle().gt(Degrees.of(5))
                       || runSpeed > Constants.Intake.INTAKE_IN
@@ -172,42 +185,19 @@ public class IntakeCommands {
     return Commands.runOnce(
             () -> {
               intake.setCurrentState(IntakeState.DEPLOYING);
-              if (!hopperZeroed) {
-                // First deploy: initialize encoder to retracted angle so PID has a
-                // meaningful reference, then drive down to 0.
-                intake.setHopperPosition(Constants.Intake.HOPPER_RETRACTED_ANGLE);
-              }
             },
             intake)
         .andThen(
-            intake
-                .setDesiredHopperAngle(Constants.Intake.HOPPER_DEPLOYED_ANGLE)
-                .until(() -> intake.isHopperAtPosition(Constants.Intake.HOPPER_DEPLOYED_ANGLE))
-                .andThen(
-                    Commands.run(
-                            () -> {
-                              // Duty cycle nudge to seat against the hard stop
-                              intake.runHopper(Constants.Intake.HOPPER_DEPLOY_NUDGE_DUTY);
-                            })
-                        .until(() -> intake.isHopperStalling())
-                        .withTimeout(1.5)) // safety timeout
-                .andThen(
-                    Commands.runOnce(
-                        () -> {
-                          if (!hopperZeroed) {
-                            // First time hitting the stop — zero the encoder
-                            intake.zeroHopper();
-                            hopperZeroed = true;
-                            intake.setHopperZeroed(true);
-                          }
-                        })))
+            Commands.either(
+                homeUnzeroedHopperCommand(), deployZeroedHopperCommand(), () -> !isHopperZeroed()))
         .alongWith(
             Commands.run(
                 () -> {
-                  if (intake.getHopperAngle().lt(Degrees.of(60))) {
+                  if (isHopperZeroed() && intake.getHopperAngle().lt(Degrees.of(60))) {
                     intake.runSpintake(Constants.Intake.INTAKE_IN);
                   }
-                }));
+                },
+                intake));
   }
 
   public static Command deployedCommand() {
@@ -266,20 +256,50 @@ public class IntakeCommands {
   }
 
   public Command operatorHopperDownCommand() {
-    return Commands.run(
-            () -> {
-              intake.runHopper(Constants.Intake.HOPPER_FIRST_DEPLOY_DUTY);
-            })
-        .until(() -> intake.isHopperStalling())
+    return homeUnzeroedHopperCommand().andThen(intakingCommand(intakeSpeed));
+  }
+
+  private static Command deployZeroedHopperCommand() {
+    Trigger hopperHardStopped =
+        new Trigger(() -> intake.isHopperHardStopDetected())
+            .debounce(Constants.Intake.HOPPER_STALL_TIME);
+
+    return intake
+        .setDesiredHopperAngle(Constants.Intake.HOPPER_DEPLOYED_ANGLE)
+        .until(() -> intake.isHopperAtPosition(Constants.Intake.HOPPER_DEPLOYED_ANGLE))
+        .andThen(
+            Commands.run(() -> intake.runHopper(Constants.Intake.HOPPER_DEPLOY_NUDGE_DUTY), intake)
+                .until(hopperHardStopped::getAsBoolean)
+                .withTimeout(1.5))
+        .andThen(Commands.runOnce(() -> intake.runHopper(0), intake));
+  }
+
+  private static Command homeUnzeroedHopperCommand() {
+    Trigger hopperHardStopped =
+        new Trigger(() -> intake.isHopperHardStopDetected())
+            .debounce(Constants.Intake.HOPPER_STALL_TIME);
+
+    return Commands.run(() -> intake.runHopper(Constants.Intake.HOPPER_FIRST_DEPLOY_DUTY), intake)
+        .until(hopperHardStopped::getAsBoolean)
         .andThen(
             Commands.runOnce(
                 () -> {
-                  // Explicit re-zero on operator failsafe
-                  intake.zeroHopper();
-                  hopperZeroed = true;
-                  intake.setHopperZeroed(true);
-                }))
-        .andThen(intakingCommand(intakeSpeed));
+                  intake.runHopper(0);
+                  if (hopperHardStopped.getAsBoolean()) {
+                    markHopperZeroed();
+                  }
+                },
+                intake));
+  }
+
+  private static void markHopperZeroed() {
+    intake.zeroHopper();
+    hopperZeroed = true;
+    intake.setHopperZeroed(true);
+  }
+
+  private static boolean isHopperZeroed() {
+    return hopperZeroed || intake.isHopperZeroed();
   }
 
   public static Command shouldIntaking() {

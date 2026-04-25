@@ -63,7 +63,7 @@ public class IntakeIOReal implements IntakeIO {
   public boolean isHopperMoving() {
     return Math.abs(
             intakeHopper.getMotorController().getMechanismVelocity().in(Degrees.per(Second)))
-        > 1.0;
+        > Constants.Intake.HOPPER_MOVING_VELOCITY_THRESHOLD;
   }
 
   public boolean isHopperStalling() {
@@ -174,12 +174,13 @@ public class IntakeIOReal implements IntakeIO {
   /** updates the input structure with the current hopper and intake speed */
   @Override
   public void updateInputs(IntakeIOInputs inputs) {
-    Logger.recordOutput(
-        "Hopper Velocity",
-        intakeHopper.getMotorController().getMechanismVelocity().in(Degrees.per(Second)));
-    Logger.recordOutput("Hopper MOving", isHopperMoving());
+    double hopperVelocityDegreesPerSecond =
+        intakeHopper.getMotorController().getMechanismVelocity().in(Degrees.per(Second));
+    double hopperAmps = intakeHopper.getMotor().getStatorCurrent().in(Amps);
+
     inputs.hopperAngleActual = intakeHopper.getMotorController().getMechanismPosition();
     inputs.hopperAngleDegrees = inputs.hopperAngleActual.in(Degrees);
+    inputs.hopperVelocityDegreesPerSecond = hopperVelocityDegreesPerSecond;
     inputs.hopperAngleDesired =
         intakeHopper.getMotorController().getMechanismPositionSetpoint().orElse(Degrees.of(0));
     inputs.hopperAngleError = inputs.hopperAngleDesired.minus(inputs.hopperAngleActual).in(Degrees);
@@ -187,7 +188,16 @@ public class IntakeIOReal implements IntakeIO {
         MathUtil.inputModulus(inputs.hopperAngleError, -180, 180)
             < Constants.Intake.HOPPER_ANGLE_TOLERANCE;
     inputs.speed = spintakeOuter.getMotor().getDutyCycle();
-    inputs.hopperAmps = intakeHopper.getMotor().getStatorCurrent().in(Amps);
+    inputs.hopperAmps = hopperAmps;
+    inputs.hopperMoving =
+        Math.abs(hopperVelocityDegreesPerSecond)
+            > Constants.Intake.HOPPER_MOVING_VELOCITY_THRESHOLD;
+    inputs.hopperStalling = Math.abs(hopperAmps) > Constants.Intake.HOPPER_STALL_CURRENT_THRESHOLD;
+    inputs.hopperHardStopDetected = inputs.hopperStalling && !inputs.hopperMoving;
+
+    Logger.recordOutput("Hopper Velocity", hopperVelocityDegreesPerSecond);
+    Logger.recordOutput("Hopper Moving", inputs.hopperMoving);
+    Logger.recordOutput("Hopper Hard Stop", inputs.hopperHardStopDetected);
     // inputs.speed = spintakeLead.getMotor().getDutyCycle();
   }
 }

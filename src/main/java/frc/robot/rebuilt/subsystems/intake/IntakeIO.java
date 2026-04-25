@@ -16,7 +16,11 @@ public interface IntakeIO {
     public double speed = 0.0;
     public Angle hopperAngleActual = Degrees.of(0.0);
     public double hopperAngleDegrees = 0.0;
+    public double hopperVelocityDegreesPerSecond = 0.0;
     public double hopperAmps = 0;
+    public boolean hopperMoving = false;
+    public boolean hopperStalling = false;
+    public boolean hopperHardStopDetected = false;
 
     public Angle hopperAngleDesired = Degrees.of(0);
     public double hopperAngleError = 0.0;

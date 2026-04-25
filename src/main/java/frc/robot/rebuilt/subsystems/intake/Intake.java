@@ -85,17 +85,34 @@ public class Intake extends GenericSubsystem {
     super.periodic();
     io.updateInputs(inputs);
 
-    // Auto-rezero: if the hopper has been zeroed and angle drifts negative
-    // (past the physical hard stop at 0°), reset the encoder and hold at 0 via PID.
-    if (inputs.hopperZeroed
-        && inputs.hopperAngleActual.in(Degrees) < Constants.Intake.HOPPER_AUTO_REZERO_THRESHOLD) {
+    boolean autoRezeroTriggered = shouldAutoRezeroAtDeployHardStop() || shouldAutoRezeroPastStop();
+    if (autoRezeroTriggered) {
       io.setHopperPosition(Degrees.of(0));
-      Logger.recordOutput("Intake/AutoRezeroTriggered", true);
-    } else {
-      Logger.recordOutput("Intake/AutoRezeroTriggered", false);
     }
+    Logger.recordOutput("Intake/AutoRezeroTriggered", autoRezeroTriggered);
 
     Logger.processInputs("Intake", inputs);
+  }
+
+  private boolean shouldAutoRezeroAtDeployHardStop() {
+    boolean deploySideState =
+        inputs.stateRequested == IntakeState.INTAKING
+            || inputs.stateRequested == IntakeState.DEPLOYED
+            || inputs.stateCurrent == IntakeState.DEPLOYING
+            || inputs.stateCurrent == IntakeState.INTAKING
+            || inputs.stateCurrent == IntakeState.DEPLOYED;
+
+    return inputs.hopperZeroed
+        && deploySideState
+        && inputs.hopperHardStopDetected
+        && inputs.hopperAngleActual.in(Degrees)
+            < Constants.Intake.HOPPER_DEPLOY_STOP_REZERO_MAX_ANGLE
+        && inputs.hopperAngleActual.in(Degrees) > Constants.Intake.HOPPER_ANGLE_TOLERANCE;
+  }
+
+  private boolean shouldAutoRezeroPastStop() {
+    return inputs.hopperZeroed
+        && inputs.hopperAngleActual.in(Degrees) < Constants.Intake.HOPPER_AUTO_REZERO_THRESHOLD;
   }
 
   public boolean isRequested(IntakeState state) {
@@ -146,6 +163,10 @@ public class Intake extends GenericSubsystem {
 
   public boolean isHopperMoving() {
     return io.isHopperMoving();
+  }
+
+  public boolean isHopperHardStopDetected() {
+    return inputs.hopperHardStopDetected;
   }
 
   public void setHopperPosition(Angle angle) {

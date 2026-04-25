@@ -61,6 +61,8 @@ public class Constants {
     public static final Angle HOPPER_DEPLOYED_ANGLE = Degrees.of(0);
     public static final Angle HOPPER_ANGLED = Degrees.of(45);
     public static final double HOPPER_STALL_CURRENT_THRESHOLD = 40.0;
+    public static final double HOPPER_MOVING_VELOCITY_THRESHOLD = 1.0;
+    public static final double HOPPER_DEPLOY_STOP_REZERO_MAX_ANGLE = 20.0;
     public static final double HOPPER_AUTO_REZERO_THRESHOLD =
         -1.0; // degrees — if hopper goes past 0, auto-rezero
     public static final double HOPPER_FIRST_DEPLOY_DUTY =
