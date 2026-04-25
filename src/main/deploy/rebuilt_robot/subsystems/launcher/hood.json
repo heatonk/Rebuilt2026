@@ -10,24 +10,25 @@
       "uom": "amps"
     }
   },
-  "controlAlgorithm": "SIMPLE",
+  "controlAlgorithm": "PROFILED",
   "motorSystemId": {
     "feedBack": {
-      "p": 200,
+      "p": 1100,
       "i": 0.0,
-      "d": 7
+      "d": 60
     },
     "feedForward": {
       "s": 0.0,
       "v": 0.0,
-      "a": 0.0
+      "a": 0.0972,
+      "g": 4.357
     },
     "maxVelocity": {
-      "val": 180,
+      "val": 1080,
       "uom": "deg/s"
     },
     "maxAcceleration": {
-      "val": 90,
+      "val": 5000,
       "uom": "deg/s^2"
     }
   },
@@ -56,23 +57,23 @@
     "uom": "in"
   },
   "lowerHardLimit": {
-    "val": 30,
+    "val": 12.723,
     "uom": "deg"
   },
   "upperHardLimit": {
-    "val": 55,
+    "val": 45.723,
     "uom": "deg"
   },
   "startingAngle": {
-    "val": 30,
+    "val": 12.723,
     "uom": "deg"
   },
   "lowerSoftLimit": {
-    "val": 30,
+    "val": 12.723,
     "uom": "deg"
   },
   "upperSoftLimit": {
-    "val": 55,
+    "val": 45.723,
     "uom": "deg"
   },
   "gearStages": "1015:33",
@@ -81,7 +82,7 @@
     "uom": "lbs"
   },
   "horizontalZero": {
-    "val": 30,
+    "val": 5.3,
     "uom": "deg"
   }
 }

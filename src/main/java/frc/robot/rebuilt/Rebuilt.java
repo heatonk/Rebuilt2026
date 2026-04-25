@@ -4,7 +4,6 @@
 
 package frc.robot.rebuilt;
 
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -31,6 +30,7 @@ import org.frc5010.common.utils.geometry.AllianceFlipUtil;
 /** This is an example robot class. */
 /** Long's correction: Main robot class that initializes subsystems and commands */
 public class Rebuilt extends GenericRobot {
+  public static String configDirectory = "rebuilt_robot";
   public static HubStatus hubStatus = new HubStatus();
   public static GenericDrivetrain drivetrain;
   public static Indexer indexer;
@@ -43,11 +43,13 @@ public class Rebuilt extends GenericRobot {
   public static IntakeCommands intakecommands;
   public static IndexerCommands indexerCommands;
   public static TestCommands testCommands;
+  public static boolean isZeroingBurst = false;
   private boolean isButtonsConfigured = false;
   private boolean isAltButtonsConfigured = false;
 
   public Rebuilt(String directory) {
     super(directory);
+    configDirectory = directory;
     AllianceFlipUtil.configure(FieldConstants.FIELD_WIDTH, FieldConstants.FIELD_LENGTH);
     /** creating robot subsystems */
     indexer = new Indexer();
@@ -62,16 +64,10 @@ public class Rebuilt extends GenericRobot {
     intakecommands = new IntakeCommands(subsystems);
     indexerCommands = new IndexerCommands(subsystems);
     autocommands = new AutoCommands(subsystems);
-    OrchestraManager.loadMusic("raiders");
+    // OrchestraManager.loadMusic("raiders");
 
     if (operator.isPresent()) {
-      operator
-          .get()
-          .createStartButton()
-          .onTrue(
-              Commands.runOnce(() -> launcher.zeroTurret(), launcher)
-                  .onlyIf(() -> DriverStation.isDisabled())
-                  .ignoringDisable(true));
+      operator.get().createStartButton().onTrue(launcher.zeroTurretCommand());
     }
   }
 
@@ -84,6 +80,18 @@ public class Rebuilt extends GenericRobot {
   public void disabledPeriodic() {
     super.disabledPeriodic();
     SmartDashboard.putBoolean("Orchestra Playing", OrchestraManager.isPlaying());
+    if (launcher != null && !isZeroingBurst) {
+      if (launcher.isTurretAtZero()) {
+        org.frc5010.common.subsystems.LEDStrip.changeSegmentPattern(
+            org.frc5010.common.config.ConfigConstants.ALL_LEDS,
+            org.frc5010.common.subsystems.LEDStrip.getSolidPattern(
+                edu.wpi.first.wpilibj.util.Color.kGreen));
+      } else {
+        org.frc5010.common.subsystems.LEDStrip.changeSegmentPattern(
+            org.frc5010.common.config.ConfigConstants.ALL_LEDS,
+            org.frc5010.common.subsystems.LEDStrip.getSolidPattern(chooseAllianceWpiColor()));
+      }
+    }
   }
 
   @Override

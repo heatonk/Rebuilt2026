@@ -23,14 +23,25 @@ public class Constants {
     public static final double SHOOTER_TOLERANCE_RPM = 50.0;
     public static final double HOOD_ANGLE_TOLERANCE_DEGREES = 3.5;
     public static final double TURRET_ANGLE_TOLERANCE_DEGREES = 5.0;
+    public static final Angle HOPPER_EXTENSION_BUFFER_BEFORE_AIM = Degrees.of(10);
 
-    public static final Angle LOW_HOOD_ANGLE = Degrees.of(31);
+    public static final double HOOD_LEGACY_START_ANGLE_DEGREES = 30.0;
+    public static final double HOOD_CORRECTED_START_ANGLE_DEGREES = 12.723;
+    public static final double HOOD_CORRECTED_END_ANGLE_DEGREES = 45.723;
+    public static final double HOOD_CALIBRATION_OFFSET_DEGREES =
+        HOOD_CORRECTED_START_ANGLE_DEGREES - HOOD_LEGACY_START_ANGLE_DEGREES;
+
+    public static double offsetLegacyHoodAngleDegrees(double legacyAngleDegrees) {
+      return legacyAngleDegrees + HOOD_CALIBRATION_OFFSET_DEGREES;
+    }
+
+    public static final Angle LOW_HOOD_ANGLE = Degrees.of(offsetLegacyHoodAngleDegrees(31.0));
     public static final AngularVelocity LOW_FLYWHEEL_RPM = RotationsPerSecond.of(1);
 
     public static final Angle HUB_HOOD_ANGLE = LOW_HOOD_ANGLE;
     public static final AngularVelocity HUB_FLYWHEEL_RPM = RotationsPerSecond.of(1.25);
 
-    public static final Angle TOWER_HOOD_ANGLE = Degrees.of(40);
+    public static final Angle TOWER_HOOD_ANGLE = Degrees.of(offsetLegacyHoodAngleDegrees(40.0));
     public static final AngularVelocity TOWER_FLYWHEEL_RPM = RotationsPerSecond.of(1.5);
 
     public static final Angle TURRET_FORWARD = Degrees.of(0);
@@ -60,5 +71,13 @@ public class Constants {
     public static final Angle HOPPER_DEPLOYED_ANGLE = Degrees.of(0);
     public static final Angle HOPPER_ANGLED = Degrees.of(45);
     public static final double HOPPER_STALL_CURRENT_THRESHOLD = 40.0;
+    public static final double HOPPER_MOVING_VELOCITY_THRESHOLD = 1.0;
+    public static final double HOPPER_DEPLOY_STOP_REZERO_MAX_ANGLE = 20.0;
+    public static final double HOPPER_AUTO_REZERO_THRESHOLD =
+        -1.0; // degrees — if hopper goes past 0, auto-rezero
+    public static final double HOPPER_FIRST_DEPLOY_DUTY =
+        -0.2; // duty cycle for first-deploy zeroing nudge
+    public static final double HOPPER_DEPLOY_NUDGE_DUTY =
+        -0.35; // duty cycle for normal deploy nudge after PID
   }
 }

@@ -67,6 +67,9 @@ public class Launcher extends GenericSubsystem {
       profileNotifier.setName("SmartTurret");
       profileNotifier.startPeriodic(PROFILE_PERIOD_SECONDS);
     }
+
+    new edu.wpi.first.wpilibj2.command.button.Trigger(io.getTurretZeroButtonSupplier())
+        .onTrue(zeroTurretCommand());
   }
 
   /**
@@ -360,17 +363,21 @@ public class Launcher extends GenericSubsystem {
     return Commands.runOnce(
         () -> {
           Angle newAngle = inputs.hoodAngleActual.plus(Degrees.of(0.5));
-          if (newAngle.lt(Degrees.of(60))) {
+          Angle upperLimit =
+              hood.getMotorController().getConfig().getMechanismUpperLimit().orElse(Degrees.of(60));
+          if (newAngle.lt(upperLimit)) {
             io.setHoodAngle(newAngle);
           }
         });
   }
-  /** Decreases the hood angle by 0.5 degrees and ensures it does not go below 30 degrees */
+  /** Decreases the hood angle by 0.5 degrees and respects the configured lower limit. */
   public Command decreaseHoodAngleCommand() {
     return Commands.runOnce(
         () -> {
           Angle newAngle = inputs.hoodAngleActual.minus(Degrees.of(0.5));
-          if (newAngle.gt(Degrees.of(30))) {
+          Angle lowerLimit =
+              hood.getMotorController().getConfig().getMechanismLowerLimit().orElse(Degrees.of(30));
+          if (newAngle.gt(lowerLimit)) {
             io.setHoodAngle(newAngle);
           }
         });
@@ -418,5 +425,35 @@ public class Launcher extends GenericSubsystem {
 
   public void zeroTurret() {
     io.zeroTurret();
+  }
+
+  public boolean isTurretAtZero() {
+    return io.isTurretAtZero();
+  }
+
+  public Command zeroTurretCommand() {
+    return Commands.sequence(
+            Commands.runOnce(() -> zeroTurret(), this),
+            Commands.run(
+                    () -> {
+                      org.frc5010.common.utils.OrchestraManager.playTone(261.63);
+                      org.frc5010.common.subsystems.LEDStrip.changeSegmentPattern(
+                          org.frc5010.common.config.ConfigConstants.ALL_LEDS,
+                          org.frc5010.common.subsystems.LEDStrip.getRainbowPattern(2.0));
+                    })
+                .withTimeout(1.5)
+                .ignoringDisable(true))
+        .beforeStarting(() -> frc.robot.rebuilt.Rebuilt.isZeroingBurst = true)
+        .finallyDo(
+            () -> {
+              frc.robot.rebuilt.Rebuilt.isZeroingBurst = false;
+              org.frc5010.common.utils.OrchestraManager.stopTone();
+            })
+        .onlyIf(
+            () ->
+                edu.wpi.first.wpilibj.DriverStation.isDisabled()
+                    && !(frc.robot.rebuilt.Rebuilt.hasEverEnabled()
+                        && edu.wpi.first.wpilibj.DriverStation.isFMSAttached()))
+        .ignoringDisable(true);
   }
 }
