@@ -144,23 +144,28 @@ public class ShotCalculator {
   static {
     applyShotTables(createDefaultTables());
   }
+
+  private static Rotation2d legacyHoodAngle(double legacyAngleDegrees) {
+    return Rotation2d.fromDegrees(
+        frc.robot.rebuilt.Constants.Launcher.offsetLegacyHoodAngleDegrees(legacyAngleDegrees));
+  }
+
   /** Creates default hood angle, flywheel speeds, and time of light tables */
   public static ShotTables createDefaultTables() {
-    final double offset = 0.5969;
     return new ShotTables(
         Map.ofEntries(
-            Map.entry(2.0796297600462808, Rotation2d.fromDegrees(33.0)),
-            Map.entry(2.3644814757115706, Rotation2d.fromDegrees(34.0)),
-            Map.entry(2.7648598116063776, Rotation2d.fromDegrees(35.0)),
-            Map.entry(3.2194779503261004, Rotation2d.fromDegrees(38.0)),
-            Map.entry(3.53088512698516, Rotation2d.fromDegrees(39.0)),
-            Map.entry(3.9268571046742813, Rotation2d.fromDegrees(40.0)),
-            Map.entry(4.317290273504823, Rotation2d.fromDegrees(42.0)),
-            Map.entry(4.540307519714445, Rotation2d.fromDegrees(43.0)),
-            Map.entry(5.77893560525366, Rotation2d.fromDegrees(45.0)),
-            Map.entry(6.35214199070158, Rotation2d.fromDegrees(47.0)),
-            Map.entry(10.990685758149123, Rotation2d.fromDegrees(50.0)),
-            Map.entry(13.024035615135324, Rotation2d.fromDegrees(55.0))),
+            Map.entry(2.0796297600462808, legacyHoodAngle(33.0)),
+            Map.entry(2.3644814757115706, legacyHoodAngle(34.0)),
+            Map.entry(2.7648598116063776, legacyHoodAngle(35.0)),
+            Map.entry(3.2194779503261004, legacyHoodAngle(38.0)),
+            Map.entry(3.53088512698516, legacyHoodAngle(39.0)),
+            Map.entry(3.9268571046742813, legacyHoodAngle(40.0)),
+            Map.entry(4.317290273504823, legacyHoodAngle(42.0)),
+            Map.entry(4.540307519714445, legacyHoodAngle(43.0)),
+            Map.entry(5.77893560525366, legacyHoodAngle(45.0)),
+            Map.entry(6.35214199070158, legacyHoodAngle(47.0)),
+            Map.entry(10.990685758149123, legacyHoodAngle(50.0)),
+            Map.entry(13.024035615135324, legacyHoodAngle(55.0))),
         Map.ofEntries(
             Map.entry(2.0796297600462808, 97.0),
             Map.entry(2.3644814757115706, 103.0),

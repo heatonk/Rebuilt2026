@@ -30,6 +30,7 @@ import org.frc5010.common.utils.geometry.AllianceFlipUtil;
 /** This is an example robot class. */
 /** Long's correction: Main robot class that initializes subsystems and commands */
 public class Rebuilt extends GenericRobot {
+  public static String configDirectory = "rebuilt_robot";
   public static HubStatus hubStatus = new HubStatus();
   public static GenericDrivetrain drivetrain;
   public static Indexer indexer;
@@ -48,6 +49,7 @@ public class Rebuilt extends GenericRobot {
 
   public Rebuilt(String directory) {
     super(directory);
+    configDirectory = directory;
     AllianceFlipUtil.configure(FieldConstants.FIELD_WIDTH, FieldConstants.FIELD_LENGTH);
     /** creating robot subsystems */
     indexer = new Indexer();

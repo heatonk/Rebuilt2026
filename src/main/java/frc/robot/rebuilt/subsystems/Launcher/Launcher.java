@@ -363,17 +363,21 @@ public class Launcher extends GenericSubsystem {
     return Commands.runOnce(
         () -> {
           Angle newAngle = inputs.hoodAngleActual.plus(Degrees.of(0.5));
-          if (newAngle.lt(Degrees.of(60))) {
+          Angle upperLimit =
+              hood.getMotorController().getConfig().getMechanismUpperLimit().orElse(Degrees.of(60));
+          if (newAngle.lt(upperLimit)) {
             io.setHoodAngle(newAngle);
           }
         });
   }
-  /** Decreases the hood angle by 0.5 degrees and ensures it does not go below 30 degrees */
+  /** Decreases the hood angle by 0.5 degrees and respects the configured lower limit. */
   public Command decreaseHoodAngleCommand() {
     return Commands.runOnce(
         () -> {
           Angle newAngle = inputs.hoodAngleActual.minus(Degrees.of(0.5));
-          if (newAngle.gt(Degrees.of(30))) {
+          Angle lowerLimit =
+              hood.getMotorController().getConfig().getMechanismLowerLimit().orElse(Degrees.of(30));
+          if (newAngle.gt(lowerLimit)) {
             io.setHoodAngle(newAngle);
           }
         });

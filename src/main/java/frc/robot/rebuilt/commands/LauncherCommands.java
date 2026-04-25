@@ -235,7 +235,13 @@ public class LauncherCommands {
     Trigger intakeDeployingTrigger =
         new Trigger(
             () ->
-                (intake.isCurrent(IntakeState.DEPLOYING) || intake.isCurrent(IntakeState.INTAKING))
+                ((intake.isCurrent(IntakeState.DEPLOYING)
+                            && intake
+                                .getHopperAngle()
+                                .lt(
+                                    Constants.Intake.HOPPER_RETRACTED_ANGLE.minus(
+                                        Constants.Launcher.HOPPER_EXTENSION_BUFFER_BEFORE_AIM)))
+                        || intake.isCurrent(IntakeState.INTAKING))
                     && launcher.isCurrent(LauncherState.HAMMERTIME));
     intakeDeployingTrigger.onTrue(shouldLowCommand());
 
