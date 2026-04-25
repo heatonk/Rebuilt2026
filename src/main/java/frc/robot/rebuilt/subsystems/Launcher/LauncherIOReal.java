@@ -228,8 +228,8 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
                 .withYAMSController(turret.getMotorController())
                 .withGearRatio(30.0)
                 .withMotionConstraints(maxVelMechRotPerSec, maxAccelMechRotPerSecSq)
-                .withSeekingPID(950, 0, 104) // Initial values from turret.json
-                .withTrackingPID(950, 0, 104) // Start same, tune separately
+                .withSeekingPID(1050, 0, 144.886) // Initial values from turret.json
+                .withTrackingPID(1050, 0, 144.886) // Start same, tune separately
                 .withFeedforward(kS, kV, kA)
                 .withSeekingThreshold(Degrees.of(5).in(Rotations))
                 .withHysteresisBuffer(Degrees.of(12).in(Rotations))
