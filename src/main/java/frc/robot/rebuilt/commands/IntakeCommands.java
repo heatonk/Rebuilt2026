@@ -173,8 +173,7 @@ public class IntakeCommands {
                     intake.setDesiredHopperAngle(Constants.Intake.HOPPER_DEPLOYED_ANGLE);
                   }
                   intake.runSpintake(runSpeed);
-                },
-                intake));
+                }));
   }
 
   public static Command waitUntilIntaking() {
@@ -196,8 +195,7 @@ public class IntakeCommands {
                   if (isHopperZeroed() && intake.getHopperAngle().lt(Degrees.of(60))) {
                     intake.runSpintake(Constants.Intake.INTAKE_IN);
                   }
-                },
-                intake));
+                }));
   }
 
   public static Command deployedCommand() {
@@ -223,8 +221,7 @@ public class IntakeCommands {
                     Commands.run(
                         () ->
                             intake.runSpintakes(
-                                Constants.Intake.INTAKE_IN * 0.5, Constants.Intake.INTAKE_CHURN),
-                        intake)));
+                                Constants.Intake.INTAKE_IN * 0.5, Constants.Intake.INTAKE_CHURN))));
   }
 
   public static Command retractingCommand() {
@@ -241,7 +238,7 @@ public class IntakeCommands {
   }
 
   public static Command retractedCommand() {
-    return Commands.runOnce(() -> intake.setCurrentState(IntakeState.RETRACTED))
+    return Commands.runOnce(() -> intake.setCurrentState(IntakeState.RETRACTED), intake)
         .andThen(() -> intake.runSpintake(0), intake)
         .andThen(() -> intake.runHopper(0), intake);
   }
@@ -250,7 +247,8 @@ public class IntakeCommands {
     return Commands.runOnce(
             () -> {
               intake.setCurrentState(IntakeState.UNKNOWN);
-            })
+            },
+            intake)
         .andThen(Commands.runOnce(() -> intake.runHopper(0), intake))
         .andThen(Commands.runOnce(() -> intake.runSpintake(0), intake));
   }
@@ -271,7 +269,7 @@ public class IntakeCommands {
             Commands.run(() -> intake.runHopper(Constants.Intake.HOPPER_DEPLOY_NUDGE_DUTY), intake)
                 .until(hopperHardStopped::getAsBoolean)
                 .withTimeout(1.5))
-        .andThen(Commands.runOnce(() -> intake.runHopper(0), intake));
+        .andThen(Commands.runOnce(() -> intake.runHopper(0)));
   }
 
   private static Command homeUnzeroedHopperCommand() {
@@ -288,8 +286,7 @@ public class IntakeCommands {
                   if (hopperHardStopped.getAsBoolean()) {
                     markHopperZeroed();
                   }
-                },
-                intake));
+                }));
   }
 
   private static void markHopperZeroed() {
