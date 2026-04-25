@@ -25,8 +25,8 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
@@ -58,7 +58,7 @@ public class AkitDriveCommands {
   private static final double FF_RAMP_RATE = 0.1; // Volts/Sec
   private static final double WHEEL_RADIUS_MAX_VELOCITY = 0.25; // Rad/Sec
   private static final double WHEEL_RADIUS_RAMP_RATE = 0.05; // Rad/Sec^2
-  private static final double PID_TUNING_VOLTAGE = 2.0; // Volts - voltage to apply during tuning
+  private static final double PID_TUNING_VOLTAGE = 30.0; // Volts - voltage to apply during tuning
   private static final double PID_TUNING_DELAY = 1.0; // Secs - initial delay before measurements
 
   private AkitDriveCommands() {}
@@ -398,8 +398,7 @@ public class AkitDriveCommands {
                             // Transition to new setpoint
                             Commands.runOnce(
                                 () -> {
-                                  ChassisSpeeds speeds =
-                                      new ChassisSpeeds(targetVelocity, 0.0, 0.0);
+                                  ChassisSpeeds speeds = new ChassisSpeeds(0, 0.0, targetVelocity);
                                   drive.runVelocity(speeds);
                                 }),
 
@@ -410,7 +409,7 @@ public class AkitDriveCommands {
                             Commands.run(
                                     () -> {
                                       ChassisSpeeds speeds =
-                                          new ChassisSpeeds(targetVelocity, 0.0, 0.0);
+                                          new ChassisSpeeds(0, 0.0, targetVelocity);
                                       drive.runVelocity(speeds);
 
                                       // Calculate velocity error: difference between setpoint

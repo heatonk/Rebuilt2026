@@ -7,10 +7,10 @@
 
 package org.frc5010.common.drive.swerve.akit;
 
+import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
-import static edu.wpi.first.units.Units.Amps;
 
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.util.DriveFeedforwards;
@@ -561,6 +561,9 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
     selectableCommand.addOption(
         "PRO: Swerve Wheel Radius Characterization",
         AkitDriveCommands.wheelRadiusCharacterization(drivetrain, this));
+
+    selectableCommand.addOption(
+        "PRO: Swerve Drive PID Tuning", AkitDriveCommands.drivePIDTuning(drivetrain, this));
     selectableCommand.addOption(
         "PRO: Swerve Drive Feedforward Characterization",
         AkitDriveCommands.feedforwardCharacterization(
@@ -584,7 +587,8 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
         "PRO: Swerve Steer TorqueCurrent Characterization",
         AkitDriveCommands.torqueCurrentFeedforwardCharacterization(
             drivetrain,
-            (edu.wpi.first.units.measure.Current current) -> runSteerCharacterization(current.in(Amps)),
+            (edu.wpi.first.units.measure.Current current) ->
+                runSteerCharacterization(current.in(Amps)),
             () -> getSteerFFCharacterizationVelocity()));
 
     selectableCommand.addOption(
