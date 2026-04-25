@@ -62,7 +62,7 @@ public class Rebuilt extends GenericRobot {
     intakecommands = new IntakeCommands(subsystems);
     indexerCommands = new IndexerCommands(subsystems);
     autocommands = new AutoCommands(subsystems);
-    OrchestraManager.loadMusic("raiders");
+    // OrchestraManager.loadMusic("raiders");
 
     if (operator.isPresent()) {
       operator.get().createStartButton().onTrue(launcher.zeroTurretCommand());
