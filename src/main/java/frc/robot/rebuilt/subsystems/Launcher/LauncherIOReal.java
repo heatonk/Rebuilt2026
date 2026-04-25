@@ -83,8 +83,6 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
 
   /** 2-state turret controller: SEEKING (MotionMagic) and TRACKING (Position + FF). */
   protected SmartTurretController smartTurretController;
-  protected SmartHoodController smartHoodController;
-  protected SmartFlywheelController smartFlywheelController;
 
   /** Previous turret desired angle (rad) for numerical feedforward differentiation. */
   private double previousTurretDesiredAngleRad = 0.0;
@@ -214,36 +212,6 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
         smartTurretController = new SmartTurretController(smartConfig);
         // Reset controller to the CRT-solved initial position.
         smartTurretController.reset(calculatedAngle.in(Rotations), 0);
-      }
-    }
-
-    // Initialize SmartHoodController
-    {
-      var hoodConfig = hood.getMotorController().getConfig();
-      double lowerLimitRot = hoodConfig.getMechanismLowerLimit().orElse(Degrees.of(0)).in(Rotations);
-      double upperLimitRot = hoodConfig.getMechanismUpperLimit().orElse(Degrees.of(90)).in(Rotations);
-      Object rawController = hood.getMotorController().getMotorController();
-      if (rawController instanceof com.ctre.phoenix6.hardware.TalonFX talonFXRaw) {
-        SmartHoodConfig smartConfig =
-            new SmartHoodConfig.Builder()
-                .withTalonFX(talonFXRaw)
-                .withYAMSController(hood.getMotorController())
-                .withSoftLimits(lowerLimitRot, upperLimitRot)
-                .build();
-        smartHoodController = new SmartHoodController(smartConfig);
-      }
-    }
-
-    // Initialize SmartFlywheelController
-    {
-      Object rawController = flyWheel.getMotorController().getMotorController();
-      if (rawController instanceof com.ctre.phoenix6.hardware.TalonFX talonFXRaw) {
-        SmartFlywheelConfig smartConfig =
-            new SmartFlywheelConfig.Builder()
-                .withTalonFX(talonFXRaw)
-                .withYAMSController(flyWheel.getMotorController())
-                .build();
-        smartFlywheelController = new SmartFlywheelController(smartConfig, "Main");
       }
     }
 
@@ -391,16 +359,6 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
     return smartTurretController;
   }
 
-  @Override
-  public SmartHoodController getSmartHoodController() {
-    return smartHoodController;
-  }
-
-  @Override
-  public SmartFlywheelController getSmartFlywheelController() {
-    return smartFlywheelController;
-  }
-
   /** Sets the flywheel motor's duty cycle */
   public void runShooter(double speed) {
     flyWheel.getMotor().setDutyCycle(speed);
@@ -408,20 +366,12 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
 
   /** Sets the flywheel motor's angular velocity */
   public void setFlyWheelVelocity(AngularVelocity speed) {
-    if (smartFlywheelController != null) {
-      smartFlywheelController.setTarget(speed);
-    } else {
-      flyWheel.getMotor().setVelocity(speed);
-    }
+    flyWheel.getMotor().setVelocity(speed);
   }
 
   /** Sets the hood angle and overrides the requested angle if the hood is near the trench */
   public void setHoodAngle(Angle angle) {
-    if (smartHoodController != null) {
-      smartHoodController.setTarget(angle);
-    } else {
-      hood.getMotorController().setPosition(angle);
-    }
+    hood.getMotorController().setPosition(angle);
   }
 
   /** Sets the low hard limit to 30 degrees and updates LED's */
@@ -540,16 +490,10 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
 
   /** Applies voltage and measures hood velocity to characterize the feed forward */
   public Command getHoodCharacterizationCommand(GenericSubsystem launcher) {
-    return SystemIdentification.torqueCurrentFeedforwardCharacterization(
+    return SystemIdentification.feedforwardCharacterization(
         launcher,
-        (edu.wpi.first.units.measure.Current current) -> {
-            if (smartHoodController != null) {
-                smartHoodController.getTalonFX().setControl(new com.ctre.phoenix6.controls.TorqueCurrentFOC(current.in(Amps)));
-            } else {
-                hood.getMotor().setVoltage(Volts.of(current.in(Amps))); // Fallback for old
-            }
-        },
-        () -> hood.getMotorController().getMechanismVelocity().in(RadiansPerSecond));
+        (Voltage voltage) -> hood.getMotor().setVoltage(voltage),
+        () -> hood.getMotorController().getMechanismVelocity().in(Degrees.per(Second)));
   }
 
   /** Applies voltage and measures turret velocity to characterize the feedfoward */
@@ -562,14 +506,9 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
 
   /** sets the flywheel, hood, and turret motor duty cycles to 0, which stops the motors */
   public void stopAllMotors() {
-    if (smartFlywheelController != null) smartFlywheelController.stop();
-    else flyWheel.getMotor().setDutyCycle(0);
-    
-    if (smartHoodController != null) smartHoodController.stop();
-    else hood.getMotor().setDutyCycle(0);
-    
-    if (smartTurretController != null) smartTurretController.stop();
-    else turret.getMotor().setDutyCycle(0);
+    flyWheel.getMotor().setDutyCycle(0);
+    hood.getMotor().setDutyCycle(0);
+    turret.getMotor().setDutyCycle(0);
   }
 
   public Command getFlyWheelSysIdCommand() {
@@ -596,19 +535,6 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
         8,
         3,
         3);
-  }
-
-  public Command getFlywheelCharacterizationCommand(GenericSubsystem launcher) {
-    return SystemIdentification.torqueCurrentFeedforwardCharacterization(
-        launcher,
-        (edu.wpi.first.units.measure.Current current) -> {
-            if (smartFlywheelController != null) {
-                smartFlywheelController.getTalonFX().setControl(new com.ctre.phoenix6.controls.TorqueCurrentFOC(current.in(Amps)));
-            } else {
-                flyWheel.getMotor().setVoltage(Volts.of(current.in(Amps))); // Fallback
-            }
-        },
-        () -> flyWheel.getMotorController().getMechanismVelocity().in(RadiansPerSecond));
   }
 
   @Override

@@ -126,8 +126,6 @@ public interface LauncherIO {
 
   public Command getFlyWheelSysIdCommand();
 
-  public Command getFlywheelCharacterizationCommand(GenericSubsystem launcher);
-
   public Command getTurretSysIdCommand(GenericSubsystem launcher);
 
   public ShotCalculator.ShootingParameters getShootingParameters(
@@ -138,14 +136,6 @@ public interface LauncherIO {
   public default void configureShotCalculator(ShotCalculator shotCalculator) {}
 
   public default SmartTurretController getSmartTurretController() {
-    return null;
-  }
-
-  public default SmartHoodController getSmartHoodController() {
-    return null;
-  }
-
-  public default SmartFlywheelController getSmartFlywheelController() {
     return null;
   }
 
