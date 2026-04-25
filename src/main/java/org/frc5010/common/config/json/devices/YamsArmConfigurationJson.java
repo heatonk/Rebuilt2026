@@ -4,9 +4,7 @@
 
 package org.frc5010.common.config.json.devices;
 
-import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC;
 import edu.wpi.first.math.controller.ArmFeedforward;
-import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.Optional;
 import org.frc5010.common.config.ConfigConstants.ControlAlgorithm;
@@ -39,7 +37,6 @@ public class YamsArmConfigurationJson implements DeviceConfiguration {
   public UnitValueJson mass = new UnitValueJson(0, MassUnit.POUNDS.toString());
   public UnitValueJson voltageCompensation = new UnitValueJson(12, VoltageUnit.VOLTS.toString());
   public UnitValueJson horizontalZero = new UnitValueJson(0, AngleUnit.DEGREES.toString());
-    public boolean useTorqueCurrentFOCMotionMagic = false;
 
   /**
    * Configure the given GenericSubsystem with an arm using the given json configuration.
@@ -65,20 +62,6 @@ public class YamsArmConfigurationJson implements DeviceConfiguration {
                     simSystemId.feedForward.g,
                     simSystemId.feedForward.v,
                     simSystemId.feedForward.a));
-
-        if (useTorqueCurrentFOCMotionMagic) {
-            if (controlAlgorithm != ControlAlgorithm.PROFILED) {
-                throw new IllegalArgumentException(
-                        "TorqueCurrentFOCMotionMagic requires PROFILED controlAlgorithm for YAMS arms.");
-            }
-            if (!supportsTorqueCurrentFOCMotionMagic(motorSetup.controllerType)) {
-                throw new IllegalArgumentException(
-                        "TorqueCurrentFOCMotionMagic requires a TalonFX-backed arm motor controller.");
-            }
-            if (!RobotBase.isSimulation()) {
-                motorConfig.withVendorControlRequest(new MotionMagicTorqueCurrentFOC(0).withSlot(0));
-            }
-        }
 
     YamsConfigCommon.PhysicalParameters physicalParams =
         new YamsConfigCommon.PhysicalParameters(
@@ -110,14 +93,4 @@ public class YamsArmConfigurationJson implements DeviceConfiguration {
     Arm arm = new Arm(armConfig);
     return arm;
   }
-
-    private static boolean supportsTorqueCurrentFOCMotionMagic(String controllerType) {
-        if (controllerType == null) {
-            return false;
-        }
-        return switch (controllerType.toLowerCase()) {
-            case "talonfx", "talonfxs" -> true;
-            default -> false;
-        };
-    }
 }

@@ -2,16 +2,21 @@ package frc.robot.rebuilt.subsystems.intake;
 
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
+import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC;
+import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.FieldConstants;
 import frc.robot.rebuilt.commands.IntakeCommands;
@@ -28,6 +33,10 @@ public class IntakeIOReal implements IntakeIO {
   private FlyWheel spintakeInner;
   private FlyWheel spintakeOuter;
   private Arm intakeHopper;
+  private TalonFX hopperTalonFX;
+  private final MotionMagicTorqueCurrentFOC hopperMotionMagicRequest =
+      new MotionMagicTorqueCurrentFOC(0).withSlot(0);
+  private Angle hopperAngleSetpoint = Degrees.of(0.0);
   protected GenericDrivetrain drivetrain;
   private boolean isNearTrench = false;
   private IntakeCommands.IntakeState lastState = IntakeCommands.IntakeState.RETRACTED;
@@ -39,6 +48,12 @@ public class IntakeIOReal implements IntakeIO {
     spintakeOuter = (FlyWheel) devices.get("spintake_outer");
     spintakeInner = (FlyWheel) devices.get("spintake_inner");
     intakeHopper = (Arm) devices.get("hopper");
+    hopperAngleSetpoint = intakeHopper.getAngle();
+
+    Object rawController = intakeHopper.getMotorController().getMotorController();
+    if (!RobotBase.isSimulation() && rawController instanceof TalonFX talonFX) {
+      hopperTalonFX = talonFX;
+    }
   }
 
   @Override
@@ -53,7 +68,7 @@ public class IntakeIOReal implements IntakeIO {
   }
 
   public Command setHopperAngle(Angle angle) {
-    return intakeHopper.setAngle(angle);
+    return Commands.runOnce(() -> requestHopperAngle(angle));
   }
 
   public void setHopperPosition(Angle angle) {
@@ -171,6 +186,15 @@ public class IntakeIOReal implements IntakeIO {
         < Constants.Intake.HOPPER_ANGLE_TOLERANCE;
   }
 
+  private void requestHopperAngle(Angle angle) {
+    hopperAngleSetpoint = angle;
+    if (hopperTalonFX != null) {
+      hopperTalonFX.setControl(hopperMotionMagicRequest.withPosition(angle.in(Rotations)));
+      return;
+    }
+    intakeHopper.getMotorController().setPosition(angle);
+  }
+
   /** updates the input structure with the current hopper and intake speed */
   @Override
   public void updateInputs(IntakeIOInputs inputs) {
@@ -181,7 +205,12 @@ public class IntakeIOReal implements IntakeIO {
     inputs.hopperAngleActual = intakeHopper.getMotorController().getMechanismPosition();
     inputs.hopperAngleDegrees = inputs.hopperAngleActual.in(Degrees);
     inputs.hopperAngleDesired =
-        intakeHopper.getMotorController().getMechanismPositionSetpoint().orElse(Degrees.of(0));
+        hopperTalonFX != null
+            ? hopperAngleSetpoint
+            : intakeHopper
+                .getMotorController()
+                .getMechanismPositionSetpoint()
+                .orElse(Degrees.of(0));
     inputs.hopperAngleError = inputs.hopperAngleDesired.minus(inputs.hopperAngleActual).in(Degrees);
     inputs.hopperAtGoal =
         MathUtil.inputModulus(inputs.hopperAngleError, -180, 180)

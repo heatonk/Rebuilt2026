@@ -11,7 +11,6 @@
     }
   },
   "controlAlgorithm": "PROFILED",
-  "useTorqueCurrentFOCMotionMagic": true,
   "motorSystemId": {
     "feedBack": {
       "p": 200,

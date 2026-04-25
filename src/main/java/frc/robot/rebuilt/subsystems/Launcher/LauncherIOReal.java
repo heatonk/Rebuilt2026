@@ -18,7 +18,9 @@ import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.CANBus;
+import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.CANcoder;
+import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -28,6 +30,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -64,6 +67,10 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   protected Map<String, Object> devices;
   protected Pivot turret;
   protected Arm hood;
+  private TalonFX hoodTalonFX;
+  private final MotionMagicTorqueCurrentFOC hoodMotionMagicRequest =
+      new MotionMagicTorqueCurrentFOC(0).withSlot(0);
+  private Angle hoodAngleSetpoint = Degrees.of(0.0);
   protected GenericDrivetrain drivetrain;
   protected FlyWheel flyWheel;
   protected CANcoder crtEncoder40;
@@ -111,6 +118,11 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
     turretZeroButton = new DigitalInput(0);
 
     hood = (Arm) devices.get("hood");
+    hoodAngleSetpoint = hood.getAngle();
+    Object rawHoodController = hood.getMotorController().getMotorController();
+    if (!RobotBase.isSimulation() && rawHoodController instanceof TalonFX talonFX) {
+      hoodTalonFX = talonFX;
+    }
     flyWheel = (FlyWheel) devices.get("flywheel");
 
     turretLowLimit =
@@ -298,7 +310,9 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
             .map(it -> it)
             .orElse(RPM.of(0.0));
     inputs.hoodAngleDesired =
-        hood.getMotorController().getMechanismPositionSetpoint().orElse(Degrees.of(0.0));
+        hoodTalonFX != null
+            ? hoodAngleSetpoint
+            : hood.getMotorController().getMechanismPositionSetpoint().orElse(Degrees.of(0.0));
     // Read turret desired angle from the SmartTurretController's goal, not YAMS (which is
     // bypassed).
     inputs.turretAngleDesired =
@@ -380,14 +394,22 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
 
   /** Sets the hood angle and overrides the requested angle if the hood is near the trench */
   public void setHoodAngle(Angle angle) {
-    hood.getMotorController().setPosition(angle);
+    requestHoodAngle(angle);
   }
 
   /** Sets the low hard limit to 30 degrees and updates LED's */
   public void setHoodAngleLow() {
-    hood.getMotorController()
-        .setPosition(hood.getArmConfig().getLowerHardLimit().orElse(Degrees.of(30)));
+    requestHoodAngle(hood.getArmConfig().getLowerHardLimit().orElse(Degrees.of(30)));
     LEDStrip.changeSegmentPattern(ConfigConstants.ALL_LEDS, LEDStrip.getSolidPattern(Color.kGreen));
+  }
+
+  private void requestHoodAngle(Angle angle) {
+    hoodAngleSetpoint = angle;
+    if (hoodTalonFX != null) {
+      hoodTalonFX.setControl(hoodMotionMagicRequest.withPosition(angle.in(Rotations)));
+      return;
+    }
+    hood.getMotorController().setPosition(angle);
   }
 
   /** Sets the angle of the turret via the SmartTurretController (zero feedforward). */
