@@ -2,7 +2,6 @@ package frc.robot.rebuilt.subsystems.intake;
 
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
@@ -196,15 +195,6 @@ public class IntakeIOReal implements IntakeIO {
 
   private void requestHopperAngle(Angle angle) {
     hopperAngleSetpoint = angle;
-    if (hopperTalonFX != null) {
-      hopperTalonFX.setControl(
-          hopperMotionMagicRequest
-              .withPosition(angle.in(Rotations))
-              .withFeedForward(
-                  TorqueCurrentArmSupport.calculateGravityFeedforward(
-                      angle, hopperTorqueCurrentConfig)));
-      return;
-    }
     intakeHopper.getMotorController().setPosition(angle);
   }
 

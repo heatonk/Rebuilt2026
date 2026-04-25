@@ -95,6 +95,8 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
 
   Angle turretLowLimit = Degrees.of(-90);
   Angle turretHighLimit = Degrees.of(90);
+  Angle hoodLowLimit = Degrees.of(12);
+  Angle hoodHighLimit = Degrees.of(42);
 
   /** 2-state turret controller: SEEKING (MotionMagic) and TRACKING (Position + FF). */
   protected SmartTurretController smartTurretController;
