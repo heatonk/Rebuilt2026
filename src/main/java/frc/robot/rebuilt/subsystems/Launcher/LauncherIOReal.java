@@ -219,8 +219,8 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
         // Turret is a Pivot so getArmFeedforward() contains the characterised kS/kV/kA in SI units.
         // Fallback values match turret.json in case the YAMS FF was not set.
         ArmFeedforward yamsFf = turretConfig.getArmFeedforward().orElse(null);
-        double kS = yamsFf != null ? yamsFf.getKs() : 12;
-        double kV = yamsFf != null ? yamsFf.getKv() : 0.0;
+        double kS = yamsFf != null ? yamsFf.getKs() : 15.26;
+        double kV = yamsFf != null ? yamsFf.getKv() : 4.0;
         double kA = yamsFf != null ? yamsFf.getKa() : 2.0;
         SmartTurretConfig smartConfig =
             new SmartTurretConfig.Builder()
@@ -228,10 +228,10 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
                 .withYAMSController(turret.getMotorController())
                 .withGearRatio(30.0)
                 .withMotionConstraints(maxVelMechRotPerSec, maxAccelMechRotPerSecSq)
-                .withSeekingPID(650, 0, 50) // Initial values from turret.json
-                .withTrackingPID(650, 0, 50) // Start same, tune separately
+                .withSeekingPID(950, 0, 104) // Initial values from turret.json
+                .withTrackingPID(950, 0, 104) // Start same, tune separately
                 .withFeedforward(kS, kV, kA)
-                .withSeekingThreshold(Degrees.of(100).in(Rotations))
+                .withSeekingThreshold(Degrees.of(5).in(Rotations))
                 .withHysteresisBuffer(Degrees.of(12).in(Rotations))
                 .withSoftLimits(lowerLimitRot, upperLimitRot)
                 .build();
