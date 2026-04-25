@@ -6,15 +6,20 @@ import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
+import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC;
+import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.FieldConstants;
 import frc.robot.rebuilt.commands.IntakeCommands;
+import frc.robot.rebuilt.util.TorqueCurrentArmSupport;
 import java.util.Map;
 import org.frc5010.common.arch.GenericSubsystem;
 import org.frc5010.common.drive.GenericDrivetrain;
@@ -28,6 +33,12 @@ public class IntakeIOReal implements IntakeIO {
   private FlyWheel spintakeInner;
   private FlyWheel spintakeOuter;
   private Arm intakeHopper;
+  private TalonFX hopperTalonFX;
+  private final MotionMagicTorqueCurrentFOC hopperMotionMagicRequest =
+      new MotionMagicTorqueCurrentFOC(0).withSlot(0);
+  private Angle hopperAngleSetpoint = Degrees.of(0.0);
+  private TorqueCurrentArmSupport.Config hopperTorqueCurrentConfig =
+      TorqueCurrentArmSupport.Config.defaults(false);
   protected GenericDrivetrain drivetrain;
   private boolean isNearTrench = false;
   private IntakeCommands.IntakeState lastState = IntakeCommands.IntakeState.RETRACTED;
@@ -39,6 +50,17 @@ public class IntakeIOReal implements IntakeIO {
     spintakeOuter = (FlyWheel) devices.get("spintake_outer");
     spintakeInner = (FlyWheel) devices.get("spintake_inner");
     intakeHopper = (Arm) devices.get("hopper");
+    hopperTorqueCurrentConfig =
+        TorqueCurrentArmSupport.loadConfig("intake/hopper.json", false, "hopper");
+    hopperAngleSetpoint = intakeHopper.getAngle();
+
+    Object rawController = intakeHopper.getMotorController().getMotorController();
+    if (!RobotBase.isSimulation()
+        && hopperTorqueCurrentConfig.useTorqueCurrentFOC()
+        && rawController instanceof TalonFX talonFX) {
+      hopperTalonFX = talonFX;
+      TorqueCurrentArmSupport.syncSlot0Feedforward(intakeHopper, hopperTalonFX);
+    }
   }
 
   @Override
@@ -53,7 +75,7 @@ public class IntakeIOReal implements IntakeIO {
   }
 
   public Command setHopperAngle(Angle angle) {
-    return intakeHopper.setAngle(angle);
+    return Commands.runOnce(() -> requestHopperAngle(angle));
   }
 
   public void setHopperPosition(Angle angle) {
@@ -63,7 +85,7 @@ public class IntakeIOReal implements IntakeIO {
   public boolean isHopperMoving() {
     return Math.abs(
             intakeHopper.getMotorController().getMechanismVelocity().in(Degrees.per(Second)))
-        > 1.0;
+        > Constants.Intake.HOPPER_MOVING_VELOCITY_THRESHOLD;
   }
 
   public boolean isHopperStalling() {
@@ -171,23 +193,43 @@ public class IntakeIOReal implements IntakeIO {
         < Constants.Intake.HOPPER_ANGLE_TOLERANCE;
   }
 
+  private void requestHopperAngle(Angle angle) {
+    hopperAngleSetpoint = angle;
+    intakeHopper.getMotorController().setPosition(angle);
+  }
+
   /** updates the input structure with the current hopper and intake speed */
   @Override
   public void updateInputs(IntakeIOInputs inputs) {
-    Logger.recordOutput(
-        "Hopper Velocity",
-        intakeHopper.getMotorController().getMechanismVelocity().in(Degrees.per(Second)));
-    Logger.recordOutput("Hopper MOving", isHopperMoving());
+    double hopperVelocityDegreesPerSecond =
+        intakeHopper.getMotorController().getMechanismVelocity().in(Degrees.per(Second));
+    double hopperAmps = intakeHopper.getMotor().getStatorCurrent().in(Amps);
+
     inputs.hopperAngleActual = intakeHopper.getMotorController().getMechanismPosition();
     inputs.hopperAngleDegrees = inputs.hopperAngleActual.in(Degrees);
+    inputs.hopperVelocityDegreesPerSecond = hopperVelocityDegreesPerSecond;
     inputs.hopperAngleDesired =
-        intakeHopper.getMotorController().getMechanismPositionSetpoint().orElse(Degrees.of(0));
+        hopperTalonFX != null
+            ? hopperAngleSetpoint
+            : intakeHopper
+                .getMotorController()
+                .getMechanismPositionSetpoint()
+                .orElse(Degrees.of(0));
     inputs.hopperAngleError = inputs.hopperAngleDesired.minus(inputs.hopperAngleActual).in(Degrees);
     inputs.hopperAtGoal =
         MathUtil.inputModulus(inputs.hopperAngleError, -180, 180)
             < Constants.Intake.HOPPER_ANGLE_TOLERANCE;
     inputs.speed = spintakeOuter.getMotor().getDutyCycle();
-    inputs.hopperAmps = intakeHopper.getMotor().getStatorCurrent().in(Amps);
+    inputs.hopperAmps = hopperAmps;
+    inputs.hopperMoving =
+        Math.abs(hopperVelocityDegreesPerSecond)
+            > Constants.Intake.HOPPER_MOVING_VELOCITY_THRESHOLD;
+    inputs.hopperStalling = Math.abs(hopperAmps) > Constants.Intake.HOPPER_STALL_CURRENT_THRESHOLD;
+    inputs.hopperHardStopDetected = inputs.hopperStalling && !inputs.hopperMoving;
+
+    Logger.recordOutput("Hopper Velocity", hopperVelocityDegreesPerSecond);
+    Logger.recordOutput("Hopper Moving", inputs.hopperMoving);
+    Logger.recordOutput("Hopper Hard Stop", inputs.hopperHardStopDetected);
     // inputs.speed = spintakeLead.getMotor().getDutyCycle();
   }
 }

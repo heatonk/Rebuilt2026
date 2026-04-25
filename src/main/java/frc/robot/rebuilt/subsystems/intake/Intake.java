@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.commands.IntakeCommands;
 import frc.robot.rebuilt.commands.IntakeCommands.IntakeState;
 import org.frc5010.common.arch.GenericSubsystem;
@@ -83,7 +84,35 @@ public class Intake extends GenericSubsystem {
   public void periodic() {
     super.periodic();
     io.updateInputs(inputs);
+
+    boolean autoRezeroTriggered = shouldAutoRezeroAtDeployHardStop() || shouldAutoRezeroPastStop();
+    if (autoRezeroTriggered) {
+      io.setHopperPosition(Degrees.of(0));
+    }
+    Logger.recordOutput("Intake/AutoRezeroTriggered", autoRezeroTriggered);
+
     Logger.processInputs("Intake", inputs);
+  }
+
+  private boolean shouldAutoRezeroAtDeployHardStop() {
+    boolean deploySideState =
+        inputs.stateRequested == IntakeState.INTAKING
+            || inputs.stateRequested == IntakeState.DEPLOYED
+            || inputs.stateCurrent == IntakeState.DEPLOYING
+            || inputs.stateCurrent == IntakeState.INTAKING
+            || inputs.stateCurrent == IntakeState.DEPLOYED;
+
+    return inputs.hopperZeroed
+        && deploySideState
+        && inputs.hopperHardStopDetected
+        && inputs.hopperAngleActual.in(Degrees)
+            < Constants.Intake.HOPPER_DEPLOY_STOP_REZERO_MAX_ANGLE
+        && inputs.hopperAngleActual.in(Degrees) > Constants.Intake.HOPPER_ANGLE_TOLERANCE;
+  }
+
+  private boolean shouldAutoRezeroPastStop() {
+    return inputs.hopperZeroed
+        && inputs.hopperAngleActual.in(Degrees) < Constants.Intake.HOPPER_AUTO_REZERO_THRESHOLD;
   }
 
   public boolean isRequested(IntakeState state) {
@@ -136,8 +165,25 @@ public class Intake extends GenericSubsystem {
     return io.isHopperMoving();
   }
 
+  public boolean isHopperHardStopDetected() {
+    return inputs.hopperHardStopDetected;
+  }
+
   public void setHopperPosition(Angle angle) {
     io.setHopperPosition(angle);
+  }
+
+  /** Zeroes the hopper encoder to 0° (the deployed/hard-stop position). */
+  public void zeroHopper() {
+    io.setHopperPosition(Degrees.of(0));
+  }
+
+  public boolean isHopperZeroed() {
+    return inputs.hopperZeroed;
+  }
+
+  public void setHopperZeroed(boolean zeroed) {
+    inputs.hopperZeroed = zeroed;
   }
 
   public boolean isHopperAtGoal() {
