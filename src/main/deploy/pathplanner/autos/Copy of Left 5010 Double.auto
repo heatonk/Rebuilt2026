@@ -7,13 +7,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "TRSide-CTR-QTR"
+            "pathName": "TL-CTL-QTL"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "QTR-TR"
+            "pathName": "QTL-TL"
           }
         },
         {
@@ -37,7 +37,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "TR-CTR-QTR-BR-HP Longer"
+            "pathName": "TL-CTL-QTL-BL-L"
           }
         },
         {
@@ -50,6 +50,6 @@
     }
   },
   "resetOdom": true,
-  "folder": "Right",
+  "folder": "Worlds",
   "choreoAuto": false
 }

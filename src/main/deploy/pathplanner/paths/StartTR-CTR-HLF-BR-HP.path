@@ -3,16 +3,16 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 4.412518072289157,
-        "y": 0.6255542168674697
+        "x": 3.528863636363636,
+        "y": 0.5269999999999992
       },
       "prevControl": null,
       "nextControl": {
-        "x": 5.412518072289159,
-        "y": 0.6255542168674697
+        "x": 4.528863636363638,
+        "y": 0.5269999999999992
       },
       "isLocked": false,
-      "linkedName": "TR"
+      "linkedName": "DELAYTRS"
     },
     {
       "anchor": {
@@ -112,22 +112,22 @@
     },
     {
       "anchor": {
-        "x": 0.484188888888889,
-        "y": 0.7413777777777772
+        "x": 0.475,
+        "y": 0.8003975903614469
       },
       "prevControl": {
-        "x": 0.5048025252525253,
-        "y": 1.236105050505049
+        "x": 0.5334666666666664,
+        "y": 1.4435309236947798
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "hp"
+      "linkedName": "HP"
     }
   ],
   "rotationTargets": [
     {
       "waypointRelativePos": 0.44730290456431443,
-      "rotationDegrees": -0.7868689853072587
+      "rotationDegrees": 90.94294723905875
     },
     {
       "waypointRelativePos": 1.0291777188328912,
@@ -190,6 +190,17 @@
   "pointTowardsZones": [],
   "eventMarkers": [
     {
+      "name": "intakeIntake",
+      "waypointRelativePos": 0.4348413234301141,
+      "endWaypointRelativePos": null,
+      "command": {
+        "type": "named",
+        "data": {
+          "name": "intakeIntake"
+        }
+      }
+    },
+    {
       "name": "launcherPrep",
       "waypointRelativePos": 4.915555555555553,
       "endWaypointRelativePos": null,
@@ -211,13 +222,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -88.6360724683971
+    "rotation": -90.0
   },
   "reversed": false,
   "folder": "Right",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -0.08211332881449039
+    "rotation": 90.0
   },
   "useDefaultConstraints": true
 }

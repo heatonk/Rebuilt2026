@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.580397727272727,
-        "y": 6.024215909090909
+        "x": 3.6024111111111115,
+        "y": 5.7207888888888885
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.9302994318941398,
-        "y": 7.283418604781539
+        "x": 2.9523128157325242,
+        "y": 6.979991584579518
       },
       "isLocked": false,
       "linkedName": "BLStart"
@@ -36,12 +36,12 @@
         "y": 5.271818181818182
       },
       "prevControl": {
-        "x": -0.022117386116737414,
-        "y": 5.662536469802621
+        "x": 0.16262222222222222,
+        "y": 5.6136
       },
       "nextControl": {
-        "x": 2.5600227272727274,
-        "y": 5.0450681818181815
+        "x": 2.5607231109340027,
+        "y": 5.048017319029992
       },
       "isLocked": false,
       "linkedName": null
@@ -52,8 +52,8 @@
         "y": 0.7249755535012343
       },
       "prevControl": {
-        "x": 1.4468863636363634,
-        "y": 1.6128977272727276
+        "x": 1.8094333333333332,
+        "y": 1.8522444444444432
       },
       "nextControl": null,
       "isLocked": false,
@@ -76,7 +76,7 @@
       "minWaypointRelativePos": 0.0,
       "maxWaypointRelativePos": 3.0,
       "constraints": {
-        "maxVelocity": 1.0,
+        "maxVelocity": 2.0,
         "maxAcceleration": 9.0,
         "maxAngularVelocity": 540.0,
         "maxAngularAcceleration": 720.0,
@@ -89,7 +89,7 @@
   "eventMarkers": [
     {
       "name": "intakeIntake",
-      "waypointRelativePos": 0.0,
+      "waypointRelativePos": 0.03,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",
@@ -100,8 +100,8 @@
     },
     {
       "name": "launcherPrep",
-      "waypointRelativePos": 0.8088888888888881,
-      "endWaypointRelativePos": 3.0,
+      "waypointRelativePos": 0.348387096774195,
+      "endWaypointRelativePos": null,
       "command": null
     }
   ],

@@ -7,19 +7,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "TL-CTR-QTR"
+            "pathName": "TL-CTR-QTL-BL-TL"
           }
         },
         {
-          "type": "named",
+          "type": "path",
           "data": {
-            "name": "launcherPrep"
+            "pathName": "TL-CTR-HLF-BL-HP"
           }
         }
       ]
     }
   },
   "resetOdom": true,
-  "folder": "Left",
+  "folder": "Worlds",
   "choreoAuto": false
 }

@@ -16,35 +16,39 @@
     },
     {
       "anchor": {
-        "x": 7.509933333333333,
-        "y": 0.8777999999999986
+        "x": 7.539166666666667,
+        "y": 0.8485666666666658
       },
       "prevControl": {
-        "x": 7.271317836812465,
-        "y": 0.4426776239913567
+        "x": 7.212798661311914,
+        "y": 0.4747314591700117
       },
       "nextControl": {
-        "x": 7.841244444444444,
-        "y": 1.4819555555555552
+        "x": 8.074808348799735,
+        "y": 1.4621124680279736
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 7.752453637660485,
-        "y": 3.187517831669045
+        "x": 7.821755555555557,
+        "y": 3.5965
       },
       "prevControl": {
-        "x": 7.739313929379794,
-        "y": 2.9378633743359175
+        "x": 7.808615847274865,
+        "y": 3.3468455426668724
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "CTR-QTRShort"
+      "linkedName": "CTR-QTR"
     }
   ],
   "rotationTargets": [
+    {
+      "waypointRelativePos": 0.5,
+      "rotationDegrees": 90.4395422581697
+    },
     {
       "waypointRelativePos": 1.2464730290456414,
       "rotationDegrees": 89.06764595078421
@@ -95,7 +99,7 @@
   "eventMarkers": [
     {
       "name": "intakeIntake",
-      "waypointRelativePos": 0.23227548953409913,
+      "waypointRelativePos": 0.39432815665090637,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",
