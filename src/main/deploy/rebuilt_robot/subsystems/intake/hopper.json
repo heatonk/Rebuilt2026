@@ -4,7 +4,7 @@
     "controllerType": "talonfx",
     "motorType": "KrakenX44",
     "canId": 15,
-    "logLevel": "LOW",
+    "logLevel": "HIGH",
     "inverted": true,
     "currentLimit": {
       "val": 60,
@@ -21,9 +21,9 @@
   "useTorqueCurrentFOC": false,
   "motorSystemId": {
     "feedBack": {
-      "p": 10,
+      "p": 25,
       "i": 0.0,
-      "d": 0.0
+      "d": 5.0
     },
     "feedForward": {
       "s": 0.5992224858009301,
@@ -32,11 +32,11 @@
       "g": 0.65
     },
     "maxVelocity": {
-      "val": 4320,
+      "val": 1080,
       "uom": "deg/s"
     },
     "maxAcceleration": {
-      "val": 4320,
+      "val": 5000,
       "uom": "deg/s^2"
     }
   },
