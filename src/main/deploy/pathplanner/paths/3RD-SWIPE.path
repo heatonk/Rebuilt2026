@@ -16,16 +16,16 @@
     },
     {
       "anchor": {
-        "x": 6.213922222222224,
-        "y": 1.6865888888888891
+        "x": 5.941077777777777,
+        "y": 1.8619888888888885
       },
       "prevControl": {
-        "x": 6.409280399418058,
-        "y": 0.9480396824168345
+        "x": 6.111548415940352,
+        "y": 1.1173013642839542
       },
       "nextControl": {
-        "x": 5.414877777777779,
-        "y": 4.707366666666667
+        "x": 5.385644444444446,
+        "y": 4.2883555555555555
       },
       "isLocked": false,
       "linkedName": null
@@ -72,13 +72,13 @@
   "pointTowardsZones": [],
   "eventMarkers": [
     {
-      "name": "launcherPrep",
-      "waypointRelativePos": 0.27039627039627084,
+      "name": "launcherLow",
+      "waypointRelativePos": 0,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",
         "data": {
-          "name": "launcherPrep"
+          "name": "launcherLow"
         }
       }
     }

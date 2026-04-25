@@ -195,7 +195,7 @@
     },
     {
       "name": "Constraints Zone",
-      "minWaypointRelativePos": 5.502729528535972,
+      "minWaypointRelativePos": 5.264516129032287,
       "maxWaypointRelativePos": 7.043176178660044,
       "constraints": {
         "maxVelocity": 1.0,
@@ -222,7 +222,7 @@
     },
     {
       "name": "launcherPrep",
-      "waypointRelativePos": 5.4233250620347535,
+      "waypointRelativePos": 5.248635235732003,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",
