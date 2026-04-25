@@ -41,6 +41,7 @@ import frc.robot.rebuilt.Rebuilt;
 import frc.robot.rebuilt.commands.IntakeCommands.IntakeState;
 import frc.robot.rebuilt.commands.LauncherCommands;
 import frc.robot.rebuilt.subsystems.intake.Intake;
+import frc.robot.rebuilt.util.TorqueCurrentArmSupport;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
@@ -71,6 +72,8 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   private final MotionMagicTorqueCurrentFOC hoodMotionMagicRequest =
       new MotionMagicTorqueCurrentFOC(0).withSlot(0);
   private Angle hoodAngleSetpoint = Degrees.of(0.0);
+  private TorqueCurrentArmSupport.Config hoodTorqueCurrentConfig =
+      TorqueCurrentArmSupport.Config.defaults(true);
   protected GenericDrivetrain drivetrain;
   protected FlyWheel flyWheel;
   protected CANcoder crtEncoder40;
@@ -118,10 +121,13 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
     turretZeroButton = new DigitalInput(0);
 
     hood = (Arm) devices.get("hood");
+    hoodTorqueCurrentConfig =
+        TorqueCurrentArmSupport.loadConfig("launcher/hood.json", true, "hood");
     hoodAngleSetpoint = hood.getAngle();
     Object rawHoodController = hood.getMotorController().getMotorController();
     if (!RobotBase.isSimulation() && rawHoodController instanceof TalonFX talonFX) {
       hoodTalonFX = talonFX;
+      TorqueCurrentArmSupport.syncSlot0Feedforward(hood, hoodTalonFX);
     }
     flyWheel = (FlyWheel) devices.get("flywheel");
 
@@ -406,7 +412,12 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   private void requestHoodAngle(Angle angle) {
     hoodAngleSetpoint = angle;
     if (hoodTalonFX != null) {
-      hoodTalonFX.setControl(hoodMotionMagicRequest.withPosition(angle.in(Rotations)));
+      hoodTalonFX.setControl(
+          hoodMotionMagicRequest
+              .withPosition(angle.in(Rotations))
+              .withFeedForward(
+                  TorqueCurrentArmSupport.calculateGravityFeedforward(
+                      angle, hoodTorqueCurrentConfig)));
       return;
     }
     hood.getMotorController().setPosition(angle);

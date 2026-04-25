@@ -37,6 +37,7 @@ public class YamsArmConfigurationJson implements DeviceConfiguration {
   public UnitValueJson mass = new UnitValueJson(0, MassUnit.POUNDS.toString());
   public UnitValueJson voltageCompensation = new UnitValueJson(12, VoltageUnit.VOLTS.toString());
   public UnitValueJson horizontalZero = new UnitValueJson(0, AngleUnit.DEGREES.toString());
+  public boolean useTorqueCurrentFOC = true;
 
   /**
    * Configure the given GenericSubsystem with an arm using the given json configuration.

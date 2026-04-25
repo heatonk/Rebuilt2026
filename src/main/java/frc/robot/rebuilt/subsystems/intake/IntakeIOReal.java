@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.FieldConstants;
 import frc.robot.rebuilt.commands.IntakeCommands;
+import frc.robot.rebuilt.util.TorqueCurrentArmSupport;
 import java.util.Map;
 import org.frc5010.common.arch.GenericSubsystem;
 import org.frc5010.common.drive.GenericDrivetrain;
@@ -37,6 +38,8 @@ public class IntakeIOReal implements IntakeIO {
   private final MotionMagicTorqueCurrentFOC hopperMotionMagicRequest =
       new MotionMagicTorqueCurrentFOC(0).withSlot(0);
   private Angle hopperAngleSetpoint = Degrees.of(0.0);
+  private TorqueCurrentArmSupport.Config hopperTorqueCurrentConfig =
+      TorqueCurrentArmSupport.Config.defaults(false);
   protected GenericDrivetrain drivetrain;
   private boolean isNearTrench = false;
   private IntakeCommands.IntakeState lastState = IntakeCommands.IntakeState.RETRACTED;
@@ -48,11 +51,16 @@ public class IntakeIOReal implements IntakeIO {
     spintakeOuter = (FlyWheel) devices.get("spintake_outer");
     spintakeInner = (FlyWheel) devices.get("spintake_inner");
     intakeHopper = (Arm) devices.get("hopper");
+    hopperTorqueCurrentConfig =
+        TorqueCurrentArmSupport.loadConfig("intake/hopper.json", false, "hopper");
     hopperAngleSetpoint = intakeHopper.getAngle();
 
     Object rawController = intakeHopper.getMotorController().getMotorController();
-    if (!RobotBase.isSimulation() && rawController instanceof TalonFX talonFX) {
+    if (!RobotBase.isSimulation()
+        && hopperTorqueCurrentConfig.useTorqueCurrentFOC()
+        && rawController instanceof TalonFX talonFX) {
       hopperTalonFX = talonFX;
+      TorqueCurrentArmSupport.syncSlot0Feedforward(intakeHopper, hopperTalonFX);
     }
   }
 
@@ -189,7 +197,12 @@ public class IntakeIOReal implements IntakeIO {
   private void requestHopperAngle(Angle angle) {
     hopperAngleSetpoint = angle;
     if (hopperTalonFX != null) {
-      hopperTalonFX.setControl(hopperMotionMagicRequest.withPosition(angle.in(Rotations)));
+      hopperTalonFX.setControl(
+          hopperMotionMagicRequest
+              .withPosition(angle.in(Rotations))
+              .withFeedForward(
+                  TorqueCurrentArmSupport.calculateGravityFeedforward(
+                      angle, hopperTorqueCurrentConfig)));
       return;
     }
     intakeHopper.getMotorController().setPosition(angle);

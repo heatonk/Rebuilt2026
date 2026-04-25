@@ -24,13 +24,23 @@ public class Constants {
     public static final double HOOD_ANGLE_TOLERANCE_DEGREES = 3.5;
     public static final double TURRET_ANGLE_TOLERANCE_DEGREES = 5.0;
 
-    public static final Angle LOW_HOOD_ANGLE = Degrees.of(31);
+    public static final double HOOD_LEGACY_START_ANGLE_DEGREES = 30.0;
+    public static final double HOOD_CORRECTED_START_ANGLE_DEGREES = 12.723;
+    public static final double HOOD_CORRECTED_END_ANGLE_DEGREES = 45.723;
+    public static final double HOOD_CALIBRATION_OFFSET_DEGREES =
+        HOOD_CORRECTED_START_ANGLE_DEGREES - HOOD_LEGACY_START_ANGLE_DEGREES;
+
+    public static double offsetLegacyHoodAngleDegrees(double legacyAngleDegrees) {
+      return legacyAngleDegrees + HOOD_CALIBRATION_OFFSET_DEGREES;
+    }
+
+    public static final Angle LOW_HOOD_ANGLE = Degrees.of(offsetLegacyHoodAngleDegrees(31.0));
     public static final AngularVelocity LOW_FLYWHEEL_RPM = RotationsPerSecond.of(1);
 
     public static final Angle HUB_HOOD_ANGLE = LOW_HOOD_ANGLE;
     public static final AngularVelocity HUB_FLYWHEEL_RPM = RotationsPerSecond.of(1.25);
 
-    public static final Angle TOWER_HOOD_ANGLE = Degrees.of(40);
+    public static final Angle TOWER_HOOD_ANGLE = Degrees.of(offsetLegacyHoodAngleDegrees(40.0));
     public static final AngularVelocity TOWER_FLYWHEEL_RPM = RotationsPerSecond.of(1.5);
 
     public static final Angle TURRET_FORWARD = Degrees.of(0);
