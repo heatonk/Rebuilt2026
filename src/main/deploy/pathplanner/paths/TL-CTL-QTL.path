@@ -3,16 +3,16 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 4.445301204819277,
-        "y": 7.378879518072289
+        "x": 4.412518072289157,
+        "y": 7.575578313253012
       },
       "prevControl": null,
       "nextControl": {
-        "x": 5.445301204819279,
-        "y": 7.378879518072289
+        "x": 5.412518072289159,
+        "y": 7.575578313253012
       },
       "isLocked": false,
-      "linkedName": "TL"
+      "linkedName": "TLSide"
     },
     {
       "anchor": {
@@ -44,16 +44,7 @@
       "linkedName": "CTL-QTL"
     }
   ],
-  "rotationTargets": [
-    {
-      "waypointRelativePos": 0.5,
-      "rotationDegrees": -0.0
-    },
-    {
-      "waypointRelativePos": 1.2464730290456414,
-      "rotationDegrees": -89.06764595078421
-    }
-  ],
+  "rotationTargets": [],
   "constraintZones": [
     {
       "name": "trench",
@@ -122,10 +113,10 @@
     "rotation": -90.0
   },
   "reversed": false,
-  "folder": null,
+  "folder": "Left",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -0.7046458978606126
+    "rotation": -90.0
   },
   "useDefaultConstraints": true
 }
