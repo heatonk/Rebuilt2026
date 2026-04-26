@@ -5,39 +5,21 @@
     "data": {
       "commands": [
         {
-          "type": "path",
-          "data": {
-            "pathName": "TRSide-CTR-QTR"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "QTR-TR"
-          }
-        },
-        {
           "type": "named",
           "data": {
-            "name": "launcherPrep"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 3.0
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "launcherLow"
+            "name": "CustomWait"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "TR-CTR-QTR-BR-HP Longer"
+            "pathName": "DelayTRS-QTRL"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "QTRLeft-HP"
           }
         },
         {

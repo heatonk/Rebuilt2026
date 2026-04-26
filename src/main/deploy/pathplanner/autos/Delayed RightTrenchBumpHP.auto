@@ -5,15 +5,15 @@
     "data": {
       "commands": [
         {
-          "type": "wait",
+          "type": "named",
           "data": {
-            "waitTime": 5.0
+            "name": "CustomWait"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "StartTR-CTR-HLF-BR-HP"
+            "pathName": "DelayTRS-CTR-QTR-BR-HP Longer"
           }
         }
       ]
