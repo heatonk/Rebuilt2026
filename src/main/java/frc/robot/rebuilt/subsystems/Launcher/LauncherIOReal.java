@@ -25,6 +25,7 @@ import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearVelocity;
@@ -52,6 +53,8 @@ import org.frc5010.common.motors.SystemIdentification;
 import org.frc5010.common.subsystems.LEDStrip;
 import org.frc5010.common.utils.geometry.AllianceFlipUtil;
 import org.frc5010.common.vision.AprilTags;
+import org.littletonrobotics.junction.Logger;
+
 import yams.mechanisms.config.SensorConfig;
 import yams.mechanisms.positional.Arm;
 import yams.mechanisms.positional.Pivot;
@@ -295,6 +298,9 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
     TargetProfile targetProfile = TargetProfile.NONE;
     inputs.isValidCalculation = false;
     SmartDashboard.putNumber("Flywheel Multiplier", ShotCalculator.getFlywheelMultiplier());
+
+    Translation2d SOTMOffset = new Translation2d();
+
     if (targetPose.isPresent()) {
       targetProfile = getTargetProfile(targetPose.get());
       ShotCalculator.getInstance().useShotProfile(getShotProfile(targetPose.get()));
@@ -318,6 +324,9 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
             (inputs.turretFeedforwardRadPerSec - previousTurretVelocityRadPerSec)
                 / org.frc5010.common.constants.Constants.loopPeriodSecs;
         previousTurretVelocityRadPerSec = inputs.turretFeedforwardRadPerSec;
+
+        ChassisSpeeds virtualTargetOffsetparams = params.solution().finalSolverState().robotStateAtFire().velocity().times(-params.solution().estimatedTimeOfFlight());
+        SOTMOffset = new Translation2d(virtualTargetOffsetparams.vxMetersPerSecond, virtualTargetOffsetparams.vyMetersPerSecond);
       }
       Translation2d fieldTarget = AllianceFlipUtil.apply(targetPose.get());
       inputs.robotToTarget = fieldTarget.minus(currentPose.getTranslation());
@@ -344,12 +353,15 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
             ? Rotations.of(smartTurretController.getGoalPositionMechRot())
             : turret.getMotorController().getMechanismPositionSetpoint().orElse(Degrees.of(0.0));
 
-    double turretAngleToleranceDegrees =
+    double[] turretAngleToleranceDegrees =
         getTurretAngleToleranceDegrees(
-            currentPose, inputs.turretAngleDesired, targetPose.orElse(null), targetProfile);
+            currentPose, inputs.turretAngleDesired, targetPose.orElse(null), SOTMOffset, targetProfile);
     SmartDashboard.putString("Launcher/Target Profile", targetProfile.name());
-    SmartDashboard.putNumber(
-        "Launcher/Turret Angle Tolerance Degrees", turretAngleToleranceDegrees);
+    Logger.recordOutput(
+        "Launcher/Lower Turret Tolerance Deg", turretAngleToleranceDegrees[0]);
+    Logger.recordOutput(
+        "Launcher/Upper Turret Tolerance Deg", turretAngleToleranceDegrees[1]);
+    
 
     inputs.flyWheelSpeedActual = flyWheel.getSpeed();
     inputs.hoodAngleActual = hood.getAngle();
@@ -363,7 +375,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
         Math.abs(inputs.flyWheelSpeedError.in(RPM)) <= Constants.Launcher.SHOOTER_TOLERANCE_RPM;
     inputs.hoodAngleAtGoal =
         Math.abs(inputs.hoodAngleError) <= Constants.Launcher.HOOD_ANGLE_TOLERANCE_DEGREES;
-    inputs.turretAngleAtGoal = Math.abs(inputs.turretAngleError) <= turretAngleToleranceDegrees;
+    inputs.turretAngleAtGoal = turretAngleToleranceDegrees[0] <= inputs.turretAngleError && inputs.turretAngleError <= turretAngleToleranceDegrees[1];
 
     inputs.hoodVelocity = hood.getMotorController().getMechanismVelocity().in(Degrees.per(Second));
     inputs.turretVelocity =
@@ -612,13 +624,14 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
         : ShotCalculator.ShotProfile.NORMAL;
   }
 
-  private double getTurretAngleToleranceDegrees(
+  private double[] getTurretAngleToleranceDegrees(
       Pose2d currentPose,
       Angle desiredTurretAngle,
       Translation2d targetPose,
+      Translation2d SOTMOffset,
       TargetProfile targetProfile) {
     if (targetPose == null || targetProfile == TargetProfile.NONE) {
-      return Constants.Launcher.TURRET_ANGLE_TOLERANCE_DEGREES;
+      return new double[] {Constants.Launcher.TURRET_ANGLE_TOLERANCE_DEGREES, Constants.Launcher.TURRET_ANGLE_TOLERANCE_DEGREES};
     }
 
     Translation2d turretFieldPosition = getTurretFieldPosition(currentPose);
@@ -626,24 +639,29 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
         currentPose.getRotation().plus(Rotation2d.fromRadians(desiredTurretAngle.in(Radians)));
 
     if (targetProfile == TargetProfile.HUB) {
-      return getHubTurretAngleToleranceDegrees(turretFieldPosition, desiredFieldHeading);
+      return getHubTurretAngleToleranceDegrees(turretFieldPosition, desiredFieldHeading, SOTMOffset);
     }
 
     return getShuttleTurretAngleToleranceDegrees(
-        turretFieldPosition, desiredFieldHeading, targetPose);
+        turretFieldPosition, desiredFieldHeading, targetPose, SOTMOffset);
   }
 
-  private double getHubTurretAngleToleranceDegrees(
-      Translation2d turretFieldPosition, Rotation2d desiredFieldHeading) {
+  private double[] getHubTurretAngleToleranceDegrees(
+      Translation2d turretFieldPosition, Rotation2d desiredFieldHeading, Translation2d SOTMOffset) {
+        Translation2d adjustedNearLeftCorner = AllianceFlipUtil.apply(FieldConstants.Hub.nearLeftCorner).plus(SOTMOffset);
+        Translation2d adjustedNearRightCorner = AllianceFlipUtil.apply(FieldConstants.Hub.nearRightCorner).plus(SOTMOffset);
+        Logger.recordOutput("Launcher/Adjusted Near Left Corner", adjustedNearLeftCorner);
+        Logger.recordOutput("Launcher/Adjusted Near Right Corner", adjustedNearRightCorner);
     return getAngularMarginDegrees(
         turretFieldPosition,
         desiredFieldHeading,
-        AllianceFlipUtil.apply(FieldConstants.Hub.nearLeftCorner),
-        AllianceFlipUtil.apply(FieldConstants.Hub.nearRightCorner));
+        adjustedNearLeftCorner,
+        adjustedNearRightCorner
+      );
   }
 
-  private double getShuttleTurretAngleToleranceDegrees(
-      Translation2d turretFieldPosition, Rotation2d desiredFieldHeading, Translation2d targetPose) {
+  private double[] getShuttleTurretAngleToleranceDegrees(
+      Translation2d turretFieldPosition, Rotation2d desiredFieldHeading, Translation2d targetPose, Translation2d SOTMOffset) {
     double allianceZoneFarX =
         FieldConstants.TrenchZoneBottom.nearAlliance.getX() - 0.5 * FieldConstants.LeftTrench.depth;
     Translation2d upperFieldEdge =
@@ -658,26 +676,38 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
     Translation2d fieldTarget = AllianceFlipUtil.apply(targetPose);
 
     if (fieldTarget.getY() >= FieldConstants.fieldWidth / 2.0) {
-      return getAngularMarginDegrees(
-          turretFieldPosition, desiredFieldHeading, upperFieldEdge, upperLaneEdge);
-    }
 
+      Translation2d adjustedUpperFieldEdge = upperFieldEdge.plus(SOTMOffset);
+      Translation2d adjustedUpperLaneEdge = upperLaneEdge.plus(SOTMOffset);
+      Logger.recordOutput("Launcher/Adjusted Upper Field Edge", adjustedUpperFieldEdge);
+      Logger.recordOutput("Launcher/Adjusted Upper Lane Edge", adjustedUpperLaneEdge);
+      return getAngularMarginDegrees(
+          turretFieldPosition, desiredFieldHeading, adjustedUpperFieldEdge, adjustedUpperLaneEdge);
+    }
+    Translation2d adjustedLowerFieldEdge = lowerFieldEdge.plus(SOTMOffset);
+    Translation2d adjustedLowerLaneEdge = lowerLaneEdge.plus(SOTMOffset);
+    Logger.recordOutput("Launcher/Adjusted Lower Field Edge", adjustedLowerFieldEdge);
+    Logger.recordOutput("Launcher/Adjusted Lower Lane Edge", adjustedLowerLaneEdge);
     return getAngularMarginDegrees(
-        turretFieldPosition, desiredFieldHeading, lowerFieldEdge, lowerLaneEdge);
+        turretFieldPosition, desiredFieldHeading, adjustedLowerFieldEdge, adjustedLowerLaneEdge);
   }
 
-  private double getAngularMarginDegrees(
+private double[] getAngularMarginDegrees(
       Translation2d origin,
       Rotation2d desiredFieldHeading,
       Translation2d boundaryA,
       Translation2d boundaryB) {
-    double boundaryAMarginDegrees =
-        Math.abs(boundaryA.minus(origin).getAngle().minus(desiredFieldHeading).getDegrees());
-    double boundaryBMarginDegrees =
-        Math.abs(boundaryB.minus(origin).getAngle().minus(desiredFieldHeading).getDegrees());
-    return Math.max(
-        MIN_DYNAMIC_TURRET_TOLERANCE_DEGREES,
-        Math.min(boundaryAMarginDegrees, boundaryBMarginDegrees));
+      
+
+    double marginA = boundaryA.minus(origin).getAngle().minus(desiredFieldHeading).getDegrees();
+    double marginB = boundaryB.minus(origin).getAngle().minus(desiredFieldHeading).getDegrees();
+
+    double lowerBound = Math.min(marginA, marginB);
+    double upperBound = Math.max(marginA, marginB);
+    lowerBound = Math.min(lowerBound, -MIN_DYNAMIC_TURRET_TOLERANCE_DEGREES);
+    upperBound = Math.max(upperBound, MIN_DYNAMIC_TURRET_TOLERANCE_DEGREES);
+
+    return new double[] { lowerBound, upperBound };
   }
 
   private Translation2d getTurretFieldPosition(Pose2d robotPose) {
