@@ -5,21 +5,21 @@
     "data": {
       "commands": [
         {
-          "type": "named",
+          "type": "path",
           "data": {
-            "name": "CustomWait"
+            "pathName": "TL-CTR-QTR"
           }
         },
         {
-          "type": "path",
+          "type": "named",
           "data": {
-            "pathName": "DelayTRS-CTR-QTR-BR-HP Longer"
+            "name": "launcherPrep"
           }
         }
       ]
     }
   },
   "resetOdom": true,
-  "folder": "Worlds",
+  "folder": "Left",
   "choreoAuto": false
 }

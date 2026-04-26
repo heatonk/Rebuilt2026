@@ -33,18 +33,20 @@ public class FieldRegions {
       FieldConstants.TrenchZoneBottom.oppAllianceRightDanger.getX();
 
   static Translation2d allianceCornerOrigin = new Translation2d(0, 0);
-  // AllianceCornerTrench extends to the hub's far (field-center-facing) X boundary so that the
-  // allianceField rectangle covers the full alliance side including the area beside the hub far
-  // face. Previously this used TrenchZoneBottom.nearAlliance.x (= hub center X), leaving a ~0.6 m
-  // gap between hub-center and Hub.farLeftCorner where isValidCalculation was always false.
   static Translation2d AllianceCornerTrench =
-      new Translation2d(FieldConstants.Hub.farLeftCorner.getX(), FieldConstants.fieldWidth);
-  // topRight/bottomRightMidTrenchCorner extended to Hub.oppFarLeftCorner.x for the same reason on
-  // the opponent side (covers gap from opp-hub-center to opp-hub-far-face).
+      new Translation2d(
+          FieldConstants.TrenchZoneBottom.nearAlliance.getX()
+              - 1 / 2 * FieldConstants.LeftTrench.depth,
+          FieldConstants.fieldWidth);
   static Translation2d topRightMidTrenchCorner =
-      new Translation2d(FieldConstants.Hub.oppFarLeftCorner.getX(), FieldConstants.fieldWidth);
+      new Translation2d(
+          FieldConstants.TrenchZoneTop.oppAlliance.getX()
+              - 1 / 2 * FieldConstants.RightTrench.depth,
+          FieldConstants.fieldWidth);
   static Translation2d bottomRightMidTrenchCorner =
-      new Translation2d(FieldConstants.Hub.oppFarRightCorner.getX(), 0);
+      new Translation2d(
+          FieldConstants.TrenchZoneTop.oppAlliance.getX() - 1 / 2 * FieldConstants.LeftTrench.depth,
+          0);
   static Translation2d oppTopRightOrigin =
       new Translation2d(FieldConstants.fieldLength, FieldConstants.fieldWidth);
   static Translation2d oppBottemRightOrigin = new Translation2d(FieldConstants.fieldLength, 0);
@@ -83,13 +85,22 @@ public class FieldRegions {
     allianceCornerOrigin = AllianceFlipUtil.apply(new Translation2d(0, 0));
     AllianceCornerTrench =
         AllianceFlipUtil.apply(
-            new Translation2d(FieldConstants.Hub.farLeftCorner.getX(), FieldConstants.fieldWidth));
+            new Translation2d(
+                FieldConstants.TrenchZoneBottom.nearAlliance.getX()
+                    - 1 / 2 * FieldConstants.LeftTrench.depth,
+                FieldConstants.fieldWidth));
     topRightMidTrenchCorner =
         AllianceFlipUtil.apply(
             new Translation2d(
-                FieldConstants.Hub.oppFarLeftCorner.getX(), FieldConstants.fieldWidth));
+                FieldConstants.TrenchZoneTop.oppAlliance.getX()
+                    - 1 / 2 * FieldConstants.RightTrench.depth,
+                FieldConstants.fieldWidth));
     bottomRightMidTrenchCorner =
-        AllianceFlipUtil.apply(new Translation2d(FieldConstants.Hub.oppFarRightCorner.getX(), 0));
+        AllianceFlipUtil.apply(
+            new Translation2d(
+                FieldConstants.TrenchZoneTop.oppAlliance.getX()
+                    - 1 / 2 * FieldConstants.LeftTrench.depth,
+                0));
     oppTopRightOrigin =
         AllianceFlipUtil.apply(
             new Translation2d(FieldConstants.fieldLength, FieldConstants.fieldWidth));

@@ -7,7 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "TRSide-CTR-QTR"
+            "pathName": "TR-CTR-QTR"
           }
         },
         {
@@ -25,7 +25,7 @@
         {
           "type": "wait",
           "data": {
-            "waitTime": 3.0
+            "waitTime": 3.5
           }
         },
         {
@@ -37,7 +37,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "TR-CTR-QTR-BR-HP Longer"
+            "pathName": "TR-CTR-QTR-BR-HP"
           }
         },
         {
@@ -50,6 +50,6 @@
     }
   },
   "resetOdom": true,
-  "folder": "Worlds",
+  "folder": "Right",
   "choreoAuto": false
 }

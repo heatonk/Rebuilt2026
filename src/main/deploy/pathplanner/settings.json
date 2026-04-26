@@ -2,19 +2,14 @@
   "robotWidth": 0.89535,
   "robotLength": 0.89535,
   "holonomicMode": true,
-  "pathFolders": [
-    "Center",
-    "Left",
-    "Misc",
-    "Right"
-  ],
+  "pathFolders": [],
   "autoFolders": [
     "AllianceSide",
     "Center",
     "Left",
+    "untested",
     "Orbit",
-    "Right",
-    "Worlds"
+    "Right"
   ],
   "defaultMaxVel": 4.0,
   "defaultMaxAccel": 9.0,

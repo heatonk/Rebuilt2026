@@ -9,7 +9,7 @@
       "prevControl": null,
       "nextControl": {
         "x": 8.158335446482184,
-        "y": 7.75592098438274
+        "y": 7.755920984382741
       },
       "isLocked": false,
       "linkedName": "QTRLH"
@@ -92,7 +92,7 @@
     "rotation": 0.0
   },
   "reversed": false,
-  "folder": "Left",
+  "folder": null,
   "idealStartingState": {
     "velocity": 0,
     "rotation": -118.17859010995926

@@ -14,10 +14,8 @@
 package org.frc5010.common.drive.swerve.akit;
 
 import static edu.wpi.first.units.Units.Radians;
-import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
-import edu.wpi.first.math.geometry.Rotation2d;
 import java.util.Arrays;
 import org.frc5010.common.drive.swerve.AkitSwerveConfig;
 import org.frc5010.common.drive.swerve.akit.util.PhoenixUtil;
@@ -44,14 +42,6 @@ public class ModuleIOTalonFXSim extends ModuleIOTalonFX {
   @Override
   public void updateInputs(ModuleIOInputs inputs) {
     super.updateInputs(inputs);
-
-    // In simulation, report the authoritative MapleSim wheel and steering state directly.
-    inputs.drivePositionRad = simulation.getDriveWheelFinalPosition().in(Radians);
-    inputs.driveVelocityRadPerSec = simulation.getDriveWheelFinalSpeed().in(RadiansPerSecond);
-    Rotation2d steerAngle = Rotation2d.fromRadians(simulation.getSteerAbsoluteAngle().in(Radians));
-    inputs.turnPosition = steerAngle;
-    inputs.turnAbsolutePosition = steerAngle;
-    inputs.turnVelocityRadPerSec = simulation.getSteerAbsoluteEncoderSpeed().in(RadiansPerSecond);
 
     // Update odometry inputs
     inputs.odometryTimestamps = PhoenixUtil.getSimulationOdometryTimeStamps();

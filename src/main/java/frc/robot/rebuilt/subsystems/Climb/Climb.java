@@ -6,19 +6,13 @@ package frc.robot.rebuilt.subsystems.Climb;
 
 import static edu.wpi.first.units.Units.Meters;
 
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.robot.rebuilt.Rebuilt;
 import frc.robot.rebuilt.commands.ClimbCommands.ClimbState;
 import org.frc5010.common.arch.GenericSubsystem;
 import org.frc5010.common.sensors.Controller;
-import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 /** The class climb controlls the climb */
@@ -92,25 +86,5 @@ public class Climb extends GenericSubsystem {
 
   public void setRequestedState(ClimbState state) {
     inputs.stateRequested = state;
-  }
-
-  /**
-   * Returns the field-relative 3D pose of the climber for AdvantageScope visualization. Log key:
-   * {@code Climb/ComponentPoses}.
-   *
-   * <p>The climber is modelled as a vertical extension from the rear of the robot. The pose Z
-   * component rises with {@code inputs.climbHeight}. The mount offset is a placeholder — adjust the
-   * X/Y/Z values to match the actual climber base position from climb.json.
-   */
-  @AutoLogOutput(key = "Climb/ComponentPoses")
-  public Pose3d[] getComponentPoses() {
-    Pose3d robotPose = Rebuilt.drivetrain.getPoseEstimator().getCurrentPose3d();
-    // Climber base: 0.3 m behind center (-X), centered laterally (Y=0), 0.2 m above floor (+Z).
-    // Translates upward by the current climb extension height.
-    Pose3d climbPose =
-        robotPose.transformBy(
-            new Transform3d(
-                new Translation3d(-0.3, 0, 0.2 + inputs.climbHeight.in(Meters)), new Rotation3d()));
-    return new Pose3d[] {climbPose};
   }
 }

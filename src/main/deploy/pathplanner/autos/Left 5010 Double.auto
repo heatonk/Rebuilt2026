@@ -50,6 +50,6 @@
     }
   },
   "resetOdom": true,
-  "folder": "Worlds",
+  "folder": "Left",
   "choreoAuto": false
 }

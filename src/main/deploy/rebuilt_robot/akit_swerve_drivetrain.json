@@ -156,7 +156,7 @@
     },
     "wheelCOF": 1.2,
     "slipCurrent": {
-      "val": 1000,
+      "val": 120,
       "uom": "amps"
     },
     "canbus": "canivore",

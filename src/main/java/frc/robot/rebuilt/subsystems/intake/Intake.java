@@ -5,12 +5,7 @@
 package frc.robot.rebuilt.subsystems.intake;
 
 import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Radians;
 
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -21,7 +16,6 @@ import frc.robot.rebuilt.commands.IntakeCommands;
 import frc.robot.rebuilt.commands.IntakeCommands.IntakeState;
 import org.frc5010.common.arch.GenericSubsystem;
 import org.frc5010.common.sensors.Controller;
-import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class Intake extends GenericSubsystem {

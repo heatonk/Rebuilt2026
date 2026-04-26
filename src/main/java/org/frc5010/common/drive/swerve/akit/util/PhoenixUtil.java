@@ -29,15 +29,13 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
 import java.util.function.Supplier;
 import swervelib.simulation.ironmaple.simulation.SimulatedArena;
+import swervelib.simulation.ironmaple.simulation.motorsims.SimulatedBattery;
 import swervelib.simulation.ironmaple.simulation.motorsims.SimulatedMotorController;
 
 public final class PhoenixUtil {
-  private static final double SIM_DRIVE_KP_RAD = 0.05;
-
   /** Attempts to run the command until no error is produced. */
   public static void tryUntilOk(int maxAttempts, Supplier<StatusCode> command) {
     for (int i = 0; i < maxAttempts; i++) {
@@ -66,7 +64,7 @@ public final class PhoenixUtil {
         AngularVelocity encoderVelocity) {
       talonFXSimState.setRawRotorPosition(encoderAngle);
       talonFXSimState.setRotorVelocity(encoderVelocity);
-      talonFXSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
+      talonFXSimState.setSupplyVoltage(SimulatedBattery.getBatteryVoltage());
       return talonFXSimState.getMotorVoltageMeasure();
     }
   }
@@ -128,8 +126,6 @@ public final class PhoenixUtil {
         .withSteerMotorInverted(false)
         // Disable CanCoder inversion
         .withEncoderInverted(false)
-        // Use simulation-specific drive gains tuned for the MapleSim physics model.
-        .withDriveMotorGains(getSimulationDriveGains(moduleConstants))
         // Adjust steer motor PID gains for simulation
         .withSteerMotorGains(
             new Slot0Configs()
@@ -145,27 +141,6 @@ public final class PhoenixUtil {
         .withDriveFrictionVoltage(Volts.of(0.1))
         .withSteerFrictionVoltage(Volts.of(0.05))
         // Adjust steer inertia
-        .withSteerInertia(KilogramSquareMeters.of(0.05))
-        // Raise slip current far above operating range in simulation. MapleSim already
-        // enforces tire slip via its gripping force model (mass × g × COF). The Phoenix
-        // stator current limit applies at low wheel speeds when back-EMF is small,
-        // reducing applied voltage to ~4V and preventing the robot from accelerating.
-        .withSlipCurrent(800.0);
-  }
-
-  private static Slot0Configs getSimulationDriveGains(
-      SwerveModuleConstants<?, ?, ?> moduleConstants) {
-    double speedAt12VoltsMetersPerSecond = Math.max(moduleConstants.SpeedAt12Volts, 1e-6);
-    double driveKvRot =
-        12.0 * 2.0 * Math.PI * moduleConstants.WheelRadius / speedAt12VoltsMetersPerSecond;
-    double driveKpRot = SIM_DRIVE_KP_RAD * 2.0 * Math.PI;
-
-    return new Slot0Configs()
-        .withKP(driveKpRot)
-        .withKI(0)
-        .withKD(0)
-        .withKS(0)
-        .withKV(driveKvRot)
-        .withKA(0);
+        .withSteerInertia(KilogramSquareMeters.of(0.05));
   }
 }

@@ -15,7 +15,6 @@ import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
-import swervelib.simulation.ironmaple.simulation.SimulatedArena;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -155,9 +154,6 @@ public class Robot extends LoggedRobot {
     // schedule the autonomous command (example)
     if (m_autonomousCommand != null) {
       CommandScheduler.getInstance().schedule(m_autonomousCommand);
-    }
-    if (Robot.isSimulation()) {
-      SimulatedArena.getInstance().resetFieldForAuto();
     }
   }
 

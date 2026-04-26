@@ -5,15 +5,16 @@
     "data": {
       "commands": [
         {
-          "type": "wait",
+          "type": "parallel",
           "data": {
-            "waitTime": 3.0
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "StartTR-CTR-HLF-BR-HP"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "TR-CTR"
+                }
+              }
+            ]
           }
         }
       ]

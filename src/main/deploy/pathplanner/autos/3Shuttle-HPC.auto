@@ -5,33 +5,33 @@
     "data": {
       "commands": [
         {
-          "type": "named",
+          "type": "path",
           "data": {
-            "name": "CustomWait"
+            "pathName": "TR-QTRH"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "DelayTRS-QTRL"
+            "pathName": "CTR-NWALL"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "QTRLeft-HP"
+            "pathName": "3RD-SWIPE"
           }
         },
         {
-          "type": "named",
+          "type": "path",
           "data": {
-            "name": "launcherPrep"
+            "pathName": "NWALL-CLIMB"
           }
         }
       ]
     }
   },
   "resetOdom": true,
-  "folder": "Worlds",
+  "folder": "Right",
   "choreoAuto": false
 }

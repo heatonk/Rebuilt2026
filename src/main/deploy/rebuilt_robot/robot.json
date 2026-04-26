@@ -9,7 +9,7 @@
   "wheelDiameterUom": "m",
   "physicalMaxSpeed": 5.93,
   "physicalMaxSpeedUom": "m/s",
-  "driveMotorGearRatio": 6.0,
+  "driveMotorGearRatio": 1.0,
   "loadSimulatedField": true,
   "gamePieceA": "Fuel"
 }
