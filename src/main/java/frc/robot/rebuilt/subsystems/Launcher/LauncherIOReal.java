@@ -28,6 +28,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DigitalInput;
@@ -639,7 +640,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
         currentPose.getRotation().plus(Rotation2d.fromRadians(desiredTurretAngle.in(Radians)));
 
     if (targetProfile == TargetProfile.HUB) {
-      return getHubTurretAngleToleranceDegrees(turretFieldPosition, desiredFieldHeading, SOTMOffset);
+      return getHubTurretAngleToleranceDegrees(turretFieldPosition, desiredFieldHeading, SOTMOffset , Meters.of(targetPose.minus(currentPose.getTranslation()).plus(SOTMOffset).getNorm()));
     }
 
     return getShuttleTurretAngleToleranceDegrees(
@@ -647,17 +648,13 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   }
 
   private double[] getHubTurretAngleToleranceDegrees(
-      Translation2d turretFieldPosition, Rotation2d desiredFieldHeading, Translation2d SOTMOffset) {
+      Translation2d turretFieldPosition, Rotation2d desiredFieldHeading, Translation2d SOTMOffset, Distance distanceToVirtualTarget) {
         Translation2d adjustedNearLeftCorner = AllianceFlipUtil.apply(FieldConstants.Hub.nearLeftCorner).plus(SOTMOffset);
         Translation2d adjustedNearRightCorner = AllianceFlipUtil.apply(FieldConstants.Hub.nearRightCorner).plus(SOTMOffset);
         Logger.recordOutput("Launcher/Adjusted Near Left Corner", adjustedNearLeftCorner);
         Logger.recordOutput("Launcher/Adjusted Near Right Corner", adjustedNearRightCorner);
-    return getAngularMarginDegrees(
-        turretFieldPosition,
-        desiredFieldHeading,
-        adjustedNearLeftCorner,
-        adjustedNearRightCorner
-      );
+        double toleranceDegrees = Math.max(Math.toDegrees(Math.atan(FieldConstants.Hub.innerWidth / 2 / distanceToVirtualTarget.in(Meters))), MIN_DYNAMIC_TURRET_TOLERANCE_DEGREES);
+    return new double[] { -toleranceDegrees, toleranceDegrees };
   }
 
   private double[] getShuttleTurretAngleToleranceDegrees(
