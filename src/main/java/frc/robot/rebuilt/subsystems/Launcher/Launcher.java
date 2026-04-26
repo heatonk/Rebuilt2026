@@ -232,10 +232,7 @@ public class Launcher extends GenericSubsystem {
    * @return true if the robot is at the desired speed and angle, false otherwise.
    */
   public boolean isAtGoal() {
-    return inputs.flyWheelSpeedAtGoal
-        && inputs.hoodAngleAtGoal
-        && inputs.turretAngleAtGoal
-        && inputs.isValidCalculation;
+    return inputs.flyWheelSpeedAtGoal && inputs.turretAngleAtGoal && inputs.isValidCalculation;
   }
 
   public boolean isOKToFire() {
