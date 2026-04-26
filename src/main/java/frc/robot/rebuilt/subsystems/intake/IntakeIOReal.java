@@ -225,7 +225,7 @@ public class IntakeIOReal implements IntakeIO {
         Math.abs(hopperVelocityDegreesPerSecond)
             > Constants.Intake.HOPPER_MOVING_VELOCITY_THRESHOLD;
     inputs.hopperStalling = Math.abs(hopperAmps) > Constants.Intake.HOPPER_STALL_CURRENT_THRESHOLD;
-    inputs.hopperHardStopDetected = inputs.hopperStalling && !inputs.hopperMoving;
+    inputs.hopperHardStopDetected = inputs.hopperStalling;
 
     Logger.recordOutput("Hopper Velocity", hopperVelocityDegreesPerSecond);
     Logger.recordOutput("Hopper Moving", inputs.hopperMoving);
