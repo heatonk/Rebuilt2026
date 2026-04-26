@@ -44,7 +44,7 @@ public class LauncherCommands {
   private State hammerTimeState;
   private State autoHammerTimeState;
   private State escapeHammerTimeState;
-  private static Launcher launcher;
+  static Launcher launcher;
   private static Intake intake;
   private static GenericDrivetrain drivetrain;
   private Map<String, GenericSubsystem> subsystems;
@@ -70,6 +70,8 @@ public class LauncherCommands {
    * false to allow churning at any time regardless of flywheel speed.
    */
   public static boolean requireFlywheelAtGoalForChurn = true;
+
+  private ShotTuningCommand shotTuningCommand;
 
   public static Translation2d getRobotToTarget(Translation2d target) {
     return target.minus(drivetrain.getPoseEstimator().getCurrentPose().getTranslation());
@@ -100,6 +102,19 @@ public class LauncherCommands {
 
     drivetrain = (GenericDrivetrain) this.subsystems.get(ConfigConstants.DRIVETRAIN);
     configureStateMachine();
+
+    shotTuningCommand =
+        new ShotTuningCommand(launcher, launcher)
+            .withDistanceSupplier(
+                () ->
+                    drivetrain
+                        .getPoseEstimator()
+                        .getCurrentPose()
+                        .getTranslation()
+                        .getDistance(hubTarget))
+            .withHoodAngleSupplier(() -> launcher.getHoodAngleActual().in(Degrees))
+            .withFlywheelSpeedSupplier(() -> launcher.getFlywheelSpeedActual().in(RPM))
+            .withTurretAngleSupplier(() -> launcher.getTurretAngleActual().in(Degrees));
   }
   /** sets the state machine as the default command of the launcher */
   public void setDefaultCommands() {
@@ -199,13 +214,6 @@ public class LauncherCommands {
 
     driver.createAButton().onTrue(shouldLowCommand()).onFalse(shouldLowCommand());
 
-    operator
-        .createLeftPovButton()
-        .onTrue(Commands.runOnce(() -> ShotCalculator.incrementFlywheelMultiplier(-0.01)));
-    operator
-        .createRightPovButton()
-        .onTrue(Commands.runOnce(() -> ShotCalculator.incrementFlywheelMultiplier(0.01)));
-
     operator.createAButton().whileTrue(towerPresetStateCommand()).onFalse(shouldLowCommand());
 
     operator
@@ -247,14 +255,25 @@ public class LauncherCommands {
 
     operator
         .createUpPovButton()
-        .onTrue(
-            Commands.runOnce(() -> ShotCalculator.incrementFlywheelMultiplier(0.01))
-                .ignoringDisable(true));
+        .onTrue(Commands.runOnce(() -> ShotTuningCommand.increaseHoodAngle()).ignoringDisable(true))
+        .whileTrue(shotTuningCommand);
     operator
         .createDownPovButton()
+        .onTrue(Commands.runOnce(() -> ShotTuningCommand.decreaseHoodAngle()).ignoringDisable(true))
+        .whileTrue(shotTuningCommand);
+    operator
+        .createRightPovButton()
         .onTrue(
-            Commands.runOnce(() -> ShotCalculator.incrementFlywheelMultiplier(-0.01))
-                .ignoringDisable(true));
+            Commands.runOnce(() -> ShotTuningCommand.increaseFlywheelSpeed()).ignoringDisable(true))
+        .whileTrue(shotTuningCommand);
+    operator
+        .createLeftPovButton()
+        .onTrue(
+            Commands.runOnce(() -> ShotTuningCommand.decreaseFlywheelSpeed()).ignoringDisable(true))
+        .whileTrue(shotTuningCommand);
+    operator
+        .createBackButton()
+        .onTrue(Commands.runOnce(() -> ShotTuningCommand.confirmOptimal()).ignoringDisable(true));
   }
 
   /** creates command behavior for the IDLE launcher state */
