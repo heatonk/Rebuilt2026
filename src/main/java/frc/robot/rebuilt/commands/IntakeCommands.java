@@ -164,7 +164,7 @@ public class IntakeCommands {
                     // First deploy homes open-loop until it sees the deployed hard stop.
                     intake.runHopper(Constants.Intake.HOPPER_FIRST_DEPLOY_DUTY);
                   } else if (intake.getHopperAngle().gt(Degrees.of(5))
-                      || runSpeed > Constants.Intake.INTAKE_IN
+                      // || runSpeed > Constants.Intake.INTAKE_IN
                       || RobotState.isAutonomous()) {
                     // Still settling or forcing — duty cycle nudge
                     intake.runHopper(Constants.Intake.HOPPER_FIRST_DEPLOY_DUTY);

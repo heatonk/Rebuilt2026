@@ -21,7 +21,7 @@
   "useTorqueCurrentFOC": false,
   "motorSystemId": {
     "feedBack": {
-      "p": 25,
+      "p": 40,
       "i": 0.0,
       "d": 5.0
     },
