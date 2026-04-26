@@ -12,7 +12,6 @@ public class NamedCommandsReg {
     NamedCommands.registerCommand("launcherIdle", LauncherCommands.shouldIdleCommand());
     // intake
     NamedCommands.registerCommand("intakeIntake", IntakeCommands.shouldIntaking());
-    NamedCommands.registerCommand("intakeOuttake", IntakeCommands.shouldOuttaking());
     NamedCommands.registerCommand("intakeRetracted", IntakeCommands.shouldRetracted());
     NamedCommands.registerCommand("intakeRetracting", IntakeCommands.shouldRetracting());
     // climb
@@ -30,5 +29,6 @@ public class NamedCommandsReg {
     NamedCommands.registerCommand("towerPreset", LauncherCommands.towerPresetStateCommand());
     NamedCommands.registerCommand(
         "towerForwardPreset", LauncherCommands.turretForwardPresetStateCommand());
+    NamedCommands.registerCommand("WaitUntilIntaking", IntakeCommands.waitUntilIntaking());
   }
 }

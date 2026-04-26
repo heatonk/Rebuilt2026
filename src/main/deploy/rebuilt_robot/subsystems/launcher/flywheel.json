@@ -5,7 +5,7 @@
     "motorType": "KrakenX60",
     "canId": 16,
     "inverted": true,
-    "logLevel": "HIGH",
+    "logLevel": "LOW",
     "currentLimit": {
       "val": 80,
       "uom": "amps"

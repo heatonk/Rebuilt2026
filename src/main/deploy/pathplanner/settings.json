@@ -1,16 +1,28 @@
 {
-  "robotWidth": 0.8,
-  "robotLength": 0.8,
+  "robotWidth": 0.89535,
+  "robotLength": 0.89535,
   "holonomicMode": true,
-  "pathFolders": [],
-  "autoFolders": [],
+  "pathFolders": [
+    "Center",
+    "Left",
+    "Misc",
+    "Right"
+  ],
+  "autoFolders": [
+    "AllianceSide",
+    "Center",
+    "Left",
+    "Orbit",
+    "Right",
+    "Worlds"
+  ],
   "defaultMaxVel": 4.0,
   "defaultMaxAccel": 2.5,
   "defaultMaxAngVel": 540.0,
   "defaultMaxAngAccel": 720.0,
   "defaultNominalVoltage": 12.0,
-  "robotMass": 72.5747791,
-  "robotMOI": 6.883,
+  "robotMass": 58.967,
+  "robotMOI": 8.0968,
   "robotTrackwidth": 0.546,
   "driveWheelRadius": 0.051,
   "driveGearing": 6.0,
@@ -30,6 +42,7 @@
   "bumperOffsetY": 0.0,
   "robotFeatures": [
     "{\"name\":\"Rectangle\",\"type\":\"rounded_rect\",\"data\":{\"center\":{\"x\":0.3,\"y\":0.0},\"size\":{\"width\":0.2,\"length\":0.2},\"borderRadius\":0.05,\"strokeWidth\":0.02,\"filled\":true}}",
-    "{\"name\":\"Rectangle\",\"type\":\"rounded_rect\",\"data\":{\"center\":{\"x\":0.55,\"y\":0.0},\"size\":{\"width\":0.8,\"length\":0.3},\"borderRadius\":0.05,\"strokeWidth\":0.02,\"filled\":false}}"
+    "{\"name\":\"Intake\",\"type\":\"rounded_rect\",\"data\":{\"center\":{\"x\":0.55,\"y\":0.0},\"size\":{\"width\":0.65386,\"length\":0.3},\"borderRadius\":0.05,\"strokeWidth\":0.02,\"filled\":false}}",
+    "{\"name\":\"Robot Perimeter\",\"type\":\"rounded_rect\",\"data\":{\"center\":{\"x\":0.0,\"y\":0.0},\"size\":{\"width\":0.6858,\"length\":0.6858},\"borderRadius\":0.05,\"strokeWidth\":0.01,\"filled\":false}}"
   ]
 }

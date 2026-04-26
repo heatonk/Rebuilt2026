@@ -1,6 +1,5 @@
 {
   "download": {
-    "deleteAfter": false,
     "localDir": "C:\\Users\\robot\\Downloads\\AllLogs",
     "remoteDir": "/u/logs",
     "serverTeam": "5010"

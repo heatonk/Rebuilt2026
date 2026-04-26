@@ -40,10 +40,17 @@ import org.frc5010.common.drive.GenericDrivetrain;
 import org.frc5010.common.drive.pose.DrivePoseEstimator;
 import org.frc5010.common.drive.pose.DrivePoseEstimator.State;
 import org.frc5010.common.drive.pose.PoseProvider;
+import org.frc5010.common.drive.pose.VisionIOInputsAutoLogged;
 import org.frc5010.common.drive.swerve.GenericSwerveDrivetrain;
 
 /** Add your docs here. */
 public class QuestNavOld implements PoseProvider {
+  /** Per-instance inputs — each QuestNav has its own object */
+  private final VisionIOInputsAutoLogged input = new VisionIOInputsAutoLogged();
+  /** Per-instance disconnected alert */
+  private final edu.wpi.first.wpilibj.Alert disconnectedAlert =
+      new edu.wpi.first.wpilibj.Alert("QuestNav", edu.wpi.first.wpilibj.Alert.AlertType.kWarning);
+
   private boolean initializedPosition = false;
   public static boolean isActive = false;
   private String networkTableRoot = "questnav";
@@ -113,6 +120,16 @@ public class QuestNavOld implements PoseProvider {
     this.networkTableRoot = networkTableRoot;
     setupNetworkTables(networkTableRoot);
     setupInitialTimestamp();
+  }
+
+  @Override
+  public VisionIOInputsAutoLogged getInput() {
+    return input;
+  }
+
+  @Override
+  public int getCameraIndex() {
+    return 0;
   }
 
   private void setupInitialTimestamp() {

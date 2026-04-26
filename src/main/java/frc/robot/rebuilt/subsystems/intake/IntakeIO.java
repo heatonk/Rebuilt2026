@@ -14,15 +14,26 @@ public interface IntakeIO {
     public IntakeCommands.IntakeState stateRequested = IntakeCommands.IntakeState.UNKNOWN;
     public IntakeCommands.IntakeState stateCurrent = IntakeCommands.IntakeState.UNKNOWN;
     public double speed = 0.0;
-    public Angle hopperAngle = Degrees.of(0.0);
-    public double hopperAngleDouble = 0.0;
+    public Angle hopperAngleActual = Degrees.of(0.0);
+    public double hopperAngleDegrees = 0.0;
+    public double hopperVelocityDegreesPerSecond = 0.0;
     public double hopperAmps = 0;
+    public boolean hopperMoving = false;
+    public boolean hopperStalling = false;
+    public boolean hopperHardStopDetected = false;
+
+    public Angle hopperAngleDesired = Degrees.of(0);
+    public double hopperAngleError = 0.0;
+    public boolean hopperAtGoal = true;
+    public boolean hopperZeroed = false;
     public int simulatedGamepieces = 0;
   }
 
   public void runSpintake(double speed);
 
-  public void setHopperAngle(Angle angle);
+  public void runSpintakes(double outerSpeed, double innerSpeed);
+
+  public Command setHopperAngle(Angle angle);
 
   public void setHopperPosition(Angle angle);
 
@@ -33,6 +44,8 @@ public interface IntakeIO {
   public boolean isDeployed();
 
   public boolean isHopperStalling();
+
+  public boolean isHopperAtLocation(Angle location);
 
   public void runHopper(double speed);
 

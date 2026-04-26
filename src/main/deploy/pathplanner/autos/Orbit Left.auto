@@ -1,0 +1,80 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "TL-QTRH"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "launcherLow"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "QTRLong-TL"
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "launcherPrep"
+                }
+              },
+              {
+                "type": "wait",
+                "data": {
+                  "waitTime": 3.0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "launcherLow"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "TL-CTR-QTR"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "QTRL-MID"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "launcherPrep"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "launcherLow"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": "Left",
+  "choreoAuto": false
+}

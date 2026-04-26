@@ -24,7 +24,8 @@ import frc.robot.rebuilt.Rebuilt;
 import frc.robot.rebuilt.subsystems.Launcher.TurretControlPhysics.AimingSolution;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.function.DoubleFunction;
+import java.util.function.BiFunction;
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import lombok.experimental.ExtensionMethod;
 import org.frc5010.common.constants.Constants;
@@ -53,19 +54,25 @@ public class ShotCalculator {
   private Rotation2d minTurretAngle = Rotation2d.fromDegrees(-165.0);
   private Rotation2d maxTurretAngle = Rotation2d.fromDegrees(165.0);
   private Rotation2d feedforwardPaddingAngle = Rotation2d.fromDegrees(10.0);
-  private double settlingGain = 0.85;
+  private double settlingGain = 0.00;
   // Default turret motion constraints (overridden via setTurretMotionConstraints).
   // These represent the practical maximum velocity (360 °/s) and acceleration (720 °/s²)
   // until real SysId values are provided.
   private double turretMaxVelocityRadPerSec = Math.toRadians(360.0);
   private double turretMaxAccelRadPerSecSq = Math.toRadians(720.0);
-  private DoubleFunction<Double> settlingTimeFunction =
-      TurretControlPhysics.trapezoidalSettlingTimeFunction(
+  private BiFunction<Double, Double, Double> settlingTimeFunction =
+      TurretControlPhysics.velocityAwareSettlingTimeFunction(
           turretMaxVelocityRadPerSec, turretMaxAccelRadPerSecSq);
+  private DoubleSupplier turretVelocitySupplier = () -> 0.0;
   private final String targetName = "Target";
   private final String lookAhead = "Lookahead";
   private final String virtualTarget = "VirtualTarget";
   private final String turret = "Turret";
+
+  public enum ShotProfile {
+    NORMAL,
+    SHUTTLE
+  }
 
   public static ShotCalculator getInstance() {
     if (instance == null) instance = new ShotCalculator();
@@ -84,7 +91,11 @@ public class ShotCalculator {
 
   // Cache parameters
   private ShootingParameters latestParameters = null;
-  public static double flywheelMultiplier = 1.0;
+  public static double flywheelMultiplier = 1.05;
+
+  private static ShotTables normalShotTables = createDefaultTables();
+  private static ShotTables shuttleShotTables = copyShotTables(normalShotTables);
+  private ShotProfile activeShotProfile = ShotProfile.NORMAL;
 
   private static double minDistance;
   private static double maxDistance;
@@ -140,42 +151,80 @@ public class ShotCalculator {
       double hoodAngleReferenceRadians) {}
 
   static {
-    applyShotTables(createDefaultTables());
+    applyShotTables(normalShotTables);
   }
+
+  private static Rotation2d legacyHoodAngle(double legacyAngleDegrees) {
+    return Rotation2d.fromDegrees(
+        frc.robot.rebuilt.Constants.Launcher.offsetLegacyHoodAngleDegrees(legacyAngleDegrees));
+  }
+
   /** Creates default hood angle, flywheel speeds, and time of light tables */
   public static ShotTables createDefaultTables() {
-    final double offset = 0.5969;
     return new ShotTables(
         Map.ofEntries(
-            Map.entry(2.0796297600462808, Rotation2d.fromDegrees(33.0)),
-            Map.entry(2.3644814757115706, Rotation2d.fromDegrees(34.0)),
-            Map.entry(2.7648598116063776, Rotation2d.fromDegrees(35.0)),
-            Map.entry(3.2194779503261004, Rotation2d.fromDegrees(38.0)),
-            Map.entry(3.53088512698516, Rotation2d.fromDegrees(39.0)),
-            Map.entry(3.9268571046742813, Rotation2d.fromDegrees(40.0)),
-            Map.entry(4.317290273504823, Rotation2d.fromDegrees(42.0)),
-            Map.entry(4.540307519714445, Rotation2d.fromDegrees(43.0)),
-            Map.entry(5.77893560525366, Rotation2d.fromDegrees(45.0)),
-            Map.entry(6.35214199070158, Rotation2d.fromDegrees(47.0))),
+            Map.entry(1.4156, legacyHoodAngle(33.00)),
+            Map.entry(2.0796, legacyHoodAngle(35.03)),
+            Map.entry(2.3645, legacyHoodAngle(36.91)),
+            Map.entry(2.7649, legacyHoodAngle(39.13)),
+            Map.entry(3.0481, legacyHoodAngle(41.87)),
+            Map.entry(3.2195, legacyHoodAngle(43.25)),
+            Map.entry(3.5309, legacyHoodAngle(44.69)),
+            Map.entry(3.7474, legacyHoodAngle(45.55)),
+            Map.entry(3.9269, legacyHoodAngle(46.17)),
+            Map.entry(4.3173, legacyHoodAngle(48.64)),
+            Map.entry(4.5403, legacyHoodAngle(49.80)),
+            Map.entry(4.8099, legacyHoodAngle(50.44)),
+            Map.entry(5.2494, legacyHoodAngle(51.14)),
+            Map.entry(5.2859, legacyHoodAngle(51.20)),
+            Map.entry(5.7789, legacyHoodAngle(51.55)),
+            Map.entry(6.3521, legacyHoodAngle(53.04)),
+            Map.entry(10.9907, legacyHoodAngle(51.84)),
+            Map.entry(13.0240, legacyHoodAngle(55.00))),
         Map.ofEntries(
-            Map.entry(2.0796297600462808, 97.0),
-            Map.entry(2.3644814757115706, 103.0),
-            Map.entry(2.7648598116063776, 105.0),
-            Map.entry(3.2194779503261004, 107.0),
-            Map.entry(3.53088512698516, 110.0),
-            Map.entry(3.9268571046742813, 113.0),
-            Map.entry(4.317290273504823, 115.0),
-            Map.entry(4.540307519714445, 117.0),
-            Map.entry(5.77893560525366, 127.0),
-            Map.entry(6.35214199070158, 133.0)),
+            Map.entry(1.4156, 88.00),
+            Map.entry(2.0796, 88.41),
+            Map.entry(2.3645, 94.58),
+            Map.entry(2.7649, 96.83),
+            Map.entry(3.0481, 98.25),
+            Map.entry(3.2195, 99.25),
+            Map.entry(3.5309, 102.69),
+            Map.entry(3.7474, 104.64),
+            Map.entry(3.9269, 106.00),
+            Map.entry(4.3173, 108.00),
+            Map.entry(4.5403, 110.00),
+            Map.entry(4.8099, 112.18),
+            Map.entry(5.2494, 115.97),
+            Map.entry(5.2859, 114.77),
+            Map.entry(5.7789, 119.21),
+            Map.entry(6.3521, 125.75),
+            Map.entry(10.9907, 155.09),
+            Map.entry(13.0240, 172.00)),
         Map.ofEntries(
-            Map.entry(2.11, 1.04),
-            Map.entry(3.92, 1.19),
-            Map.entry(4.10, 1.22),
-            Map.entry(5.58, 1.28)),
+            Map.entry(1.5090, 0.4958),
+            Map.entry(2.9721, 0.5083),
+            Map.entry(3.6098, 0.5125),
+            Map.entry(4.1380, 0.5083),
+            Map.entry(5.0046, 0.5167),
+            Map.entry(5.4947, 0.5542),
+            Map.entry(6.7420, 0.7000)),
         0.7,
-        10.0,
+        100.0,
         0.03);
+  }
+
+  public static ShotTables copyShotTables(ShotTables source) {
+    if (source == null) {
+      return createDefaultTables();
+    }
+
+    return new ShotTables(
+        new TreeMap<>(source.hoodAngles()),
+        new TreeMap<>(source.flywheelSpeeds()),
+        new TreeMap<>(source.timeOfFlightSeconds()),
+        source.minDistanceMeters(),
+        source.maxDistanceMeters(),
+        source.phaseDelaySeconds());
   }
 
   public static ShotTables createBallisticTables(BallisticConfig config) {
@@ -392,7 +441,32 @@ public class ShotCalculator {
   }
 
   public void setShotTables(ShotTables tables) {
-    applyShotTables(tables);
+    normalShotTables = tables != null ? tables : createDefaultTables();
+    if (activeShotProfile == ShotProfile.NORMAL) {
+      applyShotTables(normalShotTables);
+    }
+    latestParameters = null;
+    turretControlPhysics = null;
+  }
+
+  public void setShuttleShotTables(ShotTables tables) {
+    shuttleShotTables = tables != null ? tables : copyShotTables(normalShotTables);
+    if (activeShotProfile == ShotProfile.SHUTTLE) {
+      applyShotTables(shuttleShotTables);
+    }
+    latestParameters = null;
+    turretControlPhysics = null;
+  }
+
+  public void useShotProfile(ShotProfile shotProfile) {
+    ShotProfile requestedProfile = shotProfile != null ? shotProfile : ShotProfile.NORMAL;
+    if (activeShotProfile == requestedProfile) {
+      return;
+    }
+
+    activeShotProfile = requestedProfile;
+    applyShotTables(
+        activeShotProfile == ShotProfile.SHUTTLE ? shuttleShotTables : normalShotTables);
     latestParameters = null;
     turretControlPhysics = null;
   }
@@ -426,7 +500,8 @@ public class ShotCalculator {
     turretControlPhysics = null;
   }
 
-  public void setSettlingTimeFunction(DoubleFunction<Double> function, double newSettlingGain) {
+  public void setSettlingTimeFunction(
+      BiFunction<Double, Double, Double> function, double newSettlingGain) {
     if (function != null) {
       settlingTimeFunction = function;
     }
@@ -450,10 +525,22 @@ public class ShotCalculator {
     turretMaxVelocityRadPerSec = maxVelocityRadPerSec;
     turretMaxAccelRadPerSecSq = maxAccelRadPerSecSq;
     settlingTimeFunction =
-        TurretControlPhysics.trapezoidalSettlingTimeFunction(
+        TurretControlPhysics.velocityAwareSettlingTimeFunction(
             turretMaxVelocityRadPerSec, turretMaxAccelRadPerSecSq);
     settlingGain = newSettlingGain;
     turretControlPhysics = null;
+  }
+
+  /**
+   * Sets the supplier for the current turret angular velocity. This is used by the velocity-aware
+   * settling time function to account for turret momentum when predicting time-to-arrival.
+   *
+   * @param supplier a {@link DoubleSupplier} returning the current turret velocity in rad/s
+   */
+  public void setTurretVelocitySupplier(DoubleSupplier supplier) {
+    if (supplier != null) {
+      turretVelocitySupplier = supplier;
+    }
   }
 
   public ShootingParameters getParameters(
@@ -485,10 +572,12 @@ public class ShotCalculator {
                 turretRelativeAngle));
 
     TurretControlPhysics physics = getTurretControlPhysics(turretRelativePosition);
+    double currentTurretVelocityRadPerSec = turretVelocitySupplier.getAsDouble();
     TurretControlPhysics.AimingSolution solution =
         physics.solve(
             target,
             turretRelativeAngle,
+            currentTurretVelocityRadPerSec,
             (timeSinceStartSeconds, lookaheadSeconds) -> {
               // Linear field-frame pose extrapolation: no twist, just straight-line translation
               // in the field frame plus proportional heading change.

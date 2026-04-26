@@ -19,6 +19,18 @@
         {
           "type": "path",
           "data": {
+            "pathName": "TL-QTRH"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "QTRLong-TL"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
             "pathName": "TL-CTR-QTR"
           }
         },
@@ -48,18 +60,6 @@
           }
         },
         {
-          "type": "path",
-          "data": {
-            "pathName": "TL-QTRH"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "QTRH-DEP"
-          }
-        },
-        {
           "type": "named",
           "data": {
             "name": "launcherPrep"
@@ -69,6 +69,6 @@
     }
   },
   "resetOdom": true,
-  "folder": null,
+  "folder": "Left",
   "choreoAuto": false
 }

@@ -1,7 +1,9 @@
 {
   "cameras": [
-    "left.json",
+    "rear.json",
     "right.json",
-    "rear.json"
-  ]
+    "left.json"
+  ],
+  "viewGamePieces": false,
+  "aprilTagLayout": "2026-rebuilt-andymark.json"
 }

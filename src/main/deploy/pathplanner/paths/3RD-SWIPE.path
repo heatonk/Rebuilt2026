@@ -3,51 +3,55 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 6.611485714285715,
-        "y": 2.1173428571428565
+        "x": 7.168877777777778,
+        "y": 1.2968111111111114
       },
       "prevControl": null,
       "nextControl": {
-        "x": 6.0154571428571435,
-        "y": 1.6897571428571414
+        "x": 6.779100000000001,
+        "y": 0.6829111111111106
       },
       "isLocked": false,
       "linkedName": "CTR/NWALL"
     },
     {
       "anchor": {
-        "x": 5.8211,
-        "y": 1.6767999999999996
+        "x": 5.941077777777777,
+        "y": 1.8619888888888885
       },
       "prevControl": {
-        "x": 5.966058035714286,
-        "y": 1.331816071428571
+        "x": 6.111548415940352,
+        "y": 1.1173013642839542
       },
       "nextControl": {
-        "x": 5.676141964285715,
-        "y": 2.0217839285714283
+        "x": 5.385644444444446,
+        "y": 4.2883555555555555
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 5.8211,
-        "y": 5.240014285714285
+        "x": 7.7535444444444455,
+        "y": 1.2968111111111114
       },
       "prevControl": {
-        "x": 5.872928571428572,
-        "y": 4.643985714285713
+        "x": 8.143322222222222,
+        "y": 5.292077777777777
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "YHY"
+      "linkedName": "YHYRight"
     }
   ],
   "rotationTargets": [
     {
-      "waypointRelativePos": 1.0472440944881893,
+      "waypointRelativePos": 1.0307053941908686,
       "rotationDegrees": 89.1641830798336
+    },
+    {
+      "waypointRelativePos": 1.8207468879668083,
+      "rotationDegrees": -90.0
     }
   ],
   "constraintZones": [
@@ -68,13 +72,13 @@
   "pointTowardsZones": [],
   "eventMarkers": [
     {
-      "name": "launcherPrep",
-      "waypointRelativePos": 0.27039627039627084,
+      "name": "launcherLow",
+      "waypointRelativePos": 0,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",
         "data": {
-          "name": "launcherPrep"
+          "name": "launcherLow"
         }
       }
     }
@@ -89,13 +93,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 88.6677801461304
+    "rotation": 90.0
   },
   "reversed": false,
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -88.99491399474574
+    "rotation": 90.0
   },
   "useDefaultConstraints": true
 }

@@ -12,6 +12,7 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.FieldConstants;
 import frc.robot.rebuilt.subsystems.Launcher.Launcher;
 import frc.robot.rebuilt.subsystems.Launcher.ShotCalculator;
@@ -101,7 +102,8 @@ public class ShotCalibrationCommand extends Command {
 
     // Setup dashboard fields
     SmartDashboard.putNumber(PREFIX + "Distance Step (m)", distanceStepMeters);
-    SmartDashboard.putNumber(PREFIX + "Test Hood Angle", 35.0);
+    SmartDashboard.putNumber(
+        PREFIX + "Test Hood Angle", Constants.Launcher.offsetLegacyHoodAngleDegrees(35.0));
     SmartDashboard.putNumber(PREFIX + "Test Flywheel RPM", 1800.0);
     SmartDashboard.putNumber(PREFIX + "Flywheel Multiplier", 1.0);
     SmartDashboard.putBoolean(PREFIX + "Force Firing", false);
@@ -205,7 +207,9 @@ public class ShotCalibrationCommand extends Command {
     }
 
     // 2. Read explicit tuning values from operator. No funny business.
-    double hoodSetpoint = SmartDashboard.getNumber(PREFIX + "Test Hood Angle", 35.0);
+    double hoodSetpoint =
+        SmartDashboard.getNumber(
+            PREFIX + "Test Hood Angle", Constants.Launcher.offsetLegacyHoodAngleDegrees(35.0));
     double rpmSetpoint = SmartDashboard.getNumber(PREFIX + "Test Flywheel RPM", 1800.0);
     boolean fireRequested = SmartDashboard.getBoolean(PREFIX + "Force Firing", false);
     boolean nextRequested = SmartDashboard.getBoolean(PREFIX + "Confirm & Next", false);

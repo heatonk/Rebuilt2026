@@ -4,6 +4,7 @@
 
 package frc.robot.rebuilt;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.rebuilt.commands.AutoCommands;
@@ -23,11 +24,13 @@ import org.frc5010.common.arch.GenericRobot;
 import org.frc5010.common.config.ConfigConstants;
 import org.frc5010.common.drive.GenericDrivetrain;
 import org.frc5010.common.sensors.Controller;
+import org.frc5010.common.utils.OrchestraManager;
 import org.frc5010.common.utils.geometry.AllianceFlipUtil;
 
 /** This is an example robot class. */
 /** Long's correction: Main robot class that initializes subsystems and commands */
 public class Rebuilt extends GenericRobot {
+  public static String configDirectory = "rebuilt_robot";
   public static HubStatus hubStatus = new HubStatus();
   public static GenericDrivetrain drivetrain;
   public static Indexer indexer;
@@ -40,11 +43,13 @@ public class Rebuilt extends GenericRobot {
   public static IntakeCommands intakecommands;
   public static IndexerCommands indexerCommands;
   public static TestCommands testCommands;
+  public static boolean isZeroingBurst = false;
   private boolean isButtonsConfigured = false;
   private boolean isAltButtonsConfigured = false;
 
   public Rebuilt(String directory) {
     super(directory);
+    configDirectory = directory;
     AllianceFlipUtil.configure(FieldConstants.FIELD_WIDTH, FieldConstants.FIELD_LENGTH);
     /** creating robot subsystems */
     indexer = new Indexer();
@@ -59,6 +64,34 @@ public class Rebuilt extends GenericRobot {
     intakecommands = new IntakeCommands(subsystems);
     indexerCommands = new IndexerCommands(subsystems);
     autocommands = new AutoCommands(subsystems);
+    // OrchestraManager.loadMusic("raiders");
+
+    if (operator.isPresent()) {
+      operator.get().createStartButton().onTrue(launcher.zeroTurretCommand());
+    }
+  }
+
+  @Override
+  public void disabledInit() {
+    OrchestraManager.play();
+  }
+
+  @Override
+  public void disabledPeriodic() {
+    super.disabledPeriodic();
+    SmartDashboard.putBoolean("Orchestra Playing", OrchestraManager.isPlaying());
+    if (launcher != null && !isZeroingBurst) {
+      if (launcher.isTurretAtZero()) {
+        org.frc5010.common.subsystems.LEDStrip.changeSegmentPattern(
+            org.frc5010.common.config.ConfigConstants.ALL_LEDS,
+            org.frc5010.common.subsystems.LEDStrip.getSolidPattern(
+                edu.wpi.first.wpilibj.util.Color.kGreen));
+      } else {
+        org.frc5010.common.subsystems.LEDStrip.changeSegmentPattern(
+            org.frc5010.common.config.ConfigConstants.ALL_LEDS,
+            org.frc5010.common.subsystems.LEDStrip.getSolidPattern(chooseAllianceWpiColor()));
+      }
+    }
   }
 
   @Override
@@ -70,8 +103,9 @@ public class Rebuilt extends GenericRobot {
       drivetrain.configureButtonBindings(driver, operator);
       climbCommands.configureButtonBindings(driver, operator);
       launcherCommands.configureButtonBindings(driver, operator);
-      intakecommands.configureButtonBindings(driver);
+      intakecommands.configureButtonBindings(driver, operator);
       indexerCommands.configureButtonBindings(driver, operator);
+      hubStatus.configureButtonBindings(driver, operator);
       isButtonsConfigured = true;
     }
   }
@@ -88,6 +122,7 @@ public class Rebuilt extends GenericRobot {
   @Override
   /** Assigns default commands for each subsystem */
   public void setupDefaultCommands(Controller driver, Controller operator) {
+    OrchestraManager.stop();
     // This is part of auto init, so a good place to run this
     FieldRegions.setupFieldRegions();
     drivetrain.setDefaultCommand(drivetrain.createDefaultCommand(driver));
@@ -101,6 +136,14 @@ public class Rebuilt extends GenericRobot {
     NamedCommandsReg.createNamedCommands();
     drivetrain.setAutoBuilder();
   }
+
+  // @Override
+  // public Command getAutonomousCommand() {
+  //   if (DriverStation.isFMSAttached()) {
+  //     intake.setHopperPosition(Constants.Intake.HOPPER_RETRACTED_ANGLE);
+  //   }
+  //   return super.getAutonomousCommand();
+  // }
 
   @Override
   public Command generateAutoCommand(Command autoCommand) {

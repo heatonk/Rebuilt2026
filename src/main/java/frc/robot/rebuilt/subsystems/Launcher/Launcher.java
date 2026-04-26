@@ -13,6 +13,7 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -32,6 +33,9 @@ public class Launcher extends GenericSubsystem {
   private final LauncherIOInputsAutoLogged inputs = new LauncherIOInputsAutoLogged();
   public static Transform3d robotToTurret = new Transform3d();
   private Map<String, GenericSubsystem> subsystems;
+  private SmartTurretController smartTurretController;
+
+  private static final double PROFILE_PERIOD_SECONDS = 0.005; // 200 Hz
 
   /** Creates a new Launcher. */
   public Launcher(Map<String, GenericSubsystem> subsystems) {
@@ -52,6 +56,20 @@ public class Launcher extends GenericSubsystem {
     }
 
     io.configureShotCalculator(ShotCalculator.getInstance());
+
+    // Register the SmartTurretController's high-frequency stepping loop.
+    // This runs at 200 Hz (5 ms) via a Notifier, evaluating state transitions and
+    // sending control requests to the TalonFX.
+    smartTurretController = io.getSmartTurretController();
+    if (smartTurretController != null) {
+      Notifier profileNotifier =
+          new Notifier(() -> smartTurretController.step(PROFILE_PERIOD_SECONDS));
+      profileNotifier.setName("SmartTurret");
+      profileNotifier.startPeriodic(PROFILE_PERIOD_SECONDS);
+    }
+
+    new edu.wpi.first.wpilibj2.command.button.Trigger(io.getTurretZeroButtonSupplier())
+        .onTrue(zeroTurretCommand());
   }
 
   /**
@@ -119,6 +137,26 @@ public class Launcher extends GenericSubsystem {
     return io.getTurretCharacterizationCommand(this);
   }
 
+  public Command getTurretQuasistaticCommand() {
+    return io.getTurretQuasistaticCommand(this);
+  }
+
+  public Command getTurretDynamicCommand() {
+    return io.getTurretDynamicCommand(this);
+  }
+
+  public Command getTurretKsMapCommand() {
+    return io.getTurretKsMapCommand(this);
+  }
+
+  public Command getTurretTrackingTuneCommand() {
+    return io.getTurretTrackingTuneCommand(this);
+  }
+
+  public Command getTurretSeekingTuneCommand() {
+    return io.getTurretSeekingTuneCommand(this);
+  }
+
   public Translation2d getRobotTarget() {
     return io.determineTarget().get();
   }
@@ -141,7 +179,9 @@ public class Launcher extends GenericSubsystem {
         () -> {
           io.setHoodAngle(inputs.hoodAngleCalculated);
           io.setTurretRotationWithFeedforward(
-              inputs.turretAngleCalculated, inputs.turretFeedforwardRadPerSec);
+              inputs.turretAngleCalculated,
+              inputs.turretFeedforwardRadPerSec,
+              inputs.turretFeedforwardAccelRadPerSecSq);
           io.setFlyWheelVelocity(inputs.flyWheelSpeedCalculated);
         });
   }
@@ -151,7 +191,9 @@ public class Launcher extends GenericSubsystem {
         () -> {
           io.setHoodAngleLow();
           io.setTurretRotationWithFeedforward(
-              inputs.turretAngleCalculated, inputs.turretFeedforwardRadPerSec);
+              inputs.turretAngleCalculated,
+              inputs.turretFeedforwardRadPerSec,
+              inputs.turretFeedforwardAccelRadPerSecSq);
           io.setFlyWheelVelocity(inputs.flyWheelSpeedCalculated);
         });
   }
@@ -161,7 +203,9 @@ public class Launcher extends GenericSubsystem {
         () -> {
           io.setHoodAngle(hood.getMotorController().getConfig().getMechanismLowerLimit().get());
           io.setTurretRotationWithFeedforward(
-              inputs.turretAngleCalculated, inputs.turretFeedforwardRadPerSec);
+              inputs.turretAngleCalculated,
+              inputs.turretFeedforwardRadPerSec,
+              inputs.turretFeedforwardAccelRadPerSecSq);
           io.setFlyWheelVelocity(RPM.of(speed));
         });
   }
@@ -188,10 +232,11 @@ public class Launcher extends GenericSubsystem {
    * @return true if the robot is at the desired speed and angle, false otherwise.
    */
   public boolean isAtGoal() {
-    return inputs.flyWheelSpeedAtGoal
-        && inputs.hoodAngleAtGoal
-        && inputs.turretAngleAtGoal
-        && inputs.isValidCalculation;
+    return inputs.flyWheelSpeedAtGoal && inputs.turretAngleAtGoal && inputs.isValidCalculation;
+  }
+
+  public boolean isOKToFire() {
+    return inputs.isValidCalculation;
   }
 
   public boolean isRequested(LauncherState state) {
@@ -315,17 +360,21 @@ public class Launcher extends GenericSubsystem {
     return Commands.runOnce(
         () -> {
           Angle newAngle = inputs.hoodAngleActual.plus(Degrees.of(0.5));
-          if (newAngle.lt(Degrees.of(60))) {
+          Angle upperLimit =
+              hood.getMotorController().getConfig().getMechanismUpperLimit().orElse(Degrees.of(60));
+          if (newAngle.lt(upperLimit)) {
             io.setHoodAngle(newAngle);
           }
         });
   }
-  /** Decreases the hood angle by 0.5 degrees and ensures it does not go below 30 degrees */
+  /** Decreases the hood angle by 0.5 degrees and respects the configured lower limit. */
   public Command decreaseHoodAngleCommand() {
     return Commands.runOnce(
         () -> {
           Angle newAngle = inputs.hoodAngleActual.minus(Degrees.of(0.5));
-          if (newAngle.gt(Degrees.of(30))) {
+          Angle lowerLimit =
+              hood.getMotorController().getConfig().getMechanismLowerLimit().orElse(Degrees.of(30));
+          if (newAngle.gt(lowerLimit)) {
             io.setHoodAngle(newAngle);
           }
         });
@@ -369,5 +418,39 @@ public class Launcher extends GenericSubsystem {
             io.setTurretRotation(newAngle);
           }
         });
+  }
+
+  public void zeroTurret() {
+    io.zeroTurret();
+  }
+
+  public boolean isTurretAtZero() {
+    return io.isTurretAtZero();
+  }
+
+  public Command zeroTurretCommand() {
+    return Commands.sequence(
+            Commands.runOnce(() -> zeroTurret(), this),
+            Commands.run(
+                    () -> {
+                      org.frc5010.common.utils.OrchestraManager.playTone(261.63);
+                      org.frc5010.common.subsystems.LEDStrip.changeSegmentPattern(
+                          org.frc5010.common.config.ConfigConstants.ALL_LEDS,
+                          org.frc5010.common.subsystems.LEDStrip.getRainbowPattern(2.0));
+                    })
+                .withTimeout(1.5)
+                .ignoringDisable(true))
+        .beforeStarting(() -> frc.robot.rebuilt.Rebuilt.isZeroingBurst = true)
+        .finallyDo(
+            () -> {
+              frc.robot.rebuilt.Rebuilt.isZeroingBurst = false;
+              org.frc5010.common.utils.OrchestraManager.stopTone();
+            })
+        .onlyIf(
+            () ->
+                edu.wpi.first.wpilibj.DriverStation.isDisabled()
+                    && !(frc.robot.rebuilt.Rebuilt.hasEverEnabled()
+                        && edu.wpi.first.wpilibj.DriverStation.isFMSAttached()))
+        .ignoringDisable(true);
   }
 }

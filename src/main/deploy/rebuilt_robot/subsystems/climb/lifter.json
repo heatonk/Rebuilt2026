@@ -4,7 +4,7 @@
     "controllerType": "talonfx",
     "motorType": "KrakenX60",
     "canId": 20,
-    "logLevel": "HIGH",
+    "logLevel": "LOW",
     "robotToMotor": {
       "x": {
         "val": -10.7,

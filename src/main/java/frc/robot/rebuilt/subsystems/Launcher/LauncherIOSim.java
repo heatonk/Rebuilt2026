@@ -78,6 +78,7 @@ public class LauncherIOSim extends LauncherIOReal {
     shotCalculator.setBallisticConfig(config);
     ShotCalculator.ShotTables simTables = ShotCalculator.createBallisticTables(config);
     shotCalculator.setShotTables(simTables);
+    shotCalculator.setShuttleShotTables(ShotCalculator.copyShotTables(simTables));
   }
 
   @Override

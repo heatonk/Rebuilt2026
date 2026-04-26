@@ -1,33 +1,11 @@
 {
-  "competitionPin": 0,
+  "competitionPin": 1,
   "robots": {
-    "basic_robot": {
-      "id": "basic_robot",
-      "robotClass": "frc.robot.example.ExampleRobot",
-      "simulate": false
-    },
-    "tigershark": {
-      "id": "00:80:2F:38:90:61",
-      "robotClass": "frc.robot.tigershark.TigerShark",
-      "simulate": false,
-      "competition": false
-    },
-    "alpha": {
-      "id": "00:80:2F:33:17:DD",
-      "robotClass": "frc.robot.alpha.Alpha",
-      "competition": false,
-      "simulate": false
-    },
     "rebuilt_robot": {
-      "id": "TBD",
+      "id": "00:80:2F:43:05:95",
       "robotClass": "frc.robot.rebuilt.Rebuilt",
       "simulate": true,
       "competition": true
-    },
-    "baby_swerve": {
-      "id": "00:80:2F:24:6D:74",
-      "robotClass": "frc.robot.baby_swerve.BabySwerve",
-      "simulate": false
     }
   }
 }

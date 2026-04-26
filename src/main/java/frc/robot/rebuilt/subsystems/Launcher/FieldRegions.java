@@ -130,8 +130,8 @@ public class FieldRegions {
     return nearAllianceTop || nearOppAllianceTop || nearAllianceBottom || nearOppAllianceBottom;
   }
 
-  static Translation2d leftAdjustment = new Translation2d(Meters.of(1), Meters.of(1));
-  static Translation2d rightAdjustment = new Translation2d(Meters.of(1), Meters.of(-1));
+  static Translation2d leftAdjustment = new Translation2d(Meters.of(1), Meters.of(1.5));
+  static Translation2d rightAdjustment = new Translation2d(Meters.of(1), Meters.of(-1.5));
 
   public static Optional<Translation2d> determineTargetPose(Pose2d currentPose) {
     Boolean inAllianceField = allianceField.contains(currentPose.getTranslation());

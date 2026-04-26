@@ -56,7 +56,30 @@
   ],
   "constraintZones": [],
   "pointTowardsZones": [],
-  "eventMarkers": [],
+  "eventMarkers": [
+    {
+      "name": "intakeIntake",
+      "waypointRelativePos": 0.3942414174972331,
+      "endWaypointRelativePos": null,
+      "command": {
+        "type": "named",
+        "data": {
+          "name": "intakeIntake"
+        }
+      }
+    },
+    {
+      "name": "launcherPrep",
+      "waypointRelativePos": 1.0365448504983563,
+      "endWaypointRelativePos": null,
+      "command": {
+        "type": "named",
+        "data": {
+          "name": "launcherPrep"
+        }
+      }
+    }
+  ],
   "globalConstraints": {
     "maxVelocity": 4.0,
     "maxAcceleration": 9.0,
