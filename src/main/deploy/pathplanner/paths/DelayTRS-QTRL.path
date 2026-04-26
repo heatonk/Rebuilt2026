@@ -86,23 +86,12 @@
   "eventMarkers": [
     {
       "name": "intakeIntake",
-      "waypointRelativePos": 0.5370051635111874,
+      "waypointRelativePos": 0.0,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",
         "data": {
           "name": "intakeIntake"
-        }
-      }
-    },
-    {
-      "name": "launcherPrep",
-      "waypointRelativePos": 0.8502581755593815,
-      "endWaypointRelativePos": 1.5593803786574867,
-      "command": {
-        "type": "named",
-        "data": {
-          "name": "launcherPrep"
         }
       }
     },
@@ -119,8 +108,8 @@
     }
   ],
   "globalConstraints": {
-    "maxVelocity": 4.0,
-    "maxAcceleration": 9.0,
+    "maxVelocity": 2.0,
+    "maxAcceleration": 2.0,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0,
     "nominalVoltage": 12.0,
@@ -136,5 +125,5 @@
     "velocity": 0,
     "rotation": -0.08211332881449039
   },
-  "useDefaultConstraints": true
+  "useDefaultConstraints": false
 }
