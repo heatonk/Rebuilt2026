@@ -6,11 +6,14 @@ package frc.robot.rebuilt.subsystems.Launcher;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.RPM;
+import static edu.wpi.first.units.Units.Radians;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.Notifier;
@@ -23,7 +26,13 @@ import frc.robot.rebuilt.commands.LauncherCommands.LauncherState;
 import java.util.Map;
 import java.util.function.Supplier;
 import org.frc5010.common.arch.GenericSubsystem;
+import org.frc5010.common.motors.function.GenericFunctionalMotor;
+import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
+import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
+import org.littletonrobotics.junction.mechanism.LoggedMechanismRoot2d;
+import yams.mechanisms.SmartMechanism;
 import yams.mechanisms.positional.Arm;
 import yams.mechanisms.positional.Pivot;
 
@@ -36,6 +45,11 @@ public class Launcher extends GenericSubsystem {
   private SmartTurretController smartTurretController;
 
   private static final double PROFILE_PERIOD_SECONDS = 0.005; // 200 Hz
+
+  /** 2D mechanism visualization: turret arm ligament updated each loop. */
+  private LoggedMechanismLigament2d turretLigament;
+  /** 2D mechanism visualization: hood arm ligament attached to turret ligament. */
+  private LoggedMechanismLigament2d hoodLigament;
 
   /** Creates a new Launcher. */
   public Launcher(Map<String, GenericSubsystem> subsystems) {
@@ -83,6 +97,11 @@ public class Launcher extends GenericSubsystem {
 
     io.updateInputs(inputs);
     Logger.processInputs("Launcher", inputs);
+
+    // Update 2D mechanism visualization with current turret and hood angles.
+    turretLigament.setAngle(inputs.turretAngleActual.in(Degrees));
+    hoodLigament.setAngle(inputs.hoodAngleActual.in(Degrees));
+    Logger.recordOutput("Launcher/Mechanism2d", mechanismSimulation);
   }
 
   /**
@@ -91,7 +110,15 @@ public class Launcher extends GenericSubsystem {
    */
   @Override
   public void simulationPeriodic() {
-    super.simulationPeriodic();
+    for (var entry : devices.entrySet()) {
+      Object device = entry.getValue();
+      if (device instanceof GenericFunctionalMotor genericMotor) {
+        genericMotor.simulationUpdate();
+      }
+      if (device instanceof SmartMechanism mechanism && !entry.getKey().equals("turret")) {
+        mechanism.simIterate();
+      }
+    }
     io.updateSimulation(this, Rebuilt.indexer);
   }
 
@@ -211,15 +238,19 @@ public class Launcher extends GenericSubsystem {
   }
 
   /**
-   * A command which stops the tracking of a target and resets the turret rotation and hood angle to
-   * 0 degrees.
+   * A command which stops the tracking of a target and returns the hood and flywheel to idle.
    *
-   * @return a command which stops tracking and resets the turret rotation and hood angle.
+   * <p>The turret is held at its current measured position rather than snapping to 0°. Resetting to
+   * 0° caused the sim turret to shoot in the wrong direction after auto routines where the robot
+   * heading changed significantly, because the turret had to travel the full sweep back before the
+   * next tracking command could aim correctly.
+   *
+   * @return a command which stops tracking and idles the hood and flywheel.
    */
   public Command stopTrackingCommand() {
     return Commands.runOnce(
         () -> {
-          setTurretRotation(Degrees.of(0));
+          setTurretRotation(inputs.turretAngleActual);
           setHoodAngle(Constants.Launcher.LOW_HOOD_ANGLE);
           io.setFlyWheelVelocity(RPM.of(0));
         });
