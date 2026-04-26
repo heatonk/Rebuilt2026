@@ -7,6 +7,12 @@
         {
           "type": "path",
           "data": {
+            "pathName": "BRS-HP"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
             "pathName": "HP-TWROUT-DEP-FAR"
           }
         }
