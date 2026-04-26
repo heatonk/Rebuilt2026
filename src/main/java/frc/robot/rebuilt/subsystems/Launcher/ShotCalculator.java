@@ -201,13 +201,11 @@ public class ShotCalculator {
             Map.entry(10.9907, 155.09),
             Map.entry(13.0240, 172.00)),
         Map.ofEntries(
-            Map.entry(1.5090, 0.4958),
-            Map.entry(2.9721, 0.5083),
-            Map.entry(3.6098, 0.5125),
-            Map.entry(4.1380, 0.5083),
-            Map.entry(5.0046, 0.5167),
-            Map.entry(5.4947, 0.5542),
-            Map.entry(6.7420, 0.7000)),
+            Map.entry(1.7908, 1.0588),
+            Map.entry(2.8011, 1.0508),
+            Map.entry(3.6990, 1.1758),
+            Map.entry(4.4120, 1.0550),
+            Map.entry(5.3802, 1.1380)),
         0.7,
         100.0,
         0.03);
