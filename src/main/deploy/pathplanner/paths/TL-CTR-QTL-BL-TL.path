@@ -4,15 +4,15 @@
     {
       "anchor": {
         "x": 4.412518072289157,
-        "y": 7.575578313253012
+        "y": 7.44444578313253
       },
       "prevControl": null,
       "nextControl": {
         "x": 5.412518072289159,
-        "y": 7.575578313253012
+        "y": 7.44444578313253
       },
       "isLocked": false,
-      "linkedName": "TLSide"
+      "linkedName": "TL"
     },
     {
       "anchor": {
@@ -142,8 +142,8 @@
   ],
   "rotationTargets": [
     {
-      "waypointRelativePos": 0.5729442970822282,
-      "rotationDegrees": -89.8246005599076
+      "waypointRelativePos": 0.4580912863070636,
+      "rotationDegrees": 0.0
     },
     {
       "waypointRelativePos": 1.6620450606585724,
@@ -253,13 +253,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -1.9251188418448428
+    "rotation": 0.13923629139309768
   },
   "reversed": false,
   "folder": "Left",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -90.0
+    "rotation": 0.13923629139309768
   },
   "useDefaultConstraints": true
 }
