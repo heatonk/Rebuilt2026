@@ -301,6 +301,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
     SmartDashboard.putNumber("Flywheel Multiplier", ShotCalculator.getFlywheelMultiplier());
 
     Translation2d SOTMOffset = new Translation2d();
+    Distance distanceToVirtualTarget = Meters.of(0.0001);
 
     if (targetPose.isPresent()) {
       targetProfile = getTargetProfile(targetPose.get());
@@ -328,6 +329,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
 
         ChassisSpeeds virtualTargetOffsetparams = params.solution().finalSolverState().robotStateAtFire().velocity().times(-params.solution().estimatedTimeOfFlight());
         SOTMOffset = new Translation2d(virtualTargetOffsetparams.vxMetersPerSecond, virtualTargetOffsetparams.vyMetersPerSecond);
+        distanceToVirtualTarget = params.distanceToVirtualTarget();
       }
       Translation2d fieldTarget = AllianceFlipUtil.apply(targetPose.get());
       inputs.robotToTarget = fieldTarget.minus(currentPose.getTranslation());
@@ -356,7 +358,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
 
     double[] turretAngleToleranceDegrees =
         getTurretAngleToleranceDegrees(
-            currentPose, inputs.turretAngleDesired, targetPose.orElse(null), SOTMOffset, targetProfile);
+            currentPose, inputs.turretAngleDesired, targetPose.orElse(null), SOTMOffset, distanceToVirtualTarget, targetProfile);
     SmartDashboard.putString("Launcher/Target Profile", targetProfile.name());
     Logger.recordOutput(
         "Launcher/Lower Turret Tolerance Deg", turretAngleToleranceDegrees[0]);
@@ -630,6 +632,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
       Angle desiredTurretAngle,
       Translation2d targetPose,
       Translation2d SOTMOffset,
+      Distance distanceToVirtualTarget,
       TargetProfile targetProfile) {
     if (targetPose == null || targetProfile == TargetProfile.NONE) {
       return new double[] {Constants.Launcher.TURRET_ANGLE_TOLERANCE_DEGREES, Constants.Launcher.TURRET_ANGLE_TOLERANCE_DEGREES};
