@@ -7,13 +7,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "TR-CTR-QTR-BR-HP Longer"
+            "pathName": "BRS-HP"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "HP-TWROUT-DEP-FAR"
           }
         }
       ]
     }
   },
   "resetOdom": true,
-  "folder": "Right",
+  "folder": "Worlds",
   "choreoAuto": false
 }

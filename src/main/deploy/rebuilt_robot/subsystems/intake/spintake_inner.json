@@ -3,7 +3,7 @@
     "name": "spintake_inner",
     "controllerType": "talonfx",
     "motorType": "KrakenX60",
-    "canId": 13,
+    "canId": 12,
     "logLevel": "LOW",
     "inverted": true,
     "robotToMotor": {
