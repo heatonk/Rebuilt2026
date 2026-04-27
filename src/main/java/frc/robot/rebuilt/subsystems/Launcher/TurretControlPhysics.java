@@ -26,6 +26,7 @@ public class TurretControlPhysics {
   private final BiFunction<Double, Double, Double> settlingTimeFunction;
   private final double minEffectiveRangeMeters;
   private final double maxEffectiveRangeMeters;
+  public static double k = 1.0;
 
   /**
    * Builds a settling-time function from trapezoidal motion-profile constraints.
@@ -229,6 +230,17 @@ public class TurretControlPhysics {
     this.minEffectiveRangeMeters = minRangeMeters;
     this.maxEffectiveRangeMeters = maxRangeMeters;
   }
+
+  public double dragCorrectTOF(double baseTOF) {
+
+      double baseTime = baseTOF.apply(distance);
+      // Simple drag correction: increase time of flight by a factor proportional to distance and drag
+      double correction = (1 - Math.exp(-k * baseTime)) / (k); // Example correction factor
+      return correction;
+    
+  }
+
+
   /** Defines possible states for the aiming status */
   public enum AimingStatus {
     READY_TO_FIRE,
@@ -458,6 +470,7 @@ public class TurretControlPhysics {
 
     double distanceToVirtualTarget = vectorToVirtualTarget.getNorm();
     double requiredTimeOfFlight = timeOfFlightFunction.apply(distanceToVirtualTarget);
+    requiredTimeOfFlight = dragCorrectTOF(requiredTimeOfFlight);
 
     double errorSeconds = timeFlightGuess - requiredTimeOfFlight;
     /** Returns a fully constructed solver state */
