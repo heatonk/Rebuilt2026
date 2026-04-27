@@ -8,6 +8,7 @@ import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import java.util.Arrays;
@@ -47,6 +48,12 @@ public interface PoseProvider {
     ENVIRONMENT_BASED,
   }
 
+  public enum PhotonPoseMethod {
+    NONE,
+    MULTITAG,
+    TRIG
+  }
+
   @AutoLog
   public static class VisionIOInputs {
     public boolean connected = false;
@@ -62,10 +69,77 @@ public interface PoseProvider {
     public double poseAmbiguity = 0.0;
     /** Latest estimated robot pose from this camera */
     public Pose3d estimatedRobotPose = new Pose3d();
+    /** Count of unread PhotonVision frames returned this cycle */
+    public int unreadResultCount = 0;
+    /** Count of PhotonVision frames processed after capping */
+    public int processedResultCount = 0;
+    /** Count of PhotonVision frames dropped by the per-cycle cap */
+    public int droppedResultCount = 0;
+    /** Per-frame PhotonVision diagnostics for offline pose/filter tuning */
+    public PhotonFrameObservation[] photonFrameObservations = new PhotonFrameObservation[0];
   }
 
   /** Represents the angle to a simple target, not used for pose estimation. */
   public static record TargetRotation(Rotation3d rotation) {}
+
+  /** Logged raw pose-relevant data for a single tracked PhotonVision target. */
+  public static record PhotonTargetObservation(
+      int fiducialId,
+      double yaw,
+      double pitch,
+      double area,
+      double skew,
+      double ambiguity,
+      Transform3d bestCameraToTarget,
+      Transform3d altCameraToTarget) {
+    public static final PhotonTargetObservation EMPTY =
+        new PhotonTargetObservation(
+            -1, 0.0, 0.0, 0.0, 0.0, 0.0, new Transform3d(), new Transform3d());
+  }
+
+  /** Logged data for one pose-solve method from a PhotonVision frame. */
+  public static record PhotonPoseEstimate(
+      boolean present,
+      Pose3d pose,
+      double ambiguity,
+      int tagCount,
+      double averageTagDistance,
+      int[] tagIds) {
+    public static final PhotonPoseEstimate EMPTY =
+        new PhotonPoseEstimate(false, new Pose3d(), 0.0, 0, 0.0, new int[0]);
+  }
+
+  /** Logged raw and solved data for a single PhotonVision frame. */
+  public static record PhotonFrameObservation(
+      double timestamp,
+      double latencyMillis,
+      long sequenceId,
+      long publishTimestampMicros,
+      int targetCount,
+      double totalTagDistance,
+      int[] multitagFiducialIds,
+      Transform3d rawMultitagBestTransform,
+      double rawMultitagAmbiguity,
+      PhotonPoseMethod selectedMethod,
+      PhotonPoseEstimate multiTagEstimate,
+      PhotonPoseEstimate trigEstimate,
+      PhotonTargetObservation[] targets) {
+    public static final PhotonFrameObservation EMPTY =
+        new PhotonFrameObservation(
+            0.0,
+            0.0,
+            0L,
+            0L,
+            0,
+            0.0,
+            new int[0],
+            new Transform3d(),
+            0.0,
+            PhotonPoseMethod.NONE,
+            PhotonPoseEstimate.EMPTY,
+            PhotonPoseEstimate.EMPTY,
+            new PhotonTargetObservation[0]);
+  }
 
   /** Represents a robot pose sample used for pose estimation. */
   public static record PoseObservation(

@@ -28,6 +28,7 @@ import org.frc5010.common.arch.GenericSubsystem;
 import org.frc5010.common.commands.calibration.PoseProviderAutoOffset;
 import org.frc5010.common.drive.GenericDrivetrain;
 import org.frc5010.common.drive.pose.PoseProvider.PoseObservation;
+import org.frc5010.common.drive.pose.PoseProvider.PoseObservationType;
 import org.frc5010.common.drive.pose.PoseProvider.ProviderType;
 import org.frc5010.common.subsystems.LEDStripSegment;
 import org.frc5010.common.telemetry.DisplayBoolean;
@@ -39,10 +40,77 @@ import org.littletonrobotics.junction.Logger;
 /** A class to handle estimating the pose of the robot */
 public class DrivePoseEstimator extends GenericSubsystem {
 
+  public enum VisionRejectionReason {
+    NONE,
+    NO_TAGS,
+    HIGH_AMBIGUITY,
+    BAD_Z,
+    OUT_OF_BOUNDS
+  }
+
+  public static record VisionObservationDiagnostic(
+      int cameraIndex,
+      ProviderType providerType,
+      PoseObservationType observationType,
+      double timestamp,
+      Pose3d pose,
+      double ambiguity,
+      int tagCount,
+      double averageTagDistance,
+      boolean accepted,
+      VisionRejectionReason rejectionReason,
+      boolean acceptorCandidate,
+      double xStdDev,
+      double yStdDev,
+      double thetaStdDev) {
+    public static final VisionObservationDiagnostic EMPTY =
+        new VisionObservationDiagnostic(
+            -1,
+            ProviderType.NONE,
+            PoseObservationType.PHOTONVISION,
+            0.0,
+            new Pose3d(),
+            0.0,
+            0,
+            0.0,
+            false,
+            VisionRejectionReason.NONE,
+            false,
+            Double.NaN,
+            Double.NaN,
+            Double.NaN);
+  }
+
   @AutoLog
   public static class DrivePoseEstimatorInputs {
     public Pose2d pose2d = new Pose2d();
     public Pose3d pose3d = new Pose3d();
+    public int providerCount = 0;
+    public int activeProviderCount = 0;
+    public int observationsReceived = 0;
+    public int observationsAccepted = 0;
+    public int observationsRejected = 0;
+    public int noTagRejectCount = 0;
+    public int ambiguityRejectCount = 0;
+    public int zRejectCount = 0;
+    public int outOfBoundsRejectCount = 0;
+    public int acceptorCandidateCount = 0;
+    public boolean visionApplied = false;
+    public boolean acceptorUpdating = false;
+    public boolean poseAcceptable = false;
+    public boolean visionUpdateDisabled = false;
+    public boolean acceptorUpdatesEnabled = false;
+    public State estimatorState = State.DISABLED_FIELD;
+    public double confidenceResetThreshold = 0.0;
+    public double maxAmbiguity = 0.0;
+    public double maxZError = 0.0;
+    public double linearStdDevBaseline = 0.0;
+    public double angularStdDevBaseline = 0.0;
+    public double linearStdDevMegatag2Factor = 0.0;
+    public double angularStdDevMegatag2Factor = 0.0;
+    public double[] cameraStdDevFactors = new double[0];
+    public VisionObservationDiagnostic[] visionObservationDiagnostics =
+        new VisionObservationDiagnostic[0];
   }
 
   /** The pose tracker */
@@ -61,6 +129,11 @@ public class DrivePoseEstimator extends GenericSubsystem {
   private Pose3d cachedPose3d = new Pose3d();
   /** Pre-allocated array for Shuffleboard pose3d widget — filled in-place each cycle */
   private final double[] pose3dArray = new double[7];
+  /** Reused list for estimator-side observation diagnostics. */
+  private final List<VisionObservationDiagnostic> visionObservationDiagnostics = new ArrayList<>();
+  /** Pre-allocated array for estimator-side observation diagnostics. */
+  private VisionObservationDiagnostic[] visionObservationDiagnosticsArray =
+      new VisionObservationDiagnostic[0];
 
   private DisplayBoolean aprilTagVisible = DashBoard.makeDisplayBoolean("AprilTagVisible");
   private boolean updatingPoseAcceptor = false;
@@ -227,6 +300,27 @@ public class DrivePoseEstimator extends GenericSubsystem {
   private void updateInputs(DrivePoseEstimatorInputsAutoLogged input) {
     input.pose3d = getCurrentPose3d();
     input.pose2d = poseTracker.getCurrentPose();
+    input.providerCount = poseProviders.size();
+    input.activeProviderCount = activePoseProviders.size();
+    input.visionUpdateDisabled = disableVisionUpdateCommand;
+    input.acceptorUpdatesEnabled = activateAcceptorUpdates;
+    input.estimatorState = state;
+    input.confidenceResetThreshold = CONFIDENCE_RESET_THRESHOLD;
+    input.maxAmbiguity = VisionConstants.maxAmbiguity;
+    input.maxZError = VisionConstants.maxZError;
+    input.linearStdDevBaseline = VisionConstants.linearStdDevBaseline;
+    input.angularStdDevBaseline = VisionConstants.angularStdDevBaseline;
+    input.linearStdDevMegatag2Factor = VisionConstants.linearStdDevMegatag2Factor;
+    input.angularStdDevMegatag2Factor = VisionConstants.angularStdDevMegatag2Factor;
+    if (input.cameraStdDevFactors.length != VisionConstants.cameraStdDevFactors.length) {
+      input.cameraStdDevFactors = new double[VisionConstants.cameraStdDevFactors.length];
+    }
+    System.arraycopy(
+        VisionConstants.cameraStdDevFactors,
+        0,
+        input.cameraStdDevFactors,
+        0,
+        VisionConstants.cameraStdDevFactors.length);
   }
 
   @Override
@@ -266,10 +360,19 @@ public class DrivePoseEstimator extends GenericSubsystem {
     poseTracker.updateLocalMeasurements();
     boolean visionUpdated = false;
     boolean accepterUpdating = false;
+    int observationsReceived = 0;
+    int observationsAccepted = 0;
+    int observationsRejected = 0;
+    int noTagRejectCount = 0;
+    int ambiguityRejectCount = 0;
+    int zRejectCount = 0;
+    int outOfBoundsRejectCount = 0;
+    int acceptorCandidateCount = 0;
     poseAcceptable = false;
+    activePoseProviders.clear();
+    visionObservationDiagnostics.clear();
     if (!disableVisionUpdateCommand) {
       // Build the filtered provider list without stream/collect allocation
-      activePoseProviders.clear();
       for (int i = 0; i < poseProviders.size(); i++) {
         PoseProvider p = poseProviders.get(i);
         if (p.isConnected() && (state.type == ProviderType.ALL || p.getType() == state.type)) {
@@ -283,34 +386,11 @@ public class DrivePoseEstimator extends GenericSubsystem {
         Pose3d cachedCurrentPose3d = getCurrentPose3d();
         for (int oi = 0; oi < observations.length; oi++) {
           PoseObservation observation = observations[oi];
-          boolean rejectPose =
-              (provider.getType() != ProviderType.ENVIRONMENT_BASED)
-                      && observation.tagCount() == 0 // Must have at least one tag
-                  || (observation.tagCount() == 1
-                      && observation.ambiguity()
-                          > VisionConstants.maxAmbiguity) // Cannot be high ambiguity
-                  || Math.abs(observation.pose().getZ())
-                      > VisionConstants.maxZError // Must have realistic Z coordinate
-
-                  // Must be within the field boundaries
-                  || observation.pose().getX() < 0.0
-                  || observation.pose().getX() > AprilTags.aprilTagFieldLayout.getFieldLength()
-                  || observation.pose().getY() < 0.0
-                  || observation.pose().getY() > AprilTags.aprilTagFieldLayout.getFieldWidth();
-
+          observationsReceived++;
+          VisionRejectionReason rejectionReason = getVisionRejectionReason(provider, observation);
+          boolean rejectPose = rejectionReason != VisionRejectionReason.NONE;
           Pose3d robotPose = observation.pose();
-          if (!rejectPose) {
-            visionUpdated |= true;
-            poseTracker
-                .getVisionConsumer()
-                .accept(
-                    robotPose.toPose2d(),
-                    observation.timestamp(),
-                    provider.getStdDeviations(observation));
-          }
-
-          // Decides if pose would be good to update
-          poseAcceptable |=
+          boolean acceptorCandidate =
               activateAcceptorUpdates
                   && provider.getType() == ProviderType.FIELD_BASED
                   && (state == State.ENABLED_FIELD || state == State.ALL)
@@ -321,6 +401,63 @@ public class DrivePoseEstimator extends GenericSubsystem {
                                   .getTranslation()
                                   .getDistance(cachedCurrentPose3d.getTranslation())
                               < 0.1));
+
+          Matrix<N3, N1> stdDevs = null;
+          double xStdDev = Double.NaN;
+          double yStdDev = Double.NaN;
+          double thetaStdDev = Double.NaN;
+          if (!rejectPose) {
+            stdDevs = provider.getStdDeviations(observation);
+            xStdDev = stdDevs.get(0, 0);
+            yStdDev = stdDevs.get(1, 0);
+            thetaStdDev = stdDevs.get(2, 0);
+            observationsAccepted++;
+            visionUpdated |= true;
+            poseTracker
+                .getVisionConsumer()
+                .accept(robotPose.toPose2d(), observation.timestamp(), stdDevs);
+          } else {
+            observationsRejected++;
+            switch (rejectionReason) {
+              case NO_TAGS:
+                noTagRejectCount++;
+                break;
+              case HIGH_AMBIGUITY:
+                ambiguityRejectCount++;
+                break;
+              case BAD_Z:
+                zRejectCount++;
+                break;
+              case OUT_OF_BOUNDS:
+                outOfBoundsRejectCount++;
+                break;
+              case NONE:
+                break;
+            }
+          }
+
+          // Decides if pose would be good to update
+          if (acceptorCandidate) {
+            acceptorCandidateCount++;
+          }
+          poseAcceptable |= acceptorCandidate;
+
+          visionObservationDiagnostics.add(
+              new VisionObservationDiagnostic(
+                  provider.getCameraIndex(),
+                  provider.getType(),
+                  observation.type(),
+                  observation.timestamp(),
+                  robotPose,
+                  observation.ambiguity(),
+                  observation.tagCount(),
+                  observation.averageTagDistance(),
+                  !rejectPose,
+                  rejectionReason,
+                  acceptorCandidate,
+                  xStdDev,
+                  yStdDev,
+                  thetaStdDev));
         }
       }
     }
@@ -338,6 +475,45 @@ public class DrivePoseEstimator extends GenericSubsystem {
 
     aprilTagVisible.setValue(visionUpdated);
     updatingPoseAcceptor = accepterUpdating;
+    inputs.observationsReceived = observationsReceived;
+    inputs.observationsAccepted = observationsAccepted;
+    inputs.observationsRejected = observationsRejected;
+    inputs.noTagRejectCount = noTagRejectCount;
+    inputs.ambiguityRejectCount = ambiguityRejectCount;
+    inputs.zRejectCount = zRejectCount;
+    inputs.outOfBoundsRejectCount = outOfBoundsRejectCount;
+    inputs.acceptorCandidateCount = acceptorCandidateCount;
+    inputs.visionApplied = visionUpdated;
+    inputs.acceptorUpdating = accepterUpdating;
+    inputs.poseAcceptable = poseAcceptable;
+    if (visionObservationDiagnosticsArray.length != visionObservationDiagnostics.size()) {
+      visionObservationDiagnosticsArray =
+          new VisionObservationDiagnostic[visionObservationDiagnostics.size()];
+    }
+    for (int i = 0; i < visionObservationDiagnostics.size(); i++) {
+      visionObservationDiagnosticsArray[i] = visionObservationDiagnostics.get(i);
+    }
+    inputs.visionObservationDiagnostics = visionObservationDiagnosticsArray;
+  }
+
+  private VisionRejectionReason getVisionRejectionReason(
+      PoseProvider provider, PoseObservation observation) {
+    if (provider.getType() != ProviderType.ENVIRONMENT_BASED && observation.tagCount() == 0) {
+      return VisionRejectionReason.NO_TAGS;
+    }
+    if (observation.tagCount() == 1 && observation.ambiguity() > VisionConstants.maxAmbiguity) {
+      return VisionRejectionReason.HIGH_AMBIGUITY;
+    }
+    if (Math.abs(observation.pose().getZ()) > VisionConstants.maxZError) {
+      return VisionRejectionReason.BAD_Z;
+    }
+    if (observation.pose().getX() < 0.0
+        || observation.pose().getX() > AprilTags.aprilTagFieldLayout.getFieldLength()
+        || observation.pose().getY() < 0.0
+        || observation.pose().getY() > AprilTags.aprilTagFieldLayout.getFieldWidth()) {
+      return VisionRejectionReason.OUT_OF_BOUNDS;
+    }
+    return VisionRejectionReason.NONE;
   }
 
   public void setState(State type) {
