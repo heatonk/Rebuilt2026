@@ -26,6 +26,7 @@ import org.frc5010.common.vision.VisionConstants;
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.targeting.PhotonPipelineResult;
+import org.photonvision.targeting.PhotonTrackedTarget;
 
 /** A camera using the PhotonVision library. */
 public class PhotonVisionPoseCamera extends PhotonVisionCamera implements FiducialTargetCamera {
@@ -39,10 +40,14 @@ public class PhotonVisionPoseCamera extends PhotonVisionCamera implements Fiduci
   private final List<PoseObservation> observations = new ArrayList<>();
   /** Pre-allocated set reused each cycle to avoid per-cycle GC pressure */
   private final Set<Short> tagIds = new HashSet<>();
+  /** Pre-allocated list reused each cycle to avoid per-cycle GC pressure */
+  private final List<PhotonFrameObservation> photonFrameObservations = new ArrayList<>();
   /**
    * Pre-allocated output arrays — grown on demand but never shrunk to avoid per-cycle allocation
    */
   private PoseObservation[] poseObsArray = new PoseObservation[0];
+
+  private PhotonFrameObservation[] photonFrameObsArray = new PhotonFrameObservation[0];
 
   private int[] tagIdArray = new int[0];
 
@@ -100,6 +105,7 @@ public class PhotonVisionPoseCamera extends PhotonVisionCamera implements Fiduci
 
     observations.clear();
     tagIds.clear();
+    photonFrameObservations.clear();
 
     super.updateCameraInfo();
 
@@ -108,26 +114,49 @@ public class PhotonVisionPoseCamera extends PhotonVisionCamera implements Fiduci
     Pose3d latestRobotPose = null;
 
     for (PhotonPipelineResult iCamResult : camResults) {
-      Optional<EstimatedRobotPose> estimate = poseEstimator.estimateCoprocMultiTagPose(iCamResult);
+      Optional<EstimatedRobotPose> multiTagEstimate =
+          poseEstimator.estimateCoprocMultiTagPose(iCamResult);
+      Optional<EstimatedRobotPose> trigEstimate =
+          poseEstimator.estimatePnpDistanceTrigSolvePose(iCamResult);
 
-      if (estimate.isEmpty() && !DriverStation.isDisabled()) {
-        estimate = poseEstimator.estimatePnpDistanceTrigSolvePose(iCamResult);
+      Optional<EstimatedRobotPose> estimate = Optional.empty();
+      PhotonPoseMethod selectedMethod = PhotonPoseMethod.NONE;
+      if (multiTagEstimate.isPresent()) {
+        estimate = multiTagEstimate;
+        selectedMethod = PhotonPoseMethod.MULTITAG;
+      } else if (trigEstimate.isPresent() && !DriverStation.isDisabled()) {
+        estimate = trigEstimate;
+        selectedMethod = PhotonPoseMethod.TRIG;
       }
+
+      double totalTagDistance = 0.0;
+      for (var iTarget : iCamResult.targets) {
+        totalTagDistance += iTarget.bestCameraToTarget.getTranslation().getNorm();
+      }
+      double averageDistance =
+          iCamResult.targets.isEmpty() ? 0.0 : totalTagDistance / iCamResult.targets.size();
+
+      photonFrameObservations.add(
+          new PhotonFrameObservation(
+              iCamResult.getTimestampSeconds(),
+              iCamResult.metadata.getLatencyMillis(),
+              iCamResult.metadata.sequenceID,
+              iCamResult.metadata.publishTimestampMicros,
+              iCamResult.targets.size(),
+              totalTagDistance,
+              toMultitagIdArray(iCamResult),
+              getRawMultitagBestTransform(iCamResult),
+              getRawMultitagAmbiguity(iCamResult),
+              selectedMethod,
+              toPhotonPoseEstimate(multiTagEstimate, iCamResult, totalTagDistance, averageDistance),
+              toPhotonPoseEstimate(trigEstimate, iCamResult, totalTagDistance, averageDistance),
+              toPhotonTargetObservations(iCamResult.targets)));
 
       if (estimate.isPresent()) {
         EstimatedRobotPose estimatedRobotPose = estimate.get();
         Pose3d robotPose = estimatedRobotPose.estimatedPose;
-
-        double totalTagDistance = 0.0;
-        for (var iTarget : iCamResult.targets) {
-          totalTagDistance += iTarget.bestCameraToTarget.getTranslation().getNorm();
-        }
         // Compute the average tag distance
         int tagCount = estimatedRobotPose.targetsUsed.size();
-        double averageDistance = 0.0;
-        if (!iCamResult.targets.isEmpty()) {
-          averageDistance = totalTagDistance / iCamResult.targets.size();
-        }
 
         // Add tag IDs — use ifPresent to avoid lambda allocation from .map()
         if (iCamResult.multitagResult.isPresent()) {
@@ -151,6 +180,15 @@ public class PhotonVisionPoseCamera extends PhotonVisionCamera implements Fiduci
                 ProviderType.FIELD_BASED));
       }
     }
+
+    int frameObsSize = photonFrameObservations.size();
+    if (photonFrameObsArray.length != frameObsSize) {
+      photonFrameObsArray = new PhotonFrameObservation[frameObsSize];
+    }
+    for (int i = 0; i < frameObsSize; i++) {
+      photonFrameObsArray[i] = photonFrameObservations.get(i);
+    }
+    input.photonFrameObservations = photonFrameObsArray;
 
     // Save pose observations to inputs object (once, outside the loop).
     // Grow the pre-allocated array only when the size increases; never shrink it.
@@ -177,6 +215,77 @@ public class PhotonVisionPoseCamera extends PhotonVisionCamera implements Fiduci
     input.totalTagDistance = totalTagDistanceAccum;
     input.poseAmbiguity = latestAmbiguity;
     input.estimatedRobotPose = latestRobotPose != null ? latestRobotPose : EMPTY_POSE3D;
+  }
+
+  private PhotonTargetObservation[] toPhotonTargetObservations(List<PhotonTrackedTarget> targets) {
+    PhotonTargetObservation[] observations = new PhotonTargetObservation[targets.size()];
+    for (int i = 0; i < targets.size(); i++) {
+      PhotonTrackedTarget target = targets.get(i);
+      observations[i] =
+          new PhotonTargetObservation(
+              target.fiducialId,
+              target.yaw,
+              target.pitch,
+              target.area,
+              target.skew,
+              target.poseAmbiguity,
+              target.bestCameraToTarget,
+              target.altCameraToTarget);
+    }
+    return observations;
+  }
+
+  private PhotonPoseEstimate toPhotonPoseEstimate(
+      Optional<EstimatedRobotPose> estimate,
+      PhotonPipelineResult cameraResult,
+      double totalTagDistance,
+      double averageDistance) {
+    if (estimate.isEmpty()) {
+      return PhotonPoseEstimate.EMPTY;
+    }
+
+    EstimatedRobotPose estimatedRobotPose = estimate.get();
+    return new PhotonPoseEstimate(
+        true,
+        estimatedRobotPose.estimatedPose,
+        cameraResult.hasTargets() ? cameraResult.getBestTarget().poseAmbiguity : 0.0,
+        estimatedRobotPose.targetsUsed.size(),
+        averageDistance,
+        toTargetIdArray(estimatedRobotPose.targetsUsed));
+  }
+
+  private int[] toMultitagIdArray(PhotonPipelineResult cameraResult) {
+    if (cameraResult.multitagResult.isEmpty()) {
+      return new int[0];
+    }
+
+    int[] ids = new int[cameraResult.multitagResult.get().fiducialIDsUsed.size()];
+    for (int i = 0; i < ids.length; i++) {
+      ids[i] = cameraResult.multitagResult.get().fiducialIDsUsed.get(i);
+    }
+    return ids;
+  }
+
+  private Transform3d getRawMultitagBestTransform(PhotonPipelineResult cameraResult) {
+    if (cameraResult.multitagResult.isEmpty()) {
+      return new Transform3d();
+    }
+    return cameraResult.multitagResult.get().estimatedPose.best;
+  }
+
+  private double getRawMultitagAmbiguity(PhotonPipelineResult cameraResult) {
+    if (cameraResult.multitagResult.isEmpty()) {
+      return 0.0;
+    }
+    return cameraResult.multitagResult.get().estimatedPose.ambiguity;
+  }
+
+  private int[] toTargetIdArray(List<PhotonTrackedTarget> targets) {
+    int[] ids = new int[targets.size()];
+    for (int i = 0; i < targets.size(); i++) {
+      ids[i] = targets.get(i).fiducialId;
+    }
+    return ids;
   }
 
   @Override

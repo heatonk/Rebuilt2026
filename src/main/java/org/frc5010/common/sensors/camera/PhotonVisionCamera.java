@@ -57,6 +57,7 @@ public class PhotonVisionCamera extends GenericCamera {
   @Override
   public void updateCameraInfo() {
     List<PhotonPipelineResult> allResults = camera.getAllUnreadResults();
+    input.unreadResultCount = allResults.size();
     // Drain stale frames: keep only the most recent MAX_FRAMES_PER_CYCLE results.
     // This prevents a multi-hundred-millisecond stall on the first periodic() call when
     // the NT subscriber queue has accumulated hundreds of buffered frames since boot.
@@ -66,6 +67,8 @@ public class PhotonVisionCamera extends GenericCamera {
     } else {
       camResults = allResults;
     }
+    input.processedResultCount = camResults.size();
+    input.droppedResultCount = Math.max(0, size - camResults.size());
     // Avoid stream().findFirst() allocation — use direct index access
     camResult = camResults.isEmpty() ? EMPTY_RESULT : camResults.get(camResults.size() - 1);
     input.connected = camera.isConnected();
