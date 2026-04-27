@@ -69,6 +69,11 @@ public class ShotCalculator {
   private final String virtualTarget = "VirtualTarget";
   private final String turret = "Turret";
 
+  public enum ShotProfile {
+    NORMAL,
+    SHUTTLE
+  }
+
   public static ShotCalculator getInstance() {
     if (instance == null) instance = new ShotCalculator();
     return instance;
@@ -87,6 +92,10 @@ public class ShotCalculator {
   // Cache parameters
   private ShootingParameters latestParameters = null;
   public static double flywheelMultiplier = 1.05;
+
+  private static ShotTables normalShotTables = createDefaultTables();
+  private static ShotTables shuttleShotTables = copyShotTables(normalShotTables);
+  private ShotProfile activeShotProfile = ShotProfile.NORMAL;
 
   private static double minDistance;
   private static double maxDistance;
@@ -142,46 +151,85 @@ public class ShotCalculator {
       double hoodAngleReferenceRadians) {}
 
   static {
-    applyShotTables(createDefaultTables());
+    applyShotTables(normalShotTables);
   }
+
+  private static Rotation2d legacyHoodAngle(double legacyAngleDegrees) {
+    return Rotation2d.fromDegrees(
+        frc.robot.rebuilt.Constants.Launcher.offsetLegacyHoodAngleDegrees(legacyAngleDegrees));
+  }
+
   /** Creates default hood angle, flywheel speeds, and time of light tables */
   public static ShotTables createDefaultTables() {
-    final double offset = 0.5969;
     return new ShotTables(
         Map.ofEntries(
-            Map.entry(2.0796297600462808, Rotation2d.fromDegrees(33.0)),
-            Map.entry(2.3644814757115706, Rotation2d.fromDegrees(34.0)),
-            Map.entry(2.7648598116063776, Rotation2d.fromDegrees(35.0)),
-            Map.entry(3.2194779503261004, Rotation2d.fromDegrees(38.0)),
-            Map.entry(3.53088512698516, Rotation2d.fromDegrees(39.0)),
-            Map.entry(3.9268571046742813, Rotation2d.fromDegrees(40.0)),
-            Map.entry(4.317290273504823, Rotation2d.fromDegrees(42.0)),
-            Map.entry(4.540307519714445, Rotation2d.fromDegrees(43.0)),
-            Map.entry(5.77893560525366, Rotation2d.fromDegrees(45.0)),
-            Map.entry(6.35214199070158, Rotation2d.fromDegrees(47.0)),
-            Map.entry(10.990685758149123, Rotation2d.fromDegrees(50.0)),
-            Map.entry(13.024035615135324, Rotation2d.fromDegrees(55.0))),
+            Map.entry(1.4156, legacyHoodAngle(33.00)),
+            Map.entry(2.0796, legacyHoodAngle(35.03)),
+            Map.entry(2.3645, legacyHoodAngle(36.91)),
+            Map.entry(2.7649, legacyHoodAngle(39.13)),
+            Map.entry(3.0481, legacyHoodAngle(41.87)),
+            Map.entry(3.2195, legacyHoodAngle(43.25)),
+            Map.entry(3.5309, legacyHoodAngle(44.69)),
+            Map.entry(3.7474, legacyHoodAngle(45.55)),
+            Map.entry(3.9269, legacyHoodAngle(46.17)),
+            Map.entry(4.3173, legacyHoodAngle(48.64)),
+            Map.entry(4.5403, legacyHoodAngle(49.80)),
+            Map.entry(4.8099, legacyHoodAngle(50.44)),
+            Map.entry(5.2494, legacyHoodAngle(51.14)),
+            Map.entry(5.2859, legacyHoodAngle(51.20)),
+            Map.entry(5.7789, legacyHoodAngle(51.55)),
+            Map.entry(6.3521, legacyHoodAngle(53.04)),
+            Map.entry(10.9907, legacyHoodAngle(51.84)),
+            Map.entry(13.0240, legacyHoodAngle(55.00))),
         Map.ofEntries(
-            Map.entry(2.0796297600462808, 97.0),
-            Map.entry(2.3644814757115706, 103.0),
-            Map.entry(2.7648598116063776, 105.0),
-            Map.entry(3.2194779503261004, 107.0),
-            Map.entry(3.53088512698516, 110.0),
-            Map.entry(3.9268571046742813, 113.0),
-            Map.entry(4.317290273504823, 115.0),
-            Map.entry(4.540307519714445, 117.0),
-            Map.entry(5.77893560525366, 127.0),
-            Map.entry(6.35214199070158, 133.0),
-            Map.entry(10.990685758149123, 158.0),
-            Map.entry(13.024035615135324, 173.0)),
+            Map.entry(1.4156, 88.00),
+            Map.entry(2.0796, 88.41),
+            Map.entry(2.3645, 94.58),
+            Map.entry(2.7649, 96.83),
+            Map.entry(3.0481, 98.25),
+            Map.entry(3.2195, 99.25),
+            Map.entry(3.5309, 102.69),
+            Map.entry(3.7474, 104.64),
+            Map.entry(3.9269, 106.00),
+            Map.entry(4.3173, 108.00),
+            Map.entry(4.5403, 110.00),
+            Map.entry(4.8099, 112.18),
+            Map.entry(5.2494, 115.97),
+            Map.entry(5.2859, 114.77),
+            Map.entry(5.7789, 119.21),
+            Map.entry(6.3521, 125.75),
+            Map.entry(10.9907, 155.09),
+            Map.entry(13.0240, 172.00)),
         Map.ofEntries(
-            Map.entry(2.11, 1.04),
-            Map.entry(3.92, 1.19),
-            Map.entry(4.10, 1.22),
-            Map.entry(5.58, 1.28)),
+            Map.entry(1.5090, 0.8768),
+            Map.entry(1.7908, 0.8932),
+            Map.entry(2.8011, 0.9517),
+            Map.entry(2.9721, 0.9616),
+            Map.entry(3.6098, 0.9985),
+            Map.entry(3.6990, 1.0037),
+            Map.entry(4.1380, 1.0291),
+            Map.entry(4.4120, 1.0450),
+            Map.entry(5.0046, 1.0793),
+            Map.entry(5.3802, 1.1011),
+            Map.entry(5.4947, 1.1077),
+            Map.entry(6.7420, 1.1800)),
         0.7,
         100.0,
         0.03);
+  }
+
+  public static ShotTables copyShotTables(ShotTables source) {
+    if (source == null) {
+      return createDefaultTables();
+    }
+
+    return new ShotTables(
+        new TreeMap<>(source.hoodAngles()),
+        new TreeMap<>(source.flywheelSpeeds()),
+        new TreeMap<>(source.timeOfFlightSeconds()),
+        source.minDistanceMeters(),
+        source.maxDistanceMeters(),
+        source.phaseDelaySeconds());
   }
 
   public static ShotTables createBallisticTables(BallisticConfig config) {
@@ -398,7 +446,32 @@ public class ShotCalculator {
   }
 
   public void setShotTables(ShotTables tables) {
-    applyShotTables(tables);
+    normalShotTables = tables != null ? tables : createDefaultTables();
+    if (activeShotProfile == ShotProfile.NORMAL) {
+      applyShotTables(normalShotTables);
+    }
+    latestParameters = null;
+    turretControlPhysics = null;
+  }
+
+  public void setShuttleShotTables(ShotTables tables) {
+    shuttleShotTables = tables != null ? tables : copyShotTables(normalShotTables);
+    if (activeShotProfile == ShotProfile.SHUTTLE) {
+      applyShotTables(shuttleShotTables);
+    }
+    latestParameters = null;
+    turretControlPhysics = null;
+  }
+
+  public void useShotProfile(ShotProfile shotProfile) {
+    ShotProfile requestedProfile = shotProfile != null ? shotProfile : ShotProfile.NORMAL;
+    if (activeShotProfile == requestedProfile) {
+      return;
+    }
+
+    activeShotProfile = requestedProfile;
+    applyShotTables(
+        activeShotProfile == ShotProfile.SHUTTLE ? shuttleShotTables : normalShotTables);
     latestParameters = null;
     turretControlPhysics = null;
   }

@@ -2,21 +2,26 @@
   "robotWidth": 0.89535,
   "robotLength": 0.89535,
   "holonomicMode": true,
-  "pathFolders": [],
+  "pathFolders": [
+    "Center",
+    "Left",
+    "Misc",
+    "Right"
+  ],
   "autoFolders": [
     "AllianceSide",
     "Center",
     "Left",
-    "untested",
     "Orbit",
-    "Right"
+    "Right",
+    "Worlds"
   ],
   "defaultMaxVel": 4.0,
-  "defaultMaxAccel": 9.0,
+  "defaultMaxAccel": 2.5,
   "defaultMaxAngVel": 540.0,
   "defaultMaxAngAccel": 720.0,
   "defaultNominalVoltage": 12.0,
-  "robotMass": 58.967,
+  "robotMass": 54.5,
   "robotMOI": 8.0968,
   "robotTrackwidth": 0.546,
   "driveWheelRadius": 0.051,

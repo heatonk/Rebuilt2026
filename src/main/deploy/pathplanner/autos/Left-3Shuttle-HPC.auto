@@ -7,31 +7,31 @@
         {
           "type": "path",
           "data": {
-            "pathName": "TR-QTRH"
+            "pathName": "TL-QTLCTLSHORT"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "CTR-NWALL"
+            "pathName": "CTL-NWALL"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "3RD-SWIPE"
+            "pathName": "Left3rdSwipe"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "NWALL-CLIMB"
+            "pathName": "LeftNwall-Tower"
           }
         }
       ]
     }
   },
   "resetOdom": true,
-  "folder": "Right",
+  "folder": "Worlds",
   "choreoAuto": false
 }

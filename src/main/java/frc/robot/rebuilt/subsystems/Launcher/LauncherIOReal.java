@@ -18,59 +18,81 @@ import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.CANBus;
+import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.CANcoder;
+import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.rebuilt.Constants;
-import frc.robot.rebuilt.Rebuilt;
+import frc.robot.rebuilt.FieldConstants;
 import frc.robot.rebuilt.commands.IntakeCommands.IntakeState;
-import frc.robot.rebuilt.commands.LauncherCommands;
 import frc.robot.rebuilt.subsystems.intake.Intake;
+import frc.robot.rebuilt.util.TorqueCurrentArmSupport;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import org.frc5010.common.arch.GenericSubsystem;
 import org.frc5010.common.config.ConfigConstants;
 import org.frc5010.common.drive.GenericDrivetrain;
 import org.frc5010.common.motors.SystemIdentification;
 import org.frc5010.common.subsystems.LEDStrip;
+import org.frc5010.common.utils.geometry.AllianceFlipUtil;
 import org.frc5010.common.vision.AprilTags;
+import org.littletonrobotics.junction.Logger;
+import yams.mechanisms.config.SensorConfig;
 import yams.mechanisms.positional.Arm;
 import yams.mechanisms.positional.Pivot;
 import yams.mechanisms.velocity.FlyWheel;
-import yams.motorcontrollers.SmartMotorController.ClosedLoopControllerSlot;
+import yams.motorcontrollers.simulation.Sensor;
 import yams.units.EasyCRT;
 import yams.units.EasyCRTConfig;
 
 /** Add your docs here. */
 public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   protected static final Angle HARD_STOP = Radians.of(2.9437091319525455);
-  protected static final double TURRET_GEAR_RATIO = 30.0;
-  protected static final double CRT_DRIVE_GEAR_TEETH = 12.0;
-  protected static final double CRT_ENCODER_40_TEETH = 40.0;
-  protected static final double CRT_ENCODER_36_TEETH = 36.0;
-  protected static final double encoder40Offset = 0.362060546875;
-  protected static final double encoder36Offset = 0.226806640625;
+  protected static final double encoder40Offset = 0.4423828125;
+  protected static final double encoder36Offset = -0.095947265625;
+  private static final double MIN_DYNAMIC_TURRET_TOLERANCE_DEGREES = 0.5;
   protected Map<String, Object> devices;
   protected Pivot turret;
   protected Arm hood;
+  private TalonFX hoodTalonFX;
+  private final MotionMagicTorqueCurrentFOC hoodMotionMagicRequest =
+      new MotionMagicTorqueCurrentFOC(0).withSlot(0);
+  private Angle hoodAngleSetpoint = Degrees.of(0.0);
+  private TorqueCurrentArmSupport.Config hoodTorqueCurrentConfig =
+      TorqueCurrentArmSupport.Config.defaults(true);
   protected GenericDrivetrain drivetrain;
   protected FlyWheel flyWheel;
   protected CANcoder crtEncoder40;
   protected CANcoder crtEncoder36;
+  protected final Sensor crtSensor40;
+  protected final Sensor crtSensor36;
   protected EasyCRT easyCrtSolver;
   /** Initializes the launcher hardware, encoders, simulated sensors, and angle solver */
   EasyCRTConfig easyCrt;
+
+  private enum TargetProfile {
+    NONE,
+    HUB,
+    SHUTTLE
+  }
 
   private boolean isNearTrench = false;
   private IntakeState lastState = IntakeState.RETRACTED;
@@ -78,9 +100,13 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   protected Intake intake;
 
   protected static Translation2d robotToTurret;
+  private DigitalInput turretZeroButton;
+  private Trigger turretZeroTrigger;
 
   Angle turretLowLimit = Degrees.of(-90);
   Angle turretHighLimit = Degrees.of(90);
+  Angle hoodLowLimit = Degrees.of(12);
+  Angle hoodHighLimit = Degrees.of(42);
 
   /** 2-state turret controller: SEEKING (MotionMagic) and TRACKING (Position + FF). */
   protected SmartTurretController smartTurretController;
@@ -92,13 +118,6 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   private double previousTurretVelocityRadPerSec = 0.0;
 
   public LauncherIOReal(Map<String, Object> devices, Map<String, GenericSubsystem> subsystems) {
-    this(devices, subsystems, true);
-  }
-
-  protected LauncherIOReal(
-      Map<String, Object> devices,
-      Map<String, GenericSubsystem> subsystems,
-      boolean enableSmartTurretController) {
     this.devices = devices;
     drivetrain = (GenericDrivetrain) subsystems.get(ConfigConstants.DRIVETRAIN);
     intake = (Intake) subsystems.get(Constants.INTAKE);
@@ -111,7 +130,17 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
             .get()
             .toTranslation2d();
 
+    turretZeroButton = new DigitalInput(0);
+
     hood = (Arm) devices.get("hood");
+    hoodTorqueCurrentConfig =
+        TorqueCurrentArmSupport.loadConfig("launcher/hood.json", true, "hood");
+    hoodAngleSetpoint = hood.getAngle();
+    Object rawHoodController = hood.getMotorController().getMotorController();
+    if (!RobotBase.isSimulation() && rawHoodController instanceof TalonFX talonFX) {
+      hoodTalonFX = talonFX;
+      TorqueCurrentArmSupport.syncSlot0Feedforward(hood, hoodTalonFX);
+    }
     flyWheel = (FlyWheel) devices.get("flywheel");
 
     turretLowLimit =
@@ -122,13 +151,25 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
     CANBus canivoreBus = new CANBus("canivore");
     crtEncoder40 = new CANcoder(21, canivoreBus);
     crtEncoder36 = new CANcoder(22, canivoreBus);
+    double sensor40Sim = 0.391;
+    double sensor36Sim = 0.274;
+    crtSensor40 =
+        new SensorConfig("CRT sensor 40")
+            .withField("angle", () -> crtEncoder40.getAbsolutePosition().getValueAsDouble(), 0.0)
+            .withSimulatedValue("angle", Seconds.of(0), Seconds.of(0.5), sensor40Sim)
+            .getSensor();
+    crtSensor36 =
+        new SensorConfig("CRT sensor 36")
+            .withField("angle", () -> crtEncoder36.getAbsolutePosition().getValueAsDouble(), 0.0)
+            .withSimulatedValue("angle", Seconds.of(0), Seconds.of(0.5), sensor36Sim)
+            .getSensor();
 
     easyCrt =
         new EasyCRTConfig(
-                () -> Rotations.of(crtEncoder40.getAbsolutePosition().getValueAsDouble()),
-                () -> Rotations.of(crtEncoder36.getAbsolutePosition().getValueAsDouble()))
+                () -> Rotations.of(crtSensor40.getAsDouble("angle")),
+                () -> Rotations.of(crtSensor36.getAsDouble("angle")))
             .withCommonDriveGear(
-                /* commonRatio (mech:drive) */ TURRET_GEAR_RATIO,
+                /* commonRatio (mech:drive) */ 30.0,
                 /* driveGearTeeth */ 12,
                 /* encoder1Pinion */ 40,
                 /* encoder2Pinion */ 36)
@@ -170,7 +211,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
 
     // Create the 2-state SmartTurretController (replaces TurretProfileController).
     // Uses MotionMagicTorqueCurrentFOC for seeking and PositionTorqueCurrentFOC for tracking.
-    if (enableSmartTurretController) {
+    {
       var turretConfig = turret.getMotorController().getConfig();
       var trapConstraints = turretConfig.getTrapezoidProfile();
       // Mechanism rot/s and rot/s^2; fallback values from turret.json maxVelocity/maxAcceleration.
@@ -187,21 +228,20 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
         // Load feedforward from YAMS mechanism config (populated from turret.json motorSystemId).
         // Turret is a Pivot so getArmFeedforward() contains the characterised kS/kV/kA in SI units.
         // Fallback values match turret.json in case the YAMS FF was not set.
-        ArmFeedforward yamsFf =
-            turretConfig.getArmFeedforward(ClosedLoopControllerSlot.SLOT_0).orElse(null);
-        double kS = yamsFf != null ? yamsFf.getKs() : 12;
-        double kV = yamsFf != null ? yamsFf.getKv() : 0.0;
+        ArmFeedforward yamsFf = turretConfig.getArmFeedforward().orElse(null);
+        double kS = yamsFf != null ? yamsFf.getKs() : 15.26;
+        double kV = yamsFf != null ? yamsFf.getKv() : 4.0;
         double kA = yamsFf != null ? yamsFf.getKa() : 2.0;
         SmartTurretConfig smartConfig =
             new SmartTurretConfig.Builder()
                 .withTalonFX(talonFXRaw)
                 .withYAMSController(turret.getMotorController())
-                .withGearRatio(TURRET_GEAR_RATIO)
+                .withGearRatio(30.0)
                 .withMotionConstraints(maxVelMechRotPerSec, maxAccelMechRotPerSecSq)
-                .withSeekingPID(255, 0, 50) // Initial values from turret.json
-                .withTrackingPID(550, 0, 200) // Start same, tune separately
+                .withSeekingPID(1050, 0, 144.886) // Initial values from turret.json
+                .withTrackingPID(1050, 0, 144.886) // Start same, tune separately
                 .withFeedforward(kS, kV, kA)
-                .withSeekingThreshold(Degrees.of(8).in(Rotations))
+                .withSeekingThreshold(Degrees.of(5).in(Rotations))
                 .withHysteresisBuffer(Degrees.of(12).in(Rotations))
                 .withSoftLimits(lowerLimitRot, upperLimitRot)
                 .build();
@@ -217,24 +257,26 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
 
   public ShotCalculator.ShootingParameters getShootingParameters(
       Supplier<Pose2d> robotPoseSupplier, Supplier<Translation2d> targetPositionSupplier) {
+    Translation2d targetPosition = targetPositionSupplier.get();
+    ShotCalculator.getInstance().useShotProfile(getShotProfile(targetPosition));
     ShotCalculator.getInstance().clearShootingParameters();
     return ShotCalculator.getInstance()
         .getParameters(
             robotToTurret,
-            Rotation2d.fromDegrees(getTurretAngle().in(Degrees)),
+            Rotation2d.fromDegrees(turret.getAngle().in(Degrees)),
             robotPoseSupplier,
-            targetPositionSupplier);
+            () -> targetPosition);
   }
 
   @Override()
   /** Updating launcher sensor data, calculates shot parameters, and populates input telemetry */
   public void updateInputs(LauncherIOInputs inputs) {
-    SmartDashboard.putNumber(
-        "EasyCRT/Encoder 40", crtEncoder40.getAbsolutePosition().getValueAsDouble());
+    SmartDashboard.putNumber("EasyCRT/Encoder 40", crtSensor40.getAsDouble("angle"));
     SmartDashboard.putNumber("EasyCRT/Enc 2", easyCrt.getAbsoluteEncoder2Angle().in(Degrees));
-    SmartDashboard.putNumber(
-        "EasyCRT/Encoder 36", crtEncoder36.getAbsolutePosition().getValueAsDouble());
+    SmartDashboard.putNumber("EasyCRT/Encoder 36", crtSensor36.getAsDouble("angle"));
     SmartDashboard.putNumber("EasyCRT/Enc 1", easyCrt.getAbsoluteEncoder1Angle().in(Degrees));
+    org.littletonrobotics.junction.Logger.recordOutput(
+        "Turret Zero Button", turretZeroButton.get());
     SmartDashboard.putNumber(
         "Distance to tag 27",
         drivetrain
@@ -251,17 +293,25 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
     // SmartDashboard.putNumber("CRT Error Rot",
     // easyCrtSolver.getLastErrorRotations());
 
-    Optional<Translation2d> targetPose = determineTarget();
+    Pose2d currentPose = drivetrain.getPoseEstimator().getCurrentPose();
+    Optional<Translation2d> targetPose = FieldRegions.determineTargetPose(currentPose);
+    TargetProfile targetProfile = TargetProfile.NONE;
     inputs.isValidCalculation = false;
     SmartDashboard.putNumber("Flywheel Multiplier", ShotCalculator.getFlywheelMultiplier());
+
+    Translation2d SOTMOffset = new Translation2d();
+    Distance distanceToVirtualTarget = Meters.of(0.0001);
+
     if (targetPose.isPresent()) {
+      targetProfile = getTargetProfile(targetPose.get());
+      ShotCalculator.getInstance().useShotProfile(getShotProfile(targetPose.get()));
       ShotCalculator.getInstance().clearShootingParameters();
       ShotCalculator.ShootingParameters params =
           ShotCalculator.getInstance()
               .getParameters(
                   robotToTurret,
-                  Rotation2d.fromDegrees(getTurretAngle().in(Degrees)),
-                  () -> Rebuilt.drivetrain.getPoseEstimator().getCurrentPose(),
+                  Rotation2d.fromDegrees(turret.getAngle().in(Degrees)),
+                  () -> currentPose,
                   () -> targetPose.get());
       if (params != null) {
         inputs.isValidCalculation = params.isValid();
@@ -275,10 +325,26 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
             (inputs.turretFeedforwardRadPerSec - previousTurretVelocityRadPerSec)
                 / org.frc5010.common.constants.Constants.loopPeriodSecs;
         previousTurretVelocityRadPerSec = inputs.turretFeedforwardRadPerSec;
+
+        ChassisSpeeds virtualTargetOffsetparams =
+            params
+                .solution()
+                .finalSolverState()
+                .robotStateAtFire()
+                .velocity()
+                .times(-params.solution().estimatedTimeOfFlight());
+        SOTMOffset =
+            new Translation2d(
+                virtualTargetOffsetparams.vxMetersPerSecond,
+                virtualTargetOffsetparams.vyMetersPerSecond);
+        distanceToVirtualTarget = params.distanceToVirtualTarget();
       }
-      inputs.robotToTarget = LauncherCommands.getRobotToTarget(targetPose.get());
+      Translation2d fieldTarget = AllianceFlipUtil.apply(targetPose.get());
+      inputs.robotToTarget = fieldTarget.minus(currentPose.getTranslation());
 
       inputs.targetDistance = Meters.of(inputs.robotToTarget.getDistance(new Translation2d()));
+    } else {
+      ShotCalculator.getInstance().useShotProfile(ShotCalculator.ShotProfile.NORMAL);
     }
     /** Reads the desired flywheel, hood, and turret setpoints */
     inputs.flyWheelSpeedDesired =
@@ -288,7 +354,9 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
             .map(it -> it)
             .orElse(RPM.of(0.0));
     inputs.hoodAngleDesired =
-        hood.getMotorController().getMechanismPositionSetpoint().orElse(Degrees.of(0.0));
+        hoodTalonFX != null
+            ? hoodAngleSetpoint
+            : hood.getMotorController().getMechanismPositionSetpoint().orElse(Degrees.of(0.0));
     // Read turret desired angle from the SmartTurretController's goal, not YAMS (which is
     // bypassed).
     inputs.turretAngleDesired =
@@ -296,9 +364,21 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
             ? Rotations.of(smartTurretController.getGoalPositionMechRot())
             : turret.getMotorController().getMechanismPositionSetpoint().orElse(Degrees.of(0.0));
 
+    double[] turretAngleToleranceDegrees =
+        getTurretAngleToleranceDegrees(
+            currentPose,
+            inputs.turretAngleDesired,
+            targetPose.orElse(null),
+            SOTMOffset,
+            distanceToVirtualTarget,
+            targetProfile);
+    SmartDashboard.putString("Launcher/Target Profile", targetProfile.name());
+    Logger.recordOutput("Launcher/Lower Turret Tolerance Deg", turretAngleToleranceDegrees[0]);
+    Logger.recordOutput("Launcher/Upper Turret Tolerance Deg", turretAngleToleranceDegrees[1]);
+
     inputs.flyWheelSpeedActual = flyWheel.getSpeed();
     inputs.hoodAngleActual = hood.getAngle();
-    inputs.turretAngleActual = getTurretAngle();
+    inputs.turretAngleActual = turret.getAngle();
 
     inputs.flyWheelSpeedError = inputs.flyWheelSpeedActual.minus(inputs.flyWheelSpeedDesired);
     inputs.hoodAngleError = inputs.hoodAngleActual.minus(inputs.hoodAngleDesired).in(Degrees);
@@ -309,10 +389,12 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
     inputs.hoodAngleAtGoal =
         Math.abs(inputs.hoodAngleError) <= Constants.Launcher.HOOD_ANGLE_TOLERANCE_DEGREES;
     inputs.turretAngleAtGoal =
-        Math.abs(inputs.turretAngleError) <= Constants.Launcher.TURRET_ANGLE_TOLERANCE_DEGREES;
+        turretAngleToleranceDegrees[0] <= inputs.turretAngleError
+            && inputs.turretAngleError <= turretAngleToleranceDegrees[1];
 
     inputs.hoodVelocity = hood.getMotorController().getMechanismVelocity().in(Degrees.per(Second));
-    inputs.turretVelocity = getTurretVelocityDegreesPerSecond();
+    inputs.turretVelocity =
+        turret.getMotorController().getMechanismVelocity().in(Degrees.per(Second));
     inputs.flyWheelMotorOutput = flyWheel.getMotor().getStatorCurrent().in(Amps);
     isNearTrench();
   }
@@ -322,7 +404,9 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   public void configureShotCalculator(ShotCalculator shotCalculator) {
     var turretConfig = turret.getMotorController().getConfig();
 
-    shotCalculator.setShotTables(ShotCalculator.createDefaultTables());
+    ShotCalculator.ShotTables defaultTables = ShotCalculator.createDefaultTables();
+    shotCalculator.setShotTables(defaultTables);
+    shotCalculator.setShuttleShotTables(ShotCalculator.copyShotTables(defaultTables));
 
     // Turret angular limits and aim tolerance — read directly from the YAMS config so they stay
     // in sync with the soft-limit values defined in launcher/turret.json.
@@ -349,29 +433,12 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
     // to avoid a feedback loop between the solver and the controller.
     if (smartTurretController != null) {
       shotCalculator.setTurretVelocitySupplier(smartTurretController::getActualVelocityRadPerSec);
-    } else {
-      shotCalculator.setTurretVelocitySupplier(
-          () -> Math.toRadians(getTurretVelocityDegreesPerSecond()));
     }
   }
 
   @Override
   public SmartTurretController getSmartTurretController() {
     return smartTurretController;
-  }
-
-  protected Angle getTurretAngle() {
-    if (smartTurretController != null) {
-      return Rotations.of(smartTurretController.getActualPositionMechRot());
-    }
-    return turret.getAngle();
-  }
-
-  protected double getTurretVelocityDegreesPerSecond() {
-    if (smartTurretController != null) {
-      return Math.toDegrees(smartTurretController.getActualVelocityRadPerSec());
-    }
-    return turret.getMotorController().getMechanismVelocity().in(Degrees.per(Second));
   }
 
   /** Sets the flywheel motor's duty cycle */
@@ -386,14 +453,27 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
 
   /** Sets the hood angle and overrides the requested angle if the hood is near the trench */
   public void setHoodAngle(Angle angle) {
-    hood.getMotorController().setPosition(angle);
+    requestHoodAngle(angle);
   }
 
   /** Sets the low hard limit to 30 degrees and updates LED's */
   public void setHoodAngleLow() {
-    hood.getMotorController()
-        .setPosition(hood.getArmConfig().getLowerHardLimit().orElse(Degrees.of(30)));
+    requestHoodAngle(hood.getArmConfig().getLowerHardLimit().orElse(Degrees.of(30)));
     LEDStrip.changeSegmentPattern(ConfigConstants.ALL_LEDS, LEDStrip.getSolidPattern(Color.kGreen));
+  }
+
+  private void requestHoodAngle(Angle angle) {
+    hoodAngleSetpoint = angle;
+    if (hoodTalonFX != null) {
+      hoodTalonFX.setControl(
+          hoodMotionMagicRequest
+              .withPosition(angle.in(Rotations))
+              .withFeedForward(
+                  TorqueCurrentArmSupport.calculateGravityFeedforward(
+                      angle, hoodTorqueCurrentConfig)));
+      return;
+    }
+    hood.getMotorController().setPosition(angle);
   }
 
   /** Sets the angle of the turret via the SmartTurretController (zero feedforward). */
@@ -543,6 +623,127 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
     return FieldRegions.determineTargetPose(current);
   }
 
+  private TargetProfile getTargetProfile(Translation2d targetPose) {
+    Translation2d fieldTarget = AllianceFlipUtil.apply(targetPose);
+    Translation2d hubTarget =
+        AllianceFlipUtil.apply(FieldConstants.Hub.topCenterPoint.toTranslation2d());
+    if (fieldTarget.getDistance(hubTarget) < 1e-6) {
+      return TargetProfile.HUB;
+    }
+    return TargetProfile.SHUTTLE;
+  }
+
+  private ShotCalculator.ShotProfile getShotProfile(Translation2d targetPose) {
+    return getTargetProfile(targetPose) == TargetProfile.SHUTTLE
+        ? ShotCalculator.ShotProfile.SHUTTLE
+        : ShotCalculator.ShotProfile.NORMAL;
+  }
+
+  private double[] getTurretAngleToleranceDegrees(
+      Pose2d currentPose,
+      Angle desiredTurretAngle,
+      Translation2d targetPose,
+      Translation2d SOTMOffset,
+      Distance distanceToVirtualTarget,
+      TargetProfile targetProfile) {
+    if (targetPose == null || targetProfile == TargetProfile.NONE) {
+      return new double[] {
+        Constants.Launcher.TURRET_ANGLE_TOLERANCE_DEGREES,
+        Constants.Launcher.TURRET_ANGLE_TOLERANCE_DEGREES
+      };
+    }
+
+    Translation2d turretFieldPosition = getTurretFieldPosition(currentPose);
+    Rotation2d desiredFieldHeading =
+        currentPose.getRotation().plus(Rotation2d.fromRadians(desiredTurretAngle.in(Radians)));
+
+    if (targetProfile == TargetProfile.HUB) {
+      return getHubTurretAngleToleranceDegrees(
+          turretFieldPosition,
+          desiredFieldHeading,
+          SOTMOffset,
+          Meters.of(targetPose.minus(currentPose.getTranslation()).plus(SOTMOffset).getNorm()));
+    }
+
+    return getShuttleTurretAngleToleranceDegrees(
+        turretFieldPosition, desiredFieldHeading, targetPose, SOTMOffset);
+  }
+
+  private double[] getHubTurretAngleToleranceDegrees(
+      Translation2d turretFieldPosition,
+      Rotation2d desiredFieldHeading,
+      Translation2d SOTMOffset,
+      Distance distanceToVirtualTarget) {
+    Translation2d adjustedNearLeftCorner =
+        AllianceFlipUtil.apply(FieldConstants.Hub.nearLeftCorner).plus(SOTMOffset);
+    Translation2d adjustedNearRightCorner =
+        AllianceFlipUtil.apply(FieldConstants.Hub.nearRightCorner).plus(SOTMOffset);
+    Logger.recordOutput("Launcher/Adjusted Near Left Corner", adjustedNearLeftCorner);
+    Logger.recordOutput("Launcher/Adjusted Near Right Corner", adjustedNearRightCorner);
+    double toleranceDegrees =
+        Math.max(
+            Math.toDegrees(
+                Math.atan(FieldConstants.Hub.innerWidth / 2 / distanceToVirtualTarget.in(Meters))),
+            MIN_DYNAMIC_TURRET_TOLERANCE_DEGREES);
+    return new double[] {-toleranceDegrees, toleranceDegrees};
+  }
+
+  private double[] getShuttleTurretAngleToleranceDegrees(
+      Translation2d turretFieldPosition,
+      Rotation2d desiredFieldHeading,
+      Translation2d targetPose,
+      Translation2d SOTMOffset) {
+    double allianceZoneFarX =
+        FieldConstants.TrenchZoneBottom.nearAlliance.getX() - 0.5 * FieldConstants.LeftTrench.depth;
+    Translation2d upperFieldEdge =
+        AllianceFlipUtil.apply(new Translation2d(allianceZoneFarX, FieldConstants.fieldWidth));
+    Translation2d lowerFieldEdge = AllianceFlipUtil.apply(new Translation2d(allianceZoneFarX, 0.0));
+    Translation2d upperLaneEdge =
+        AllianceFlipUtil.apply(
+            new Translation2d(allianceZoneFarX, FieldConstants.Hub.nearLeftCorner.getY()));
+    Translation2d lowerLaneEdge =
+        AllianceFlipUtil.apply(
+            new Translation2d(allianceZoneFarX, FieldConstants.Hub.nearRightCorner.getY()));
+    Translation2d fieldTarget = AllianceFlipUtil.apply(targetPose);
+
+    if (fieldTarget.getY() >= FieldConstants.fieldWidth / 2.0) {
+
+      Translation2d adjustedUpperFieldEdge = upperFieldEdge.plus(SOTMOffset);
+      Translation2d adjustedUpperLaneEdge = upperLaneEdge.plus(SOTMOffset);
+      Logger.recordOutput("Launcher/Adjusted Upper Field Edge", adjustedUpperFieldEdge);
+      Logger.recordOutput("Launcher/Adjusted Upper Lane Edge", adjustedUpperLaneEdge);
+      return getAngularMarginDegrees(
+          turretFieldPosition, desiredFieldHeading, adjustedUpperFieldEdge, adjustedUpperLaneEdge);
+    }
+    Translation2d adjustedLowerFieldEdge = lowerFieldEdge.plus(SOTMOffset);
+    Translation2d adjustedLowerLaneEdge = lowerLaneEdge.plus(SOTMOffset);
+    Logger.recordOutput("Launcher/Adjusted Lower Field Edge", adjustedLowerFieldEdge);
+    Logger.recordOutput("Launcher/Adjusted Lower Lane Edge", adjustedLowerLaneEdge);
+    return getAngularMarginDegrees(
+        turretFieldPosition, desiredFieldHeading, adjustedLowerFieldEdge, adjustedLowerLaneEdge);
+  }
+
+  private double[] getAngularMarginDegrees(
+      Translation2d origin,
+      Rotation2d desiredFieldHeading,
+      Translation2d boundaryA,
+      Translation2d boundaryB) {
+
+    double marginA = boundaryA.minus(origin).getAngle().minus(desiredFieldHeading).getDegrees();
+    double marginB = boundaryB.minus(origin).getAngle().minus(desiredFieldHeading).getDegrees();
+
+    double lowerBound = Math.min(marginA, marginB);
+    double upperBound = Math.max(marginA, marginB);
+    lowerBound = Math.min(lowerBound, -MIN_DYNAMIC_TURRET_TOLERANCE_DEGREES);
+    upperBound = Math.max(upperBound, MIN_DYNAMIC_TURRET_TOLERANCE_DEGREES);
+
+    return new double[] {lowerBound, upperBound};
+  }
+
+  private Translation2d getTurretFieldPosition(Pose2d robotPose) {
+    return robotPose.getTranslation().plus(robotToTurret.rotateBy(robotPose.getRotation()));
+  }
+
   public Command getFlyWheelSysIdCommand(GenericSubsystem launcher) {
     return SystemIdentification.getSysIdFullCommand(
         SystemIdentification.rpmSysIdRoutine(
@@ -587,5 +788,15 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   @Override
   public void zeroTurret() {
     turret.getMotor().setEncoderPosition(HARD_STOP);
+  }
+
+  @Override
+  public boolean isTurretAtZero() {
+    return Math.abs(turret.getAngle().in(Degrees) - HARD_STOP.in(Degrees)) < 2.0;
+  }
+
+  @Override
+  public BooleanSupplier getTurretZeroButtonSupplier() {
+    return turretZeroButton::get;
   }
 }

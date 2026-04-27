@@ -7,12 +7,15 @@
 
 package org.frc5010.common.drive.swerve.akit;
 
+import static edu.wpi.first.units.Units.Amps;
+
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.Robot;
@@ -84,18 +87,18 @@ public class Module {
   }
 
   /** Runs the module with the specified setpoint state. Mutates the state to optimize it. */
-  public void runSetpoint(SwerveModuleState state) {
+  public void runSetpoint(SwerveModuleState state, Current torqueCurrent) {
     // Optimize velocity setpoint
     state.optimize(getAngle());
-
-    // In simulation, prioritize responsive chassis motion over cosine-based speed suppression.
-    if (!Robot.isSimulation()) {
-      state.cosineScale(inputs.turnPosition);
-    }
+    state.cosineScale(Robot.isSimulation() ? inputs.turnAbsolutePosition : inputs.turnPosition);
 
     // Apply setpoints
-    io.setDriveVelocity(state.speedMetersPerSecond / constants.WheelRadius);
+    io.setDriveVelocity(state.speedMetersPerSecond / constants.WheelRadius, torqueCurrent);
     io.setTurnPosition(state.angle);
+  }
+
+  public void runSetpoint(SwerveModuleState state) {
+    runSetpoint(state, Amps.zero());
   }
 
   /** Runs the module with the specified output while controlling to rotation angles. */

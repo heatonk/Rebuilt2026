@@ -23,9 +23,7 @@ import frc.robot.rebuilt.commands.LauncherCommands.LauncherState;
 import java.util.Map;
 import java.util.function.Supplier;
 import org.frc5010.common.arch.GenericSubsystem;
-import org.frc5010.common.motors.function.GenericFunctionalMotor;
 import org.littletonrobotics.junction.Logger;
-import yams.mechanisms.SmartMechanism;
 import yams.mechanisms.positional.Arm;
 import yams.mechanisms.positional.Pivot;
 
@@ -69,6 +67,9 @@ public class Launcher extends GenericSubsystem {
       profileNotifier.setName("SmartTurret");
       profileNotifier.startPeriodic(PROFILE_PERIOD_SECONDS);
     }
+
+    new edu.wpi.first.wpilibj2.command.button.Trigger(io.getTurretZeroButtonSupplier())
+        .onTrue(zeroTurretCommand());
   }
 
   /**
@@ -90,15 +91,7 @@ public class Launcher extends GenericSubsystem {
    */
   @Override
   public void simulationPeriodic() {
-    for (var entry : devices.entrySet()) {
-      Object device = entry.getValue();
-      if (device instanceof GenericFunctionalMotor genericMotor) {
-        genericMotor.simulationUpdate();
-      }
-      if (device instanceof SmartMechanism mechanism && !entry.getKey().equals("turret")) {
-        mechanism.simIterate();
-      }
-    }
+    super.simulationPeriodic();
     io.updateSimulation(this, Rebuilt.indexer);
   }
 
@@ -239,10 +232,7 @@ public class Launcher extends GenericSubsystem {
    * @return true if the robot is at the desired speed and angle, false otherwise.
    */
   public boolean isAtGoal() {
-    return inputs.flyWheelSpeedAtGoal
-        && inputs.hoodAngleAtGoal
-        && inputs.turretAngleAtGoal
-        && inputs.isValidCalculation;
+    return inputs.flyWheelSpeedAtGoal && inputs.turretAngleAtGoal && inputs.isValidCalculation;
   }
 
   public boolean isOKToFire() {
@@ -370,17 +360,21 @@ public class Launcher extends GenericSubsystem {
     return Commands.runOnce(
         () -> {
           Angle newAngle = inputs.hoodAngleActual.plus(Degrees.of(0.5));
-          if (newAngle.lt(Degrees.of(60))) {
+          Angle upperLimit =
+              hood.getMotorController().getConfig().getMechanismUpperLimit().orElse(Degrees.of(60));
+          if (newAngle.lt(upperLimit)) {
             io.setHoodAngle(newAngle);
           }
         });
   }
-  /** Decreases the hood angle by 0.5 degrees and ensures it does not go below 30 degrees */
+  /** Decreases the hood angle by 0.5 degrees and respects the configured lower limit. */
   public Command decreaseHoodAngleCommand() {
     return Commands.runOnce(
         () -> {
           Angle newAngle = inputs.hoodAngleActual.minus(Degrees.of(0.5));
-          if (newAngle.gt(Degrees.of(30))) {
+          Angle lowerLimit =
+              hood.getMotorController().getConfig().getMechanismLowerLimit().orElse(Degrees.of(30));
+          if (newAngle.gt(lowerLimit)) {
             io.setHoodAngle(newAngle);
           }
         });
@@ -428,5 +422,35 @@ public class Launcher extends GenericSubsystem {
 
   public void zeroTurret() {
     io.zeroTurret();
+  }
+
+  public boolean isTurretAtZero() {
+    return io.isTurretAtZero();
+  }
+
+  public Command zeroTurretCommand() {
+    return Commands.sequence(
+            Commands.runOnce(() -> zeroTurret(), this),
+            Commands.run(
+                    () -> {
+                      org.frc5010.common.utils.OrchestraManager.playTone(261.63);
+                      org.frc5010.common.subsystems.LEDStrip.changeSegmentPattern(
+                          org.frc5010.common.config.ConfigConstants.ALL_LEDS,
+                          org.frc5010.common.subsystems.LEDStrip.getRainbowPattern(2.0));
+                    })
+                .withTimeout(1.5)
+                .ignoringDisable(true))
+        .beforeStarting(() -> frc.robot.rebuilt.Rebuilt.isZeroingBurst = true)
+        .finallyDo(
+            () -> {
+              frc.robot.rebuilt.Rebuilt.isZeroingBurst = false;
+              org.frc5010.common.utils.OrchestraManager.stopTone();
+            })
+        .onlyIf(
+            () ->
+                edu.wpi.first.wpilibj.DriverStation.isDisabled()
+                    && !(frc.robot.rebuilt.Rebuilt.hasEverEnabled()
+                        && edu.wpi.first.wpilibj.DriverStation.isFMSAttached()))
+        .ignoringDisable(true);
   }
 }

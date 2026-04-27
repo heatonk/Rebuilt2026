@@ -247,7 +247,7 @@ public class CameraConfigurationJson {
                   AprilTags.aprilTagFieldLayout,
                   PoseStrategy.valueOf(strategy),
                   robotToCamera,
-                  robot.getSimulatedPoseSupplier(),
+                  robot.getPoseSupplier(),
                   targetFiducialIdList,
                   width,
                   height,

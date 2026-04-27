@@ -1,5 +1,6 @@
 package org.frc5010.common.drive.swerve.akit;
 
+import static edu.wpi.first.units.Units.Amps;
 import static org.frc5010.common.drive.swerve.akit.util.PhoenixUtil.tryUntilOk;
 
 import com.ctre.phoenix6.BaseStatusSignal;
@@ -57,6 +58,7 @@ public abstract class ModuleIOTalonFX implements ModuleIO {
   protected final StatusSignal<AngularAcceleration> driveAcceleration;
   protected final StatusSignal<Voltage> driveAppliedVolts;
   protected final StatusSignal<Current> driveCurrent;
+  protected final StatusSignal<Boolean> driveIsProLicensed;
 
   // Inputs from turn motor
   protected final StatusSignal<Angle> turnPosition;
@@ -141,6 +143,7 @@ public abstract class ModuleIOTalonFX implements ModuleIO {
     driveAcceleration = driveTalon.getAcceleration();
     driveAppliedVolts = driveTalon.getMotorVoltage();
     driveCurrent = driveTalon.getStatorCurrent();
+    driveIsProLicensed = driveTalon.getIsProLicensed();
 
     // Create turn status signals
     turnPosition = turnTalon.getPosition();
@@ -158,6 +161,8 @@ public abstract class ModuleIOTalonFX implements ModuleIO {
         driveAcceleration,
         driveAppliedVolts,
         driveCurrent,
+        driveIsProLicensed,
+        turnAbsolutePosition,
         turnVelocity,
         turnAppliedVolts,
         turnCurrent);
@@ -216,13 +221,20 @@ public abstract class ModuleIOTalonFX implements ModuleIO {
   }
 
   @Override
-  public void setDriveVelocity(double wheelVelocityRadPerSec) {
-    double velocityRotPerSec = Units.radiansToRotations(wheelVelocityRadPerSec);
+  public void setDriveVelocity(double wheelVelocityRadPerSec, Current current) {
+    double motorVelocityRotPerSec = Units.radiansToRotations(wheelVelocityRadPerSec);
     driveTalon.setControl(
         switch (constants.DriveMotorClosedLoopOutput) {
-          case Voltage -> velocityVoltageRequest.withVelocity(velocityRotPerSec);
-          case TorqueCurrentFOC -> velocityTorqueCurrentRequest.withVelocity(velocityRotPerSec);
+          case Voltage -> velocityVoltageRequest.withVelocity(motorVelocityRotPerSec);
+          case TorqueCurrentFOC -> velocityTorqueCurrentRequest
+              .withVelocity(motorVelocityRotPerSec)
+              .withFeedForward(current);
         });
+  }
+
+  @Override
+  public void setDriveVelocity(double velocityRadPerSec) {
+    setDriveVelocity(velocityRadPerSec, Amps.of(0.0));
   }
 
   @Override

@@ -2,7 +2,6 @@ package frc.robot.rebuilt.subsystems.intake;
 
 import static edu.wpi.first.units.Units.Inches;
 
-import edu.wpi.first.math.geometry.Translation2d;
 import frc.robot.rebuilt.Rebuilt;
 import java.util.Map;
 import org.frc5010.common.drive.GenericDrivetrain;
@@ -46,11 +45,9 @@ public class IntakeIOSim extends IntakeIOReal {
     super.updateInputs(inputs);
     if (inputs.speed < 0) {
       if (intakeSimulation.obtainGamePieceFromIntake()) {
-        Translation2d spawnTranslation =
-            GenericDrivetrain.getMapleSimDrive()
-                .map(it -> it.getSimulatedDriveTrainPose().getTranslation())
-                .orElse(Rebuilt.drivetrain.getPoseEstimator().getCurrentPose().getTranslation());
-        gamePiece = new RebuiltFuelOnField(spawnTranslation);
+        gamePiece =
+            new RebuiltFuelOnField(
+                Rebuilt.drivetrain.getPoseEstimator().getCurrentPose().getTranslation());
         SimulatedArena.getInstance().addGamePiece(gamePiece);
       }
     }

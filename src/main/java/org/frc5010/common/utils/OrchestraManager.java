@@ -6,7 +6,9 @@ import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.configs.AudioConfigs;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.wpilibj.Filesystem;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.frc5010.common.config.json.devices.OrchestraConfigJson;
 
@@ -15,6 +17,7 @@ public class OrchestraManager {
   private static Orchestra orchestra;
   private static Map<String, String> musicMap;
   private static OrchestraConfigJson musicConfigJson;
+  private static List<TalonFX> motors = new ArrayList<>();
 
   public static void init(OrchestraConfigJson configJson) {
     orchestra = new Orchestra();
@@ -27,11 +30,13 @@ public class OrchestraManager {
 
   public static void loadMusic(String musicFileName) {
     if (null != orchestra) {
+      motors.clear();
       for (int id : musicConfigJson.rioIds) {
         TalonFX motor = new TalonFX(id);
         AudioConfigs config = new AudioConfigs().withAllowMusicDurDisable(true);
         motor.getConfigurator().apply(config, 0);
         orchestra.addInstrument(motor);
+        motors.add(motor);
       }
       CANBus canivoreBus = new CANBus("canivore");
       for (int id : musicConfigJson.canivoreIds) {
@@ -39,6 +44,7 @@ public class OrchestraManager {
         AudioConfigs config = new AudioConfigs().withAllowMusicDurDisable(true);
         motor.getConfigurator().apply(config, 0);
         orchestra.addInstrument(motor, 0);
+        motors.add(motor);
       }
       orchestra.loadMusic(
           Filesystem.getDeployDirectory().toPath().resolve(musicMap.get(musicFileName)).toString());
@@ -63,6 +69,24 @@ public class OrchestraManager {
   public static void stop() {
     if (null != orchestra) {
       orchestra.stop();
+    }
+  }
+
+  public static void playTone(double frequencyHz) {
+    if (motors != null) {
+      com.ctre.phoenix6.controls.MusicTone tone =
+          new com.ctre.phoenix6.controls.MusicTone(frequencyHz);
+      for (TalonFX motor : motors) {
+        motor.setControl(tone);
+      }
+    }
+  }
+
+  public static void stopTone() {
+    if (motors != null) {
+      for (TalonFX motor : motors) {
+        motor.setControl(new com.ctre.phoenix6.controls.NeutralOut());
+      }
     }
   }
 }

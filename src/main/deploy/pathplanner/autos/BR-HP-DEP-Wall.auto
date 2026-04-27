@@ -7,7 +7,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "TL-CTR-QTR"
+            "pathName": "BRS-HP"
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 3.0
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "HP-TWROUT-DEP-FAR"
           }
         },
         {
@@ -20,6 +32,6 @@
     }
   },
   "resetOdom": true,
-  "folder": "Left",
+  "folder": "Worlds",
   "choreoAuto": false
 }

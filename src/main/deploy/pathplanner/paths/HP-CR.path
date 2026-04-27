@@ -8,8 +8,8 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 1.3043484416201954,
-        "y": 0.8563997661853032
+        "x": 1.3043484416201951,
+        "y": 0.8563997661853033
       },
       "isLocked": false,
       "linkedName": "HP"
@@ -45,7 +45,7 @@
     "rotation": 30.06858282186252
   },
   "reversed": false,
-  "folder": null,
+  "folder": "Right",
   "idealStartingState": {
     "velocity": 0.0,
     "rotation": -90.0

@@ -7,6 +7,7 @@
 
 package org.frc5010.common.drive.swerve.akit;
 
+import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
@@ -31,6 +32,7 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Force;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
@@ -214,7 +216,7 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
    *
    * @param speeds Speeds in meters/sec
    */
-  public void runVelocity(ChassisSpeeds speeds) {
+  public void runVelocity(ChassisSpeeds speeds, Current[] torqueCurrents) {
     // Calculate module setpoints
     ChassisSpeeds discreteSpeeds = ChassisSpeeds.discretize(speeds, 0.02);
     SwerveModuleState[] setpointStates = kinematics.toSwerveModuleStates(discreteSpeeds);
@@ -226,11 +228,15 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
 
     // Send setpoints to modules
     for (int i = 0; i < 4; i++) {
-      modules[i].runSetpoint(setpointStates[i]);
+      modules[i].runSetpoint(setpointStates[i], torqueCurrents[i]);
     }
 
     // Log optimized setpoints (runSetpoint mutates each state)
     Logger.recordOutput("SwerveStates/SetpointsOptimized", setpointStates);
+  }
+
+  public void runVelocity(ChassisSpeeds speeds) {
+    runVelocity(speeds, new Current[] {Amps.zero(), Amps.zero(), Amps.zero(), Amps.zero()});
   }
 
   /** Runs the drive in a straight line with the specified drive output. */
@@ -417,7 +423,7 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
 
   @Override
   public void drive(ChassisSpeeds velocity, DriveFeedforwards feedforwards) {
-    runVelocity(velocity);
+    runVelocity(velocity, feedforwards.torqueCurrents());
   }
 
   @Override
@@ -547,9 +553,7 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
   }
 
   public void updateSimulation() {
-    // NOTE: SimulatedArena.simulationPeriodic() is called by GenericDrivetrain.simulationPeriodic()
-    // (via super.simulationPeriodic() in GenericSwerveDrivetrain). Calling it again here would
-    // run double the physics sub-ticks per robot loop, causing incorrect dynamics.
+    SimulatedArena.getInstance().simulationPeriodic();
     Logger.recordOutput(
         "FieldSimulation/RobotPosition", driveSimulation.getSimulatedDriveTrainPose());
     Logger.recordOutput(
@@ -562,6 +566,9 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
     selectableCommand.addOption(
         "PRO: Swerve Wheel Radius Characterization",
         AkitDriveCommands.wheelRadiusCharacterization(drivetrain, this));
+
+    selectableCommand.addOption(
+        "PRO: Swerve Drive PID Tuning", AkitDriveCommands.drivePIDTuning(drivetrain, this));
     selectableCommand.addOption(
         "PRO: Swerve Drive Feedforward Characterization",
         AkitDriveCommands.feedforwardCharacterization(
@@ -573,6 +580,20 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
         AkitDriveCommands.feedforwardCharacterization(
             drivetrain,
             (Voltage voltage) -> runSteerCharacterization(voltage.in(Volts)),
+            () -> getSteerFFCharacterizationVelocity()));
+
+    selectableCommand.addOption(
+        "PRO: Swerve Drive TorqueCurrent Characterization",
+        AkitDriveCommands.torqueCurrentFeedforwardCharacterization(
+            drivetrain,
+            (edu.wpi.first.units.measure.Current current) -> runCharacterization(current.in(Amps)),
+            () -> getDriveFFCharacterizationVelocity()));
+    selectableCommand.addOption(
+        "PRO: Swerve Steer TorqueCurrent Characterization",
+        AkitDriveCommands.torqueCurrentFeedforwardCharacterization(
+            drivetrain,
+            (edu.wpi.first.units.measure.Current current) ->
+                runSteerCharacterization(current.in(Amps)),
             () -> getSteerFFCharacterizationVelocity()));
 
     selectableCommand.addOption(
