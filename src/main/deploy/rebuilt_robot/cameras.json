@@ -4,6 +4,5 @@
     "right.json",
     "left.json"
   ],
-  "viewGamePieces": false,
-  "aprilTagLayout": "2026-rebuilt-andymark.json"
+  "viewGamePieces": false
 }
