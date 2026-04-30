@@ -4,7 +4,7 @@
     "controllerType": "talonfx",
     "motorType": "KrakenX44",
     "canId": 15,
-    "logLevel": "HIGH",
+    "logLevel": "LOW",
     "inverted": true,
     "currentLimit": {
       "val": 60,

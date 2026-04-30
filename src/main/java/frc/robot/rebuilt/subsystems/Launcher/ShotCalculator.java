@@ -198,8 +198,8 @@ public class ShotCalculator {
             Map.entry(5.2859, 114.77),
             Map.entry(5.7789, 119.21),
             Map.entry(6.3521, 125.75),
-            Map.entry(10.9907, 155.09),
-            Map.entry(13.0240, 172.00)),
+            Map.entry(10.9907, 156.09),
+            Map.entry(13.0240, 173.00)),
         Map.ofEntries(
             Map.entry(1.5090, 0.8768),
             Map.entry(1.7908, 0.8932),
