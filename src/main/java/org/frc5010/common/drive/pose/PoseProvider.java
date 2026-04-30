@@ -62,7 +62,7 @@ public interface PoseProvider {
     public Pose3d latestTargetPose = new Pose3d();
     public double captureTime;
     public PoseObservation[] poseObservations = new PoseObservation[0];
-    public int[] tagIds = new int[0];
+    //    public int[] tagIds = new int[0];
     /** Total summed distance to all visible tags (meters) */
     public double totalTagDistance = 0.0;
     /** Pose ambiguity of the best visible target */

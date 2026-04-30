@@ -210,7 +210,7 @@ public class PhotonVisionPoseCamera extends PhotonVisionCamera implements Fiduci
     for (int id : tagIds) {
       tagIdArray[i++] = id;
     }
-    input.tagIds = tagIdArray;
+    // input.tagIds = tagIdArray;
     // Log telemetry fields via AdvantageKit inputs
     input.totalTagDistance = totalTagDistanceAccum;
     input.poseAmbiguity = latestAmbiguity;
