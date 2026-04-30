@@ -229,8 +229,8 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
         // Turret is a Pivot so getArmFeedforward() contains the characterised kS/kV/kA in SI units.
         // Fallback values match turret.json in case the YAMS FF was not set.
         ArmFeedforward yamsFf = turretConfig.getArmFeedforward().orElse(null);
-        double kS = yamsFf != null ? yamsFf.getKs() : 15.26;
-        double kV = yamsFf != null ? yamsFf.getKv() : 4.0;
+        double kS = yamsFf != null ? yamsFf.getKs() : 12.12;
+        double kV = yamsFf != null ? yamsFf.getKv() : 3.06;
         double kA = yamsFf != null ? yamsFf.getKa() : 2.0;
         SmartTurretConfig smartConfig =
             new SmartTurretConfig.Builder()
