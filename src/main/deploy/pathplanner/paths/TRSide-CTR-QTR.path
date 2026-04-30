@@ -46,8 +46,8 @@
   ],
   "rotationTargets": [
     {
-      "waypointRelativePos": 1.2464730290456414,
-      "rotationDegrees": 89.06764595078421
+      "waypointRelativePos": 0.6993603411513875,
+      "rotationDegrees": 0.0
     }
   ],
   "constraintZones": [
@@ -95,7 +95,7 @@
   "eventMarkers": [
     {
       "name": "intakeIntake",
-      "waypointRelativePos": 0.39432815665090637,
+      "waypointRelativePos": 0.0,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",
