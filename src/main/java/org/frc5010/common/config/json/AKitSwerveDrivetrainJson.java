@@ -76,7 +76,7 @@ public class AKitSwerveDrivetrainJson implements DrivetrainPropertiesJson {
                 1),
             getModuleTranslations(config));
 
-q    if (RobotBase.isSimulation()) {
+    if (RobotBase.isSimulation()) {
       SwerveDriveFunctions.mapleSimConfig =
           DriveTrainSimulationConfig.Default()
               .withBumperSize(config.getBumperFrameWidth(), config.getBumperFrameLength())
