@@ -3,16 +3,16 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.528863636363636,
-        "y": 0.5269999999999992
+        "x": 3.582922222222222,
+        "y": 0.6536777777777774
       },
       "prevControl": null,
       "nextControl": {
-        "x": 4.528863636363636,
-        "y": 0.5269999999999992
+        "x": 4.582922222222222,
+        "y": 0.6536777777777774
       },
       "isLocked": false,
-      "linkedName": "DELAYTRS"
+      "linkedName": "TRBack Delay"
     },
     {
       "anchor": {
@@ -111,7 +111,7 @@
   "rotationTargets": [
     {
       "waypointRelativePos": 0.5,
-      "rotationDegrees": 90.0
+      "rotationDegrees": 0.0
     },
     {
       "waypointRelativePos": 1.2464730290456414,
@@ -225,7 +225,7 @@
   "folder": "Right",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 90.0
+    "rotation": -1.301952672578859
   },
   "useDefaultConstraints": true
 }

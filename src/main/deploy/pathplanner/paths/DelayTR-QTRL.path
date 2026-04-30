@@ -3,6 +3,7 @@
   "waypoints": [
     {
       "anchor": {
+<<<<<<< Updated upstream:src/main/deploy/pathplanner/paths/DelayTRS-QTRL.path
         "x": 3.52151212553495,
         "y": 0.6515406562054205
       },
@@ -10,9 +11,18 @@
       "nextControl": {
         "x": 4.521512125534952,
         "y": 0.6515406562054205
+=======
+        "x": 3.582922222222222,
+        "y": 0.6536777777777774
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 4.582922222222222,
+        "y": 0.6536777777777774
+>>>>>>> Stashed changes:src/main/deploy/pathplanner/paths/DelayTR-QTRL.path
       },
       "isLocked": false,
-      "linkedName": "TR"
+      "linkedName": "TRBack Delay"
     },
     {
       "anchor": {
@@ -123,7 +133,7 @@
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -0.08211332881449039
+    "rotation": -1.301952672578859
   },
   "useDefaultConstraints": false
 }
