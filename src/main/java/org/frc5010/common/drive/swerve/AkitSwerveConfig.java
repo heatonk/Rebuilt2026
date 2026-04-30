@@ -163,7 +163,10 @@ public class AkitSwerveConfig extends SwerveDriveConfig {
               .withDriveMotorType(DriveMotorArrangement.TalonFX_Integrated)
               .withSteerMotorType(SteerMotorArrangement.TalonFX_Integrated)
               .withFeedbackSource(SteerFeedbackType.FusedCANcoder)
-              .withDriveMotorInitialConfigs(new TalonFXConfiguration())
+              .withDriveMotorInitialConfigs(
+                  new TalonFXConfiguration()
+                      .withCurrentLimits(
+                          new CurrentLimitsConfigs().withSupplyCurrentLimit(Amps.of(30))))
               .withSteerMotorInitialConfigs(
                   new TalonFXConfiguration()
                       .withCurrentLimits(

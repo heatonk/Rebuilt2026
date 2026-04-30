@@ -50,6 +50,8 @@ public class IntakeIOReal implements IntakeIO {
     spintakeOuter = (FlyWheel) devices.get("spintake_outer");
     spintakeInner = (FlyWheel) devices.get("spintake_inner");
     intakeHopper = (Arm) devices.get("hopper");
+    intakeHopper.getMotorController().setStatorCurrentLimit(Amps.of(100));
+    intakeHopper.getMotorController().setSupplyCurrentLimit(Amps.of(30));
     hopperTorqueCurrentConfig =
         TorqueCurrentArmSupport.loadConfig("intake/hopper.json", false, "hopper");
     hopperAngleSetpoint = intakeHopper.getAngle();
