@@ -17,15 +17,6 @@
           }
         },
         {
-<<<<<<< Updated upstream:src/main/deploy/pathplanner/autos/Delay Orbit Right.auto
-          "type": "wait",
-          "data": {
-            "waitTime": 2.0
-          }
-        },
-        {
-=======
->>>>>>> Stashed changes:src/main/deploy/pathplanner/autos/Follow Right Trench HP.auto
           "type": "named",
           "data": {
             "name": "launcherPrep"
@@ -34,11 +25,7 @@
         {
           "type": "wait",
           "data": {
-<<<<<<< Updated upstream:src/main/deploy/pathplanner/autos/Delay Orbit Right.auto
-            "waitTime": 3.0
-=======
             "waitTime": 4.0
->>>>>>> Stashed changes:src/main/deploy/pathplanner/autos/Follow Right Trench HP.auto
           }
         },
         {
