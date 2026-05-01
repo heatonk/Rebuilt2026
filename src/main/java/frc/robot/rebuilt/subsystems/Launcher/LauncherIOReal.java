@@ -678,7 +678,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
       TargetProfile targetProfile) {
     if (targetPose == null || targetProfile == TargetProfile.NONE) {
       return new double[] {
-        Constants.Launcher.TURRET_ANGLE_TOLERANCE_DEGREES,
+        -Constants.Launcher.TURRET_ANGLE_TOLERANCE_DEGREES,
         Constants.Launcher.TURRET_ANGLE_TOLERANCE_DEGREES
       };
     }
@@ -770,8 +770,14 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
 
     double lowerBound = Math.min(marginA, marginB);
     double upperBound = Math.max(marginA, marginB);
-    lowerBound = Math.max(Math.min(lowerBound, -MIN_DYNAMIC_TURRET_SHUTTLE_TOLERANCE_DEGREES), -MAX_DYNAMIC_TURRET_SHUTTLE_TOLERANCE_DEGREES);
-    upperBound = Math.min(Math.max(upperBound, MIN_DYNAMIC_TURRET_SHUTTLE_TOLERANCE_DEGREES), MAX_DYNAMIC_TURRET_SHUTTLE_TOLERANCE_DEGREES);
+    lowerBound =
+        Math.max(
+            Math.min(lowerBound, -MIN_DYNAMIC_TURRET_SHUTTLE_TOLERANCE_DEGREES),
+            -MAX_DYNAMIC_TURRET_SHUTTLE_TOLERANCE_DEGREES);
+    upperBound =
+        Math.min(
+            Math.max(upperBound, MIN_DYNAMIC_TURRET_SHUTTLE_TOLERANCE_DEGREES),
+            MAX_DYNAMIC_TURRET_SHUTTLE_TOLERANCE_DEGREES);
 
     return new double[] {lowerBound, upperBound};
   }
