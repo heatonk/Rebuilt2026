@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.Seconds;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -219,7 +220,7 @@ public class LauncherCommands {
         .whileTrue(turretForwardPresetStateCommand())
         .onFalse(shouldLowCommand());
 
-    operator.createBackButton().onTrue(zeroHoodSequence());
+    operator.createBackButton().whileTrue(zeroHoodSequence());
 
     // This allowed auto-hammer time
     // Trigger isTrenchTrigger = new Trigger(() -> launcher.isNearTrench());
@@ -463,11 +464,11 @@ public class LauncherCommands {
 
   public static Command zeroHoodSequence() {
     return Commands.run(() -> launcher.runHoodDown())
-      .until(() -> !launcher.isHoodMoving() && launcher.isHoodStalled())
-      .andThen(Commands.runOnce(() -> launcher.stopHood()))
-      .andThen(Commands.runOnce(() -> launcher.zeroHood()))
-      .andThen(
-      Commands.run(
+        .withTimeout(Seconds.of(0.75))
+        .andThen(Commands.runOnce(() -> launcher.stopHood()))
+        .andThen(Commands.runOnce(() -> launcher.zeroHood()))
+        .andThen(
+            Commands.run(
                     () -> {
                       org.frc5010.common.subsystems.LEDStrip.changeSegmentPattern(
                           org.frc5010.common.config.ConfigConstants.ALL_LEDS,
@@ -480,6 +481,5 @@ public class LauncherCommands {
             () -> {
               frc.robot.rebuilt.Rebuilt.isZeroingBurst = false;
             });
-
   }
 }
