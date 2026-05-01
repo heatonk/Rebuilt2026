@@ -69,7 +69,10 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   protected static final Angle HARD_STOP = Radians.of(2.9437091319525455);
   protected static final double encoder40Offset = -0.46923828125;
   protected static final double encoder36Offset = 0.129638671875;
-  private static final double MIN_DYNAMIC_TURRET_TOLERANCE_DEGREES = 4.0;
+  private static final double MIN_DYNAMIC_TURRET_TOLERANCE_DEGREES = 2.0;
+  private static final double MIN_DYNAMIC_TURRET_SHUTTLE_TOLERANCE_DEGREES = 4.0;
+  private static final double MAX_DYNAMIC_TURRET_SHUTTLE_TOLERANCE_DEGREES = 20.0;
+
   protected Map<String, Object> devices;
   protected Pivot turret;
   protected Arm hood;
@@ -487,7 +490,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   }
 
   public void runHoodDown() {
-    hood.getMotor().setDutyCycle(-0.2);
+    hood.getMotor().setDutyCycle(-1.0);
   }
 
   public void stopHood() {
