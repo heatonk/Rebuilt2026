@@ -22,6 +22,7 @@ import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.math.controller.ArmFeedforward;
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -108,6 +109,8 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   Angle hoodLowLimit = Degrees.of(12);
   Angle hoodHighLimit = Degrees.of(42);
 
+  private Debouncer hoodNotMoving;
+
   /** 2-state turret controller: SEEKING (MotionMagic) and TRACKING (Position + FF). */
   protected SmartTurretController smartTurretController;
 
@@ -129,6 +132,8 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
             .getRelativePosition()
             .get()
             .toTranslation2d();
+
+    hoodNotMoving = new Debouncer(0.25, Debouncer.DebounceType.kRising);
 
     turretZeroButton = new DigitalInput(0);
 
@@ -286,6 +291,8 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
             .minus(AprilTags.aprilTagFieldLayout.getTagPose(21).get().toPose2d())
             .getTranslation()
             .getNorm());
+
+    
     // Angle calculatedAngle =
     // easyCrtSolver.getAngleOptional().orElse(Degrees.of(0.0));
     // SmartDashboard.putNumber("CRT Angle", calculatedAngle.in(Degrees));
@@ -301,6 +308,8 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
 
     Translation2d SOTMOffset = new Translation2d();
     Distance distanceToVirtualTarget = Meters.of(0.0001);
+
+    inputs.hoodMoving = !hoodNotMoving.calculate(hood.getMotorController().getMechanismVelocity().in(Degrees.per(Second)) < 1.0);
 
     if (targetPose.isPresent()) {
       targetProfile = getTargetProfile(targetPose.get());
@@ -441,6 +450,10 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
     return smartTurretController;
   }
 
+  public void resetHoodAngle(Angle angle) {
+    hood.getMotor().setEncoderPosition(angle);
+  }
+
   /** Sets the flywheel motor's duty cycle */
   public void runShooter(double speed) {
     flyWheel.getMotor().setDutyCycle(speed);
@@ -460,6 +473,18 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   public void setHoodAngleLow() {
     requestHoodAngle(hood.getArmConfig().getLowerHardLimit().orElse(Degrees.of(30)));
     LEDStrip.changeSegmentPattern(ConfigConstants.ALL_LEDS, LEDStrip.getSolidPattern(Color.kGreen));
+  }
+
+  public void runHoodDown() {
+    hood.getMotor().setDutyCycle(-0.2);
+  }
+
+  public void stopHood() {
+    hood.getMotor().setDutyCycle(0.0);
+  }
+
+  public Boolean isHoodStalled() {
+    return hood.getMotor().getStatorCurrent().in(Amps) > Constants.Launcher.HOOD_STALL_CURRENT_THRESHOLD;
   }
 
   private void requestHoodAngle(Angle angle) {

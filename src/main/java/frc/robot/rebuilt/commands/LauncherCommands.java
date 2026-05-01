@@ -219,6 +219,8 @@ public class LauncherCommands {
         .whileTrue(turretForwardPresetStateCommand())
         .onFalse(shouldLowCommand());
 
+    operator.createBackButton().onTrue(zeroHoodSequence());
+
     // This allowed auto-hammer time
     // Trigger isTrenchTrigger = new Trigger(() -> launcher.isNearTrench());
     // isTrenchTrigger.onTrue(shouldAutoHammerTimeCommand()).onFalse(shouldEscapeHammerTimeCommand());
@@ -457,5 +459,27 @@ public class LauncherCommands {
 
   public static LauncherState getCurrentState() {
     return launcher.getCurrentState();
+  }
+
+  public static Command zeroHoodSequence() {
+    return Commands.run(() -> launcher.runHoodDown())
+      .until(() -> !launcher.isHoodMoving() && launcher.isHoodStalled())
+      .andThen(Commands.runOnce(() -> launcher.stopHood()))
+      .andThen(Commands.runOnce(() -> launcher.zeroHood()))
+      .andThen(
+      Commands.run(
+                    () -> {
+                      org.frc5010.common.subsystems.LEDStrip.changeSegmentPattern(
+                          org.frc5010.common.config.ConfigConstants.ALL_LEDS,
+                          org.frc5010.common.subsystems.LEDStrip.getRainbowPattern(50.0));
+                    })
+                .withTimeout(0.5)
+                .ignoringDisable(true))
+        .beforeStarting(() -> frc.robot.rebuilt.Rebuilt.isZeroingBurst = true)
+        .finallyDo(
+            () -> {
+              frc.robot.rebuilt.Rebuilt.isZeroingBurst = false;
+            });
+
   }
 }
