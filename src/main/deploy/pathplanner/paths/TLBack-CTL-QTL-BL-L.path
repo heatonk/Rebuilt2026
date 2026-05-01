@@ -84,7 +84,7 @@
         "y": 5.301777777777777
       },
       "prevControl": {
-        "x": 0.7996382820113707,
+        "x": 0.7996382820113708,
         "y": 5.059611811266766
       },
       "nextControl": {
@@ -202,19 +202,7 @@
     }
   ],
   "pointTowardsZones": [],
-  "eventMarkers": [
-    {
-      "name": "launcherPrep",
-      "waypointRelativePos": 3.8000000000000007,
-      "endWaypointRelativePos": 4.918518518518525,
-      "command": {
-        "type": "named",
-        "data": {
-          "name": "launcherPrep"
-        }
-      }
-    }
-  ],
+  "eventMarkers": [],
   "globalConstraints": {
     "maxVelocity": 4.0,
     "maxAcceleration": 9.0,

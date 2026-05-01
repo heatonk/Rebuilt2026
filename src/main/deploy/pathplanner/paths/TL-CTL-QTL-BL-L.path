@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 0.6888222222222222,
-        "y": 7.465044444444444
+        "x": 1.140798858773181,
+        "y": 7.214963855421686
       },
       "prevControl": null,
       "nextControl": {
-        "x": 1.6888222222222238,
-        "y": 7.465044444444444
+        "x": 2.1407988587731825,
+        "y": 7.214963855421686
       },
       "isLocked": false,
       "linkedName": "trsj__LEFT"
@@ -198,7 +198,7 @@
   "folder": "Left",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -0.0
+    "rotation": -90.11550613618262
   },
   "useDefaultConstraints": true
 }
