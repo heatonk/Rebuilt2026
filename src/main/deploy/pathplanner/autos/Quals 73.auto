@@ -25,7 +25,7 @@
         {
           "type": "wait",
           "data": {
-            "waitTime": 2.0
+            "waitTime": 3.0
           }
         },
         {
@@ -43,7 +43,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "QTRLeft-HP"
+            "pathName": "QBRight-HP"
           }
         },
         {
