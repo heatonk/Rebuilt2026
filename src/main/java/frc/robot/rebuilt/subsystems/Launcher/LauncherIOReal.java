@@ -310,7 +310,6 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
 
     Translation2d SOTMOffset = new Translation2d();
     Distance distanceToVirtualTarget = Meters.of(0.0001);
-    boolean hasTurretAimReference = false;
 
     inputs.hoodMoving =
         !hoodNotMoving.calculate(
@@ -328,7 +327,6 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
                   () -> currentPose,
                   () -> targetPose.get());
       if (params != null) {
-        hasTurretAimReference = true;
         inputs.isValidCalculation = params.isValid();
         inputs.hoodAngleCalculated = Radian.of(params.hoodAngle());
         inputs.turretAngleCalculated = params.turretAngle().getMeasure();
@@ -379,13 +377,10 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
             ? Rotations.of(smartTurretController.getGoalPositionMechRot())
             : turret.getMotorController().getMechanismPositionSetpoint().orElse(Degrees.of(0.0));
 
-    Angle turretAimReference =
-        hasTurretAimReference ? inputs.turretAngleCalculated : inputs.turretAngleDesired;
-
     double[] turretAngleToleranceDegrees =
         getTurretAngleToleranceDegrees(
             currentPose,
-            turretAimReference,
+            inputs.turretAngleDesired,
             targetPose.orElse(null),
             SOTMOffset,
             distanceToVirtualTarget,
@@ -400,12 +395,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
 
     inputs.flyWheelSpeedError = inputs.flyWheelSpeedActual.minus(inputs.flyWheelSpeedDesired);
     inputs.hoodAngleError = inputs.hoodAngleActual.minus(inputs.hoodAngleDesired).in(Degrees);
-    double wrappedTurretAngleError =
-        normalizeDegrees(inputs.turretAngleActual.minus(turretAimReference).in(Degrees));
-    double toleranceCenterDegrees =
-        0.5 * (turretAngleToleranceDegrees[0] + turretAngleToleranceDegrees[1]);
-    inputs.turretAngleError =
-        unwrapDegreesNearReference(wrappedTurretAngleError, toleranceCenterDegrees);
+    inputs.turretAngleError = inputs.turretAngleActual.minus(inputs.turretAngleDesired).in(Degrees);
 
     inputs.flyWheelSpeedAtGoal =
         Math.abs(inputs.flyWheelSpeedError.in(RPM)) <= Constants.Launcher.SHOOTER_TOLERANCE_RPM;
@@ -681,21 +671,21 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
 
   private double[] getTurretAngleToleranceDegrees(
       Pose2d currentPose,
-      Angle referenceTurretAngle,
+      Angle desiredTurretAngle,
       Translation2d targetPose,
       Translation2d SOTMOffset,
       Distance distanceToVirtualTarget,
       TargetProfile targetProfile) {
     if (targetPose == null || targetProfile == TargetProfile.NONE) {
       return new double[] {
-        -Constants.Launcher.TURRET_ANGLE_TOLERANCE_DEGREES,
+        Constants.Launcher.TURRET_ANGLE_TOLERANCE_DEGREES,
         Constants.Launcher.TURRET_ANGLE_TOLERANCE_DEGREES
       };
     }
 
     Translation2d turretFieldPosition = getTurretFieldPosition(currentPose);
     Rotation2d desiredFieldHeading =
-        currentPose.getRotation().plus(Rotation2d.fromRadians(referenceTurretAngle.in(Radians)));
+        currentPose.getRotation().plus(Rotation2d.fromRadians(desiredTurretAngle.in(Radians)));
 
     if (targetProfile == TargetProfile.HUB) {
       return getHubTurretAngleToleranceDegrees(
@@ -710,7 +700,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
     }
 
     return getShuttleTurretAngleToleranceDegrees(
-        turretFieldPosition, desiredFieldHeading, SOTMOffset);
+        turretFieldPosition, desiredFieldHeading, targetPose, SOTMOffset);
   }
 
   private double[] getHubTurretAngleToleranceDegrees(
@@ -735,7 +725,10 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   }
 
   private double[] getShuttleTurretAngleToleranceDegrees(
-      Translation2d turretFieldPosition, Rotation2d desiredFieldHeading, Translation2d SOTMOffset) {
+      Translation2d turretFieldPosition,
+      Rotation2d desiredFieldHeading,
+      Translation2d targetPose,
+      Translation2d SOTMOffset) {
     double allianceZoneFarX =
         FieldConstants.TrenchZoneBottom.nearAlliance.getX() - 0.5 * FieldConstants.LeftTrench.depth;
     Translation2d upperFieldEdge =
@@ -747,6 +740,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
     Translation2d lowerLaneEdge =
         AllianceFlipUtil.apply(
             new Translation2d(allianceZoneFarX, FieldConstants.Hub.nearRightCorner.getY()));
+    Translation2d fieldTarget = AllianceFlipUtil.apply(targetPose);
 
     if (AllianceFlipUtil.applyY(turretFieldPosition.getY()) >= FieldConstants.fieldWidth / 2.0) {
 
@@ -771,37 +765,15 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
       Translation2d boundaryA,
       Translation2d boundaryB) {
 
-    double marginA =
-        normalizeDegrees(
-            boundaryA.minus(origin).getAngle().minus(desiredFieldHeading).getDegrees());
-    double marginB =
-        normalizeDegrees(
-            boundaryB.minus(origin).getAngle().minus(desiredFieldHeading).getDegrees());
-    marginB = unwrapDegreesNearReference(marginB, marginA);
+    double marginA = boundaryA.minus(origin).getAngle().minus(desiredFieldHeading).getDegrees();
+    double marginB = boundaryB.minus(origin).getAngle().minus(desiredFieldHeading).getDegrees();
 
     double lowerBound = Math.min(marginA, marginB);
     double upperBound = Math.max(marginA, marginB);
-    if (lowerBound <= 0.0 && 0.0 <= upperBound) {
-      lowerBound = Math.min(lowerBound, -MIN_DYNAMIC_TURRET_TOLERANCE_DEGREES);
-      upperBound = Math.max(upperBound, MIN_DYNAMIC_TURRET_TOLERANCE_DEGREES);
-    }
+    lowerBound = Math.max(Math.min(lowerBound, -MIN_DYNAMIC_TURRET_SHUTTLE_TOLERANCE_DEGREES), -MAX_DYNAMIC_TURRET_SHUTTLE_TOLERANCE_DEGREES);
+    upperBound = Math.min(Math.max(upperBound, MIN_DYNAMIC_TURRET_SHUTTLE_TOLERANCE_DEGREES), MAX_DYNAMIC_TURRET_SHUTTLE_TOLERANCE_DEGREES);
 
     return new double[] {lowerBound, upperBound};
-  }
-
-  private double normalizeDegrees(double angleDegrees) {
-    return Math.IEEEremainder(angleDegrees, 360.0);
-  }
-
-  private double unwrapDegreesNearReference(double angleDegrees, double referenceDegrees) {
-    double unwrappedAngle = angleDegrees;
-    while (unwrappedAngle - referenceDegrees > 180.0) {
-      unwrappedAngle -= 360.0;
-    }
-    while (unwrappedAngle - referenceDegrees < -180.0) {
-      unwrappedAngle += 360.0;
-    }
-    return unwrappedAngle;
   }
 
   private Translation2d getTurretFieldPosition(Pose2d robotPose) {
