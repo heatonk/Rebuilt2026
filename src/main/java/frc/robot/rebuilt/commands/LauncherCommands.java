@@ -463,11 +463,11 @@ public class LauncherCommands {
 
   public static Command zeroHoodSequence() {
     return Commands.run(() -> launcher.runHoodDown())
-      .until(() -> !launcher.isHoodMoving() && launcher.isHoodStalled())
-      .andThen(Commands.runOnce(() -> launcher.stopHood()))
-      .andThen(Commands.runOnce(() -> launcher.zeroHood()))
-      .andThen(
-      Commands.run(
+        .until(() -> !launcher.isHoodMoving() && launcher.isHoodStalled())
+        .andThen(Commands.runOnce(() -> launcher.stopHood()))
+        .andThen(Commands.runOnce(() -> launcher.zeroHood()))
+        .andThen(
+            Commands.run(
                     () -> {
                       org.frc5010.common.subsystems.LEDStrip.changeSegmentPattern(
                           org.frc5010.common.config.ConfigConstants.ALL_LEDS,
@@ -480,6 +480,5 @@ public class LauncherCommands {
             () -> {
               frc.robot.rebuilt.Rebuilt.isZeroingBurst = false;
             });
-
   }
 }
