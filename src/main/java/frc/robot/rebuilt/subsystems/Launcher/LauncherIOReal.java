@@ -69,7 +69,10 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   protected static final Angle HARD_STOP = Radians.of(2.9437091319525455);
   protected static final double encoder40Offset = -0.46923828125;
   protected static final double encoder36Offset = 0.129638671875;
-  private static final double MIN_DYNAMIC_TURRET_TOLERANCE_DEGREES = 4.0;
+  private static final double MIN_DYNAMIC_TURRET_TOLERANCE_DEGREES = 2.0;
+  private static final double MIN_DYNAMIC_TURRET_SHUTTLE_TOLERANCE_DEGREES = 4.0;
+  private static final double MAX_DYNAMIC_TURRET_SHUTTLE_TOLERANCE_DEGREES = 20.0;
+
   protected Map<String, Object> devices;
   protected Pivot turret;
   protected Arm hood;
@@ -292,7 +295,6 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
             .getTranslation()
             .getNorm());
 
-    
     // Angle calculatedAngle =
     // easyCrtSolver.getAngleOptional().orElse(Degrees.of(0.0));
     // SmartDashboard.putNumber("CRT Angle", calculatedAngle.in(Degrees));
@@ -309,7 +311,9 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
     Translation2d SOTMOffset = new Translation2d();
     Distance distanceToVirtualTarget = Meters.of(0.0001);
 
-    inputs.hoodMoving = !hoodNotMoving.calculate(hood.getMotorController().getMechanismVelocity().in(Degrees.per(Second)) < 1.0);
+    inputs.hoodMoving =
+        !hoodNotMoving.calculate(
+            hood.getMotorController().getMechanismVelocity().in(Degrees.per(Second)) < 1.0);
 
     if (targetPose.isPresent()) {
       targetProfile = getTargetProfile(targetPose.get());
@@ -476,7 +480,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   }
 
   public void runHoodDown() {
-    hood.getMotor().setDutyCycle(-0.2);
+    hood.getMotor().setDutyCycle(-1.0);
   }
 
   public void stopHood() {
@@ -484,7 +488,8 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   }
 
   public Boolean isHoodStalled() {
-    return hood.getMotor().getStatorCurrent().in(Amps) > Constants.Launcher.HOOD_STALL_CURRENT_THRESHOLD;
+    return hood.getMotor().getStatorCurrent().in(Amps)
+        > Constants.Launcher.HOOD_STALL_CURRENT_THRESHOLD;
   }
 
   private void requestHoodAngle(Angle angle) {
@@ -765,8 +770,8 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
 
     double lowerBound = Math.min(marginA, marginB);
     double upperBound = Math.max(marginA, marginB);
-    lowerBound = Math.min(lowerBound, -MIN_DYNAMIC_TURRET_TOLERANCE_DEGREES);
-    upperBound = Math.max(upperBound, MIN_DYNAMIC_TURRET_TOLERANCE_DEGREES);
+    lowerBound = Math.max(Math.min(lowerBound, -MIN_DYNAMIC_TURRET_SHUTTLE_TOLERANCE_DEGREES), -MAX_DYNAMIC_TURRET_SHUTTLE_TOLERANCE_DEGREES);
+    upperBound = Math.min(Math.max(upperBound, MIN_DYNAMIC_TURRET_SHUTTLE_TOLERANCE_DEGREES), MAX_DYNAMIC_TURRET_SHUTTLE_TOLERANCE_DEGREES);
 
     return new double[] {lowerBound, upperBound};
   }
