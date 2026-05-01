@@ -68,7 +68,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   protected static final Angle HARD_STOP = Radians.of(2.9437091319525455);
   protected static final double encoder40Offset = -0.46923828125;
   protected static final double encoder36Offset = 0.129638671875;
-  private static final double MIN_DYNAMIC_TURRET_TOLERANCE_DEGREES = 2.0;
+  private static final double MIN_DYNAMIC_TURRET_TOLERANCE_DEGREES = 4.0;
   protected Map<String, Object> devices;
   protected Pivot turret;
   protected Arm hood;
@@ -662,7 +662,11 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
           turretFieldPosition,
           desiredFieldHeading,
           SOTMOffset,
-          Meters.of(AllianceFlipUtil.apply(targetPose).minus(currentPose.getTranslation()).plus(SOTMOffset).getNorm()));
+          Meters.of(
+              AllianceFlipUtil.apply(targetPose)
+                  .minus(currentPose.getTranslation())
+                  .plus(SOTMOffset)
+                  .getNorm()));
     }
 
     return getShuttleTurretAngleToleranceDegrees(
@@ -683,7 +687,9 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
     double toleranceDegrees =
         Math.max(
             Math.toDegrees(
-                Math.atan((FieldConstants.Hub.innerWidth / 2 - 0.075) / distanceToVirtualTarget.in(Meters))),
+                Math.atan(
+                    (FieldConstants.Hub.innerWidth / 2 - 0.075)
+                        / distanceToVirtualTarget.in(Meters))),
             MIN_DYNAMIC_TURRET_TOLERANCE_DEGREES);
     return new double[] {-toleranceDegrees, toleranceDegrees};
   }

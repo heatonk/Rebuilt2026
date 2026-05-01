@@ -112,7 +112,7 @@
     },
     {
       "name": "launcherPrep",
-      "waypointRelativePos": 2.65,
+      "waypointRelativePos": 3.3548387096774173,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",
