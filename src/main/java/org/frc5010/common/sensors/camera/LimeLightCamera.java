@@ -194,11 +194,11 @@ public class LimeLightCamera extends GenericCamera {
       }
 
       // Save tag IDs to inputs objects
-      input.tagIds =
-          Arrays.stream(LimelightHelpers.getRawFiducials(name))
-              .mapToInt(fiducial -> fiducial.id)
-              .distinct()
-              .toArray();
+      // input.tagIds =
+      //     Arrays.stream(LimelightHelpers.getRawFiducials(name))
+      //         .mapToInt(fiducial -> fiducial.id)
+      //         .distinct()
+      //         .toArray();
     }
   }
 

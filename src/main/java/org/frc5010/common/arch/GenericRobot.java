@@ -170,7 +170,8 @@ public abstract class GenericRobot extends GenericMechanism implements GenericDe
   @Override
   protected void initRealOrSim() {
     if (RobotBase.isReal()) {
-      WpiDataLogging.start(true);
+      // WpiDataLogging.start(true);
+      // TODO: Resolve this, maybe do not double log
     } else {
       WpiDataLogging.start(false);
       // NetworkTableInstance instance = NetworkTableInstance.getDefault();
@@ -262,6 +263,10 @@ public abstract class GenericRobot extends GenericMechanism implements GenericDe
   public Command getAutonomousCommand() {
     everEnabled = true;
     return generateAutoCommand(selectableCommand.get().asProxy());
+  }
+
+  public static boolean hasEverEnabled() {
+    return everEnabled;
   }
 
   /** Executes periodic behavior when the robot is disabled. */

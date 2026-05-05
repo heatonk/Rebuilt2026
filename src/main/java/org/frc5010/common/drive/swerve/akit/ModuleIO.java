@@ -8,6 +8,7 @@
 package org.frc5010.common.drive.swerve.akit;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.units.measure.Current;
 import org.littletonrobotics.junction.AutoLog;
 
 public interface ModuleIO {
@@ -44,6 +45,11 @@ public interface ModuleIO {
 
   /** Run the drive motor at the specified velocity. */
   public default void setDriveVelocity(double velocityRadPerSec) {}
+
+  /** Run the drive motor at the specified velocity and torque current. */
+  public default void setDriveVelocity(double velocityRadPerSec, Current torqueCurrent) {
+    setDriveVelocity(velocityRadPerSec);
+  }
 
   /** Run the turn motor to the specified rotation. */
   public default void setTurnPosition(Rotation2d rotation) {}

@@ -25,6 +25,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -57,7 +58,7 @@ public class AkitDriveCommands {
   private static final double FF_RAMP_RATE = 0.1; // Volts/Sec
   private static final double WHEEL_RADIUS_MAX_VELOCITY = 0.25; // Rad/Sec
   private static final double WHEEL_RADIUS_RAMP_RATE = 0.05; // Rad/Sec^2
-  private static final double PID_TUNING_VOLTAGE = 2.0; // Volts - voltage to apply during tuning
+  private static final double PID_TUNING_VOLTAGE = 30.0; // Volts - voltage to apply during tuning
   private static final double PID_TUNING_DELAY = 1.0; // Secs - initial delay before measurements
 
   private AkitDriveCommands() {}
@@ -259,6 +260,24 @@ public class AkitDriveCommands {
   }
 
   /**
+   * Measures the velocity feedforward constants for the drive motors using TorqueCurrentFOC.
+   *
+   * <p>This command should only be used in torque current control mode.
+   *
+   * @param subsystem the swerve drivetrain subsystem to characterize
+   * @param characterizer consumer that accepts current values to apply to drive motors
+   * @param velocitySupplier supplier that returns the current velocity for measurement
+   * @return a command that performs feedforward characterization and logs results
+   */
+  public static Command torqueCurrentFeedforwardCharacterization(
+      GenericSubsystem subsystem,
+      Consumer<Current> characterizer,
+      Supplier<Double> velocitySupplier) {
+    return org.frc5010.common.motors.SystemIdentification.torqueCurrentFeedforwardCharacterization(
+        subsystem, characterizer, velocitySupplier);
+  }
+
+  /**
    * Measures the robot's wheel radius by spinning in a circle.
    *
    * @param swerveDrive the swerve drivetrain subsystem to characterize
@@ -379,8 +398,7 @@ public class AkitDriveCommands {
                             // Transition to new setpoint
                             Commands.runOnce(
                                 () -> {
-                                  ChassisSpeeds speeds =
-                                      new ChassisSpeeds(targetVelocity, 0.0, 0.0);
+                                  ChassisSpeeds speeds = new ChassisSpeeds(0, 0.0, targetVelocity);
                                   drive.runVelocity(speeds);
                                 }),
 
@@ -391,7 +409,7 @@ public class AkitDriveCommands {
                             Commands.run(
                                     () -> {
                                       ChassisSpeeds speeds =
-                                          new ChassisSpeeds(targetVelocity, 0.0, 0.0);
+                                          new ChassisSpeeds(0, 0.0, targetVelocity);
                                       drive.runVelocity(speeds);
 
                                       // Calculate velocity error: difference between setpoint
@@ -399,8 +417,7 @@ public class AkitDriveCommands {
                                       double avgVelocity = 0.0;
                                       for (int i = 0; i < 4; i++) {
                                         avgVelocity +=
-                                            drive.getModulesInfo()[i]
-                                                .driveVelocityMetersPerSecond();
+                                            drive.getModulesInfo()[i].driveVelocityMetersPerSecond;
                                       }
                                       avgVelocity /= 4.0;
                                       double error = Math.abs(targetVelocity - avgVelocity);
@@ -497,7 +514,7 @@ public class AkitDriveCommands {
                                   double avgAngleError = 0.0;
                                   for (int i = 0; i < 4; i++) {
                                     double currentAngle =
-                                        drive.getModulesInfo()[i].steerAbsoluteDegrees();
+                                        drive.getModulesInfo()[i].steerAbsoluteDegrees;
                                     double error = Math.abs(targetDegrees - currentAngle);
                                     // Handle angle wrapping (shortest path)
                                     if (error > 180.0) {

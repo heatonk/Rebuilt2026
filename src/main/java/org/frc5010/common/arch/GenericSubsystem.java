@@ -4,6 +4,7 @@
 
 package org.frc5010.common.arch;
 
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
@@ -124,16 +125,14 @@ public class GenericSubsystem extends SubsystemBase
   @Override
   public void periodic() {
     DashBoard.notifyListeners();
-    devices.values().stream()
-        .forEach(
-            it -> {
-              if (it instanceof GenericFunctionalMotor) {
-                ((GenericFunctionalMotor) it).periodicUpdate();
-              }
-              if (it instanceof SmartMechanism) {
-                ((SmartMechanism) it).updateTelemetry();
-              }
-            });
+    for (Object it : devices.values()) {
+      if (it instanceof GenericFunctionalMotor) {
+        ((GenericFunctionalMotor) it).periodicUpdate();
+      }
+      if (it instanceof SmartMechanism) {
+        ((SmartMechanism) it).updateTelemetry();
+      }
+    }
   }
 
   /**
@@ -142,16 +141,14 @@ public class GenericSubsystem extends SubsystemBase
    */
   @Override
   public void simulationPeriodic() {
-    devices.values().stream()
-        .forEach(
-            it -> {
-              if (it instanceof GenericFunctionalMotor) {
-                ((GenericFunctionalMotor) it).simulationUpdate();
-              }
-              if (it instanceof SmartMechanism) {
-                ((SmartMechanism) it).simIterate();
-              }
-            });
+    for (Object it : devices.values()) {
+      if (it instanceof GenericFunctionalMotor) {
+        ((GenericFunctionalMotor) it).simulationUpdate();
+      }
+      if (it instanceof SmartMechanism) {
+        ((SmartMechanism) it).simIterate();
+      }
+    }
   }
 
   /**
@@ -171,5 +168,10 @@ public class GenericSubsystem extends SubsystemBase
    */
   public void setDisplay(boolean display) {
     if (display) DashBoard.makeDisplayed();
+  }
+
+  public static Object setHeight(Distance of) {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'setHeight'");
   }
 }

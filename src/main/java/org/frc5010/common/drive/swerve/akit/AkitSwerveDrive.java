@@ -7,6 +7,7 @@
 
 package org.frc5010.common.drive.swerve.akit;
 
+import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
@@ -31,6 +32,7 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Force;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
@@ -80,6 +82,27 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
       };
   private SwerveDrivePoseEstimator poseEstimator;
   private final Consumer<Pose2d> resetSimulationPoseCallBack;
+
+  // Pre-allocated odometry buffers — sized for max odometry samples per 20ms loop.
+  // At 250 Hz odometry the theoretical max is ~5 samples; 16 provides ample headroom.
+  private static final int MAX_ODOMETRY_SAMPLES = 16;
+  /** Empty array sentinel for disabled-mode logging — never mutated */
+  private static final SwerveModuleState[] EMPTY_MODULE_STATES = new SwerveModuleState[] {};
+
+  private final SwerveModulePosition[][] odometryModulePositions =
+      new SwerveModulePosition[MAX_ODOMETRY_SAMPLES][4];
+  private final SwerveModulePosition[][] odometryModuleDeltas =
+      new SwerveModulePosition[MAX_ODOMETRY_SAMPLES][4];
+
+  {
+    // Pre-populate every slot so no null checks are needed in the hot loop
+    for (int s = 0; s < MAX_ODOMETRY_SAMPLES; s++) {
+      for (int m = 0; m < 4; m++) {
+        odometryModulePositions[s][m] = new SwerveModulePosition();
+        odometryModuleDeltas[s][m] = new SwerveModulePosition();
+      }
+    }
+  }
 
   public AkitSwerveDrive(
       AkitSwerveConfig config,
@@ -145,8 +168,8 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
 
     // Log empty setpoint states when disabled
     if (DriverStation.isDisabled()) {
-      Logger.recordOutput("SwerveStates/Setpoints", new SwerveModuleState[] {});
-      Logger.recordOutput("SwerveStates/SetpointsOptimized", new SwerveModuleState[] {});
+      Logger.recordOutput("SwerveStates/Setpoints", EMPTY_MODULE_STATES);
+      Logger.recordOutput("SwerveStates/SetpointsOptimized", EMPTY_MODULE_STATES);
     }
 
     getChassisSpeeds();
@@ -154,19 +177,20 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
     // Update odometry
     double[] sampleTimestamps =
         modules[0].getOdometryTimestamps(); // All signals are sampled together
-    int sampleCount = sampleTimestamps.length;
+    int sampleCount = Math.min(sampleTimestamps.length, MAX_ODOMETRY_SAMPLES);
     for (int i = 0; i < sampleCount; i++) {
-      // Read wheel positions and deltas from each module
-      SwerveModulePosition[] modulePositions = new SwerveModulePosition[4];
-      SwerveModulePosition[] moduleDeltas = new SwerveModulePosition[4];
+      // Reuse pre-allocated position / delta arrays for this sample
+      SwerveModulePosition[] modulePositions = odometryModulePositions[i];
+      SwerveModulePosition[] moduleDeltas = odometryModuleDeltas[i];
       for (int moduleIndex = 0; moduleIndex < 4; moduleIndex++) {
-        modulePositions[moduleIndex] = modules[moduleIndex].getOdometryPositions()[i];
-        moduleDeltas[moduleIndex] =
-            new SwerveModulePosition(
-                modulePositions[moduleIndex].distanceMeters
-                    - lastModulePositions[moduleIndex].distanceMeters,
-                modulePositions[moduleIndex].angle);
-        lastModulePositions[moduleIndex] = modulePositions[moduleIndex];
+        SwerveModulePosition freshPos = modules[moduleIndex].getOdometryPositions()[i];
+        modulePositions[moduleIndex].distanceMeters = freshPos.distanceMeters;
+        modulePositions[moduleIndex].angle = freshPos.angle;
+        moduleDeltas[moduleIndex].distanceMeters =
+            freshPos.distanceMeters - lastModulePositions[moduleIndex].distanceMeters;
+        moduleDeltas[moduleIndex].angle = freshPos.angle;
+        lastModulePositions[moduleIndex].distanceMeters = freshPos.distanceMeters;
+        lastModulePositions[moduleIndex].angle = freshPos.angle;
       }
 
       // Update gyro angle
@@ -192,7 +216,7 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
    *
    * @param speeds Speeds in meters/sec
    */
-  public void runVelocity(ChassisSpeeds speeds) {
+  public void runVelocity(ChassisSpeeds speeds, Current[] torqueCurrents) {
     // Calculate module setpoints
     ChassisSpeeds discreteSpeeds = ChassisSpeeds.discretize(speeds, 0.02);
     SwerveModuleState[] setpointStates = kinematics.toSwerveModuleStates(discreteSpeeds);
@@ -204,11 +228,15 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
 
     // Send setpoints to modules
     for (int i = 0; i < 4; i++) {
-      modules[i].runSetpoint(setpointStates[i]);
+      modules[i].runSetpoint(setpointStates[i], torqueCurrents[i]);
     }
 
     // Log optimized setpoints (runSetpoint mutates each state)
     Logger.recordOutput("SwerveStates/SetpointsOptimized", setpointStates);
+  }
+
+  public void runVelocity(ChassisSpeeds speeds) {
+    runVelocity(speeds, new Current[] {Amps.zero(), Amps.zero(), Amps.zero(), Amps.zero()});
   }
 
   /** Runs the drive in a straight line with the specified drive output. */
@@ -369,6 +397,7 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
   }
 
   @Override
+  @AutoLogOutput(key = "SwerveChassisSpeeds/FieldMeasured")
   public ChassisSpeeds getFieldVelocity() {
     return ChassisSpeeds.fromRobotRelativeSpeeds(getChassisSpeeds(), getRotation());
   }
@@ -378,6 +407,7 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
    * Uses the same kinematics math as velocity, but with per-module acceleration instead of
    * velocity.
    */
+  @AutoLogOutput(key = "SwerveChassisAcceleration/Robot")
   public ChassisSpeeds getChassisAcceleration() {
     SwerveModuleState[] accelStates = new SwerveModuleState[4];
     for (int i = 0; i < 4; i++) {
@@ -389,13 +419,14 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
   /**
    * Returns the field-relative chassis acceleration derived from drive motor acceleration signals.
    */
+  @AutoLogOutput(key = "SwerveChassisAcceleration/Field")
   public ChassisSpeeds getFieldAcceleration() {
     return ChassisSpeeds.fromRobotRelativeSpeeds(getChassisAcceleration(), getRotation());
   }
 
   @Override
   public void drive(ChassisSpeeds velocity, DriveFeedforwards feedforwards) {
-    runVelocity(velocity);
+    runVelocity(velocity, feedforwards.torqueCurrents());
   }
 
   @Override
@@ -482,9 +513,14 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
 
   @Override
   public GenericSwerveModuleInfo[] getModulesInfo() {
-    if (null == moduleInfos) moduleInfos = new GenericSwerveModuleInfo[modules.length];
+    if (null == moduleInfos) {
+      moduleInfos = new GenericSwerveModuleInfo[modules.length];
+      for (int i = 0; i < modules.length; i++) {
+        moduleInfos[i] = new GenericSwerveModuleInfo();
+      }
+    }
     for (int i = 0; i < modules.length; i++) {
-      moduleInfos[i] = new GenericSwerveModuleInfo(modules[i]);
+      moduleInfos[i].update(modules[i]);
     }
     return moduleInfos;
   }
@@ -533,6 +569,9 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
     selectableCommand.addOption(
         "PRO: Swerve Wheel Radius Characterization",
         AkitDriveCommands.wheelRadiusCharacterization(drivetrain, this));
+
+    selectableCommand.addOption(
+        "PRO: Swerve Drive PID Tuning", AkitDriveCommands.drivePIDTuning(drivetrain, this));
     selectableCommand.addOption(
         "PRO: Swerve Drive Feedforward Characterization",
         AkitDriveCommands.feedforwardCharacterization(
@@ -544,6 +583,20 @@ public class AkitSwerveDrive extends SwerveDriveFunctions {
         AkitDriveCommands.feedforwardCharacterization(
             drivetrain,
             (Voltage voltage) -> runSteerCharacterization(voltage.in(Volts)),
+            () -> getSteerFFCharacterizationVelocity()));
+
+    selectableCommand.addOption(
+        "PRO: Swerve Drive TorqueCurrent Characterization",
+        AkitDriveCommands.torqueCurrentFeedforwardCharacterization(
+            drivetrain,
+            (edu.wpi.first.units.measure.Current current) -> runCharacterization(current.in(Amps)),
+            () -> getDriveFFCharacterizationVelocity()));
+    selectableCommand.addOption(
+        "PRO: Swerve Steer TorqueCurrent Characterization",
+        AkitDriveCommands.torqueCurrentFeedforwardCharacterization(
+            drivetrain,
+            (edu.wpi.first.units.measure.Current current) ->
+                runSteerCharacterization(current.in(Amps)),
             () -> getSteerFFCharacterizationVelocity()));
 
     selectableCommand.addOption(

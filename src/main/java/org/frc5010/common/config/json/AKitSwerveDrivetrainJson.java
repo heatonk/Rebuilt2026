@@ -76,27 +76,26 @@ public class AKitSwerveDrivetrainJson implements DrivetrainPropertiesJson {
                 1),
             getModuleTranslations(config));
 
-    SwerveDriveFunctions.mapleSimConfig =
-        DriveTrainSimulationConfig.Default()
-            .withBumperSize(config.getBumperFrameWidth(), config.getBumperFrameLength())
-            .withRobotMass(config.getRobotMass())
-            .withCustomModuleTranslations(getModuleTranslations(config))
-            .withGyro(COTS.ofPigeon2())
-            .withSwerveModule(
-                new SwerveModuleSimulationConfig(
-                    DeviceConfigReader.getSimulatedMotor(
-                        constants.modules.get("frontLeft").driveMotorSetup.motorType, 1),
-                    DeviceConfigReader.getSimulatedMotor(
-                        constants.modules.get("frontLeft").steerMotorSetup.motorType, 1),
-                    config.getDriveGearRatio(),
-                    config.getSteerGearRatio(),
-                    Volts.of(config.FrontLeft.DriveFrictionVoltage),
-                    Volts.of(config.FrontLeft.SteerFrictionVoltage),
-                    Meters.of(config.FrontLeft.WheelRadius),
-                    KilogramSquareMeters.of(config.FrontLeft.SteerInertia),
-                    constants.wheelCOF));
-
     if (RobotBase.isSimulation()) {
+      SwerveDriveFunctions.mapleSimConfig =
+          DriveTrainSimulationConfig.Default()
+              .withBumperSize(config.getBumperFrameWidth(), config.getBumperFrameLength())
+              .withRobotMass(config.getRobotMass())
+              .withCustomModuleTranslations(getModuleTranslations(config))
+              .withGyro(COTS.ofPigeon2())
+              .withSwerveModule(
+                  new SwerveModuleSimulationConfig(
+                      DeviceConfigReader.getSimulatedMotor(
+                          constants.modules.get("frontLeft").driveMotorSetup.motorType, 1),
+                      DeviceConfigReader.getSimulatedMotor(
+                          constants.modules.get("frontLeft").steerMotorSetup.motorType, 1),
+                      config.getDriveGearRatio(),
+                      config.getSteerGearRatio(),
+                      Volts.of(config.FrontLeft.DriveFrictionVoltage),
+                      Volts.of(config.FrontLeft.SteerFrictionVoltage),
+                      Meters.of(config.FrontLeft.WheelRadius),
+                      KilogramSquareMeters.of(config.FrontLeft.SteerInertia),
+                      constants.wheelCOF));
       SwerveDriveFunctions.driveSimulation =
           new SwerveDriveSimulation(
               SwerveDriveFunctions.mapleSimConfig, new Pose2d(3, 3, new Rotation2d()));

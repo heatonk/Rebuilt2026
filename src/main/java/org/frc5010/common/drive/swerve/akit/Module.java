@@ -7,12 +7,15 @@
 
 package org.frc5010.common.drive.swerve.akit;
 
+import static edu.wpi.first.units.Units.Amps;
+
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.Robot;
@@ -31,7 +34,8 @@ public class Module {
   private final Alert turnDisconnectedAlert;
   private final Alert turnEncoderDisconnectedAlert;
 
-  private SwerveModulePosition[] odometryPositions = new SwerveModulePosition[] {};
+  /** Grow-only array: never shrunk to minimise GC pressure from per-cycle allocation */
+  private SwerveModulePosition[] odometryPositions = new SwerveModulePosition[0];
 
   public Module(
       ModuleIO io,
@@ -63,11 +67,17 @@ public class Module {
         Math.min(
             inputs.odometryDrivePositionsRad.length,
             inputs.odometryTurnPositions.length); // All signals are sampled together
-    odometryPositions = new SwerveModulePosition[sampleCount];
+    // Grow the array only when needed; never shrink to avoid per-cycle GC pressure
+    if (odometryPositions.length != sampleCount) {
+      odometryPositions = new SwerveModulePosition[sampleCount];
+      for (int i = 0; i < sampleCount; i++) {
+        odometryPositions[i] = new SwerveModulePosition();
+      }
+    }
     for (int i = 0; i < sampleCount; i++) {
-      double positionMeters = inputs.odometryDrivePositionsRad[i] * constants.WheelRadius;
-      Rotation2d angle = inputs.odometryTurnPositions[i];
-      odometryPositions[i] = new SwerveModulePosition(positionMeters, angle);
+      odometryPositions[i].distanceMeters =
+          inputs.odometryDrivePositionsRad[i] * constants.WheelRadius;
+      odometryPositions[i].angle = inputs.odometryTurnPositions[i];
     }
 
     // Update alerts
@@ -77,14 +87,18 @@ public class Module {
   }
 
   /** Runs the module with the specified setpoint state. Mutates the state to optimize it. */
-  public void runSetpoint(SwerveModuleState state) {
+  public void runSetpoint(SwerveModuleState state, Current torqueCurrent) {
     // Optimize velocity setpoint
     state.optimize(getAngle());
     state.cosineScale(Robot.isSimulation() ? inputs.turnAbsolutePosition : inputs.turnPosition);
 
     // Apply setpoints
-    io.setDriveVelocity(state.speedMetersPerSecond / constants.WheelRadius);
+    io.setDriveVelocity(state.speedMetersPerSecond / constants.WheelRadius, torqueCurrent);
     io.setTurnPosition(state.angle);
+  }
+
+  public void runSetpoint(SwerveModuleState state) {
+    runSetpoint(state, Amps.zero());
   }
 
   /** Runs the module with the specified output while controlling to rotation angles. */

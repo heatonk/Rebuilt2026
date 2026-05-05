@@ -13,6 +13,8 @@
 
 package org.frc5010.common.drive.swerve.akit;
 
+import com.ctre.phoenix6.configs.CANcoderConfiguration;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
@@ -31,7 +33,10 @@ public class ModuleIOTalonFXReal extends ModuleIOTalonFX {
   private final Queue<Double> drivePositionQueue;
   private final Queue<Double> turnPositionQueue;
 
-  public ModuleIOTalonFXReal(AkitSwerveConfig config, SwerveModuleConstants constants) {
+  public ModuleIOTalonFXReal(
+      AkitSwerveConfig config,
+      SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
+          constants) {
     super(config, constants);
 
     this.timestampQueue = TalonFXOdometryThread.getInstance().makeTimestampQueue();

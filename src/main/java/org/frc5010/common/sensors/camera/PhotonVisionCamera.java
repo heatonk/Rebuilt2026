@@ -38,11 +38,39 @@ public class PhotonVisionCamera extends GenericCamera {
     camera = new PhotonCamera(name);
   }
 
+  /** The empty pipeline result sentinel — avoids allocating a new one each cycle */
+  private static final PhotonPipelineResult EMPTY_RESULT = new PhotonPipelineResult();
+
+  /**
+   * Maximum number of camera frames to process per 20ms loop cycle.
+   *
+   * <p>PhotonVision buffers every frame received since the NT connection was established. On the
+   * very first call to {@code getAllUnreadResults()} (typically ~16 s after boot), that buffer may
+   * contain hundreds of stale frames (16 s × 30 fps = ~480 frames per camera). Processing all of
+   * them in one cycle causes a 115–400 ms first-periodic overrun. By capping the list to the
+   * most-recent MAX_FRAMES_PER_CYCLE entries we limit latency while still receiving all frames that
+   * arrive during a single 20 ms window (≤ 2 at 30 fps).
+   */
+  private static final int MAX_FRAMES_PER_CYCLE = 10;
+
   /** Update the camera and target with the latest result */
   @Override
   public void updateCameraInfo() {
-    camResults = camera.getAllUnreadResults();
-    camResult = camResults.stream().findFirst().orElse(new PhotonPipelineResult());
+    List<PhotonPipelineResult> allResults = camera.getAllUnreadResults();
+    input.unreadResultCount = allResults.size();
+    // Drain stale frames: keep only the most recent MAX_FRAMES_PER_CYCLE results.
+    // This prevents a multi-hundred-millisecond stall on the first periodic() call when
+    // the NT subscriber queue has accumulated hundreds of buffered frames since boot.
+    int size = allResults.size();
+    if (size > MAX_FRAMES_PER_CYCLE) {
+      camResults = allResults.subList(size - MAX_FRAMES_PER_CYCLE, size);
+    } else {
+      camResults = allResults;
+    }
+    input.processedResultCount = camResults.size();
+    input.droppedResultCount = Math.max(0, size - camResults.size());
+    // Avoid stream().findFirst() allocation — use direct index access
+    camResult = camResults.isEmpty() ? EMPTY_RESULT : camResults.get(camResults.size() - 1);
     input.connected = camera.isConnected();
     input.captureTime = camResult.getTimestampSeconds();
   }
