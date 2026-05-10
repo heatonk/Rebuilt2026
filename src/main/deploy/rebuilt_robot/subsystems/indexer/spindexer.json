@@ -1,0 +1,11 @@
+{
+  "name": "spindexer",
+  "controller": "talonfx",
+  "type": "KrakenX44",
+  "id": 9,
+  "gearing": 1.0,
+  "momentOfInertiaKgMSq": 1.0,
+  "x": 0.5,
+  "y": -0.092,
+  "z": 0.2
+}

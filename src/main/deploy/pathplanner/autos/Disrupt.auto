@@ -1,0 +1,43 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "RightDisrupt1"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "intakeIntake"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "WaitUntilIntaking"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Disrupter2"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "launcherPrep"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": "Right",
+  "choreoAuto": false
+}

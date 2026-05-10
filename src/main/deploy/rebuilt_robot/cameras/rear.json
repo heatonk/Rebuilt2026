@@ -1,0 +1,13 @@
+{
+  "name": "rear-prometheus",
+  "use": "apriltag",
+  "type": "photonvision",
+  "strategy": "LOWEST_AMBIGUITY",
+  "column": 0,
+  "x": -0.2961,
+  "y": -0.2212,
+  "z": 0.2368,
+  "roll": 0,
+  "pitch": -30,
+  "yaw": 175
+}

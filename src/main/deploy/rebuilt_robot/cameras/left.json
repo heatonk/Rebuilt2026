@@ -1,0 +1,13 @@
+{
+  "name": "left-bagel",
+  "use": "apriltag",
+  "type": "photonvision",
+  "strategy": "LOWEST_AMBIGUITY",
+  "column": 0,
+  "x": -0.2778,
+  "y": 0.2975,
+  "z": 0.2368,
+  "roll": 0,
+  "pitch": -30,
+  "yaw": 70
+}

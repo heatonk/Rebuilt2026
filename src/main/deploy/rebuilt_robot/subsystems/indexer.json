@@ -1,0 +1,12 @@
+{
+  "devices": [
+    {
+      "device": "yams_shooter",
+      "file": "indexer/transfer_flywheel.json"
+    },
+    {
+      "device": "percent_motor",
+      "file": "indexer/spindexer.json"
+    }
+  ]
+}

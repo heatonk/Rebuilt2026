@@ -185,3 +185,7 @@ compile_commands.json
 
 # Eclipse generated file for annotation processors
 .factorypath
+/results
+/src/main/resources/pose_optimizer
+src/main/java/frc/robot/BuildConstants.java
+src/main/java/frc/robot/BuildConstants.java

@@ -1,14 +1,9 @@
 {
-  "competitionPin": 0,
+  "competitionPin": 1,
   "robots": {
-    "basic_robot": {
-      "id": "basic_robot",
-      "robotClass": "frc.robot.example.ExampleRobot",
-      "simulate": true
-    },
-    "baby_swerve": {
-      "id": "00:80:2F:24:6D:74",
-      "robotClass": "frc.robot.baby_swerve.BabySwerve",
+    "rebuilt_robot": {
+      "id": "00:80:2F:43:05:95",
+      "robotClass": "frc.robot.rebuilt.Rebuilt",
       "simulate": true,
       "competition": true
     }

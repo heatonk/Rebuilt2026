@@ -1,0 +1,61 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "TL-CTLD"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "CTLD-BLA"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "BLA-TLS"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "launcherLow"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "TL-QTRH"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "QTRLD-BLA"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "BLA-DEP"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "launcherPrep"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": "Left",
+  "choreoAuto": false
+}

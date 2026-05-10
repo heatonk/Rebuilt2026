@@ -1,0 +1,10 @@
+{
+  "name": "transfer_back",
+  "controller": "talonfx",
+  "type": "KrakenX60",
+  "id": 11,
+  "gearing": 1.0,
+  "x": -0.236,
+  "y": -0.001,
+  "z": 0.136
+}

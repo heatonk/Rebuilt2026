@@ -1,0 +1,61 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "TR-CTR-QTR"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "QTR-TR"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "launcherPrep"
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 3.0
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "launcherLow"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "TR-CTR-HALF"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "QTRH-HP"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "launcherPrep"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": "Worlds",
+  "choreoAuto": false
+}

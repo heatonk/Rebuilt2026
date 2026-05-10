@@ -59,6 +59,10 @@
     "horizontalZero": {
       "$ref": "./unit-value.schema.json",
       "description": "Angle at which arm is horizontal (degrees)"
+    },
+    "useTorqueCurrentFOC": {
+      "type": "boolean",
+      "description": "Whether direct TorqueCurrentFOC requests should be used when a real TalonFX is available"
     }
   }
 }

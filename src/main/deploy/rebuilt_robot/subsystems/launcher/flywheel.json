@@ -1,0 +1,103 @@
+{
+  "motorSetup": {
+    "name": "flywheel",
+    "controllerType": "talonfx",
+    "motorType": "KrakenX60",
+    "canId": 16,
+    "inverted": true,
+    "logLevel": "LOW",
+    "currentLimit": {
+      "val": 80,
+      "uom": "amps"
+    },
+    "followers": [
+      {
+        "canId": 17,
+        "inverted": true
+      }
+    ],
+    "robotToMotor": {
+      "x": {
+        "val": -5.872,
+        "uom": "in"
+      },
+      "y": {
+        "val": 4.8,
+        "uom": "in"
+      },
+      "z": {
+        "val": 14.466,
+        "uom": "in"
+      },
+      "rotation": {
+        "val": 0.0,
+        "uom": "deg"
+      }
+    }
+  },
+  "motorSystemId": {
+    "feedBack": {
+      "p": 5,
+      "i": 0.0,
+      "d": 0.0
+    },
+    "closedLoopRamp": {
+      "val": 0,
+      "uom": "s"
+    },
+    "openLoopRamp": {
+      "val": 0,
+      "uom": "s"
+    },
+    "feedForward": {
+      "s": 0.066854,
+      "v": 2.1,
+      "a": 0.38848
+    },
+    "maxVelocity": {
+      "val": 180,
+      "uom": "deg/s"
+    },
+    "maxAcceleration": {
+      "val": 90,
+      "uom": "deg/s^2"
+    }
+  },
+  "simSystemId": {
+    "feedBack": {
+      "p": 2,
+      "i": 0.0,
+      "d": 0.0
+    },
+    "feedForward": {
+      "s": 0.066854,
+      "v": 2.1962,
+      "a": 0.38848
+    },
+    "maxVelocity": {
+      "val": 180,
+      "uom": "deg/s"
+    },
+    "maxAcceleration": {
+      "val": 90,
+      "uom": "deg/s^2"
+    }
+  },
+  "lowerSoftLimit": {
+    "val": 0,
+    "uom": "rpm"
+  },
+  "upperSoftLimit": {
+    "val": 5000,
+    "uom": "rpm"
+  },
+  "gearStages": "18:1",
+  "mass": {
+    "val": 5.1,
+    "uom": "lbs"
+  },
+  "radius": {
+    "val": 1.975,
+    "uom": "in"
+  }
+}
