@@ -6,11 +6,10 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.subsystems.Indexer.Indexer;
 import frc.robot.rebuilt.subsystems.Launcher.Launcher;
+import frc.robot.rebuilt.util.LedStrip;
 import java.util.Map;
 import org.frc5010.common.arch.GenericSubsystem;
-import org.frc5010.common.config.ConfigConstants;
 import org.frc5010.common.sensors.Controller;
-import org.frc5010.common.subsystems.LEDStrip;
 
 public class IndexerCommands {
   /** declares variables that will later hold state objects */
@@ -118,7 +117,7 @@ public class IndexerCommands {
           indexer.runSpindexer(0);
           indexer.runTransferFront(0);
           //          indexer.runTransferBack(0);
-          LEDStrip.changeSegmentPattern(ConfigConstants.ALL_LEDS, LEDStrip.getRainbowPattern(0));
+          LedStrip.changeSegmentPattern(LedStrip.ALL_LEDS, LedStrip.getRainbowPattern(0));
         },
         indexer);
   }
@@ -133,8 +132,7 @@ public class IndexerCommands {
               indexer.runSpindexer(Constants.Indexer.SPINDEXER_SPEED);
               indexer.runTransferFront(Constants.Indexer.TRANSFER_SPEED);
               //              indexer.runTransferBack(1);
-              LEDStrip.changeSegmentPattern(
-                  ConfigConstants.ALL_LEDS, LEDStrip.getRainbowPattern(25));
+              LedStrip.changeSegmentPattern(LedStrip.ALL_LEDS, LedStrip.getRainbowPattern(25));
             },
             indexer));
   }

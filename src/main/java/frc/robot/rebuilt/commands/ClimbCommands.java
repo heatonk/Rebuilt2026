@@ -7,11 +7,11 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.Constants.ClimbConstants;
 import frc.robot.rebuilt.subsystems.Climb.Climb;
+import frc.robot.rebuilt.util.StateMachine;
+import frc.robot.rebuilt.util.StateMachine.State;
 import java.util.Map;
 import java.util.function.DoubleSupplier;
 import org.frc5010.common.arch.GenericSubsystem;
-import org.frc5010.common.arch.StateMachine;
-import org.frc5010.common.arch.StateMachine.State;
 import org.frc5010.common.sensors.Controller;
 
 public class ClimbCommands {

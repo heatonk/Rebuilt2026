@@ -11,8 +11,8 @@ import edu.wpi.first.math.geometry.Rectangle2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.rebuilt.FieldConstants;
+import frc.robot.rebuilt.util.AllianceFlipUtil;
 import java.util.Optional;
-import org.frc5010.common.utils.geometry.AllianceFlipUtil;
 
 /** Add your docs here. */
 public class FieldRegions {

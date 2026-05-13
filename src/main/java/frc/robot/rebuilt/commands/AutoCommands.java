@@ -34,8 +34,7 @@ public class AutoCommands {
         "TUNE: Shot Lookup Table Tuning",
         ShotCalibrationCommand.createWithFeed(
             (Launcher) subsystems.get(Constants.LAUNCHER),
-            (GenericDrivetrain)
-                subsystems.get(org.frc5010.common.config.ConfigConstants.DRIVETRAIN),
+            (GenericDrivetrain) subsystems.get("drivetrain"),
             2.0,
             0.5));
     selectableCommand.addOption(
