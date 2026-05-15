@@ -20,6 +20,8 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.Rebuilt;
 import frc.robot.rebuilt.commands.LauncherCommands.LauncherState;
+import frc.robot.rebuilt.util.LedStrip;
+import frc.robot.rebuilt.util.OrchestraManager;
 import java.util.Map;
 import java.util.function.Supplier;
 import org.frc5010.common.arch.GenericSubsystem;
@@ -463,10 +465,9 @@ public class Launcher extends GenericSubsystem {
                 this),
             Commands.run(
                     () -> {
-                      org.frc5010.common.utils.OrchestraManager.playTone(261.63);
-                      org.frc5010.common.subsystems.LEDStrip.changeSegmentPattern(
-                          org.frc5010.common.config.ConfigConstants.ALL_LEDS,
-                          org.frc5010.common.subsystems.LEDStrip.getRainbowPattern(2.0));
+                      OrchestraManager.playTone(261.63);
+                      LedStrip.changeSegmentPattern(
+                          LedStrip.ALL_LEDS, LedStrip.getRainbowPattern(2.0));
                     })
                 .withTimeout(1.5)
                 .ignoringDisable(true))
@@ -474,7 +475,7 @@ public class Launcher extends GenericSubsystem {
         .finallyDo(
             () -> {
               frc.robot.rebuilt.Rebuilt.isZeroingBurst = false;
-              org.frc5010.common.utils.OrchestraManager.stopTone();
+              OrchestraManager.stopTone();
             })
         .onlyIf(
             () ->

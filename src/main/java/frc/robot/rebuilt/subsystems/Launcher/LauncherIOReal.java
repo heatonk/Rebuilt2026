@@ -43,18 +43,16 @@ import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.FieldConstants;
 import frc.robot.rebuilt.commands.IntakeCommands.IntakeState;
 import frc.robot.rebuilt.subsystems.intake.Intake;
+import frc.robot.rebuilt.util.AllianceFlipUtil;
+import frc.robot.rebuilt.util.LedStrip;
 import frc.robot.rebuilt.util.TorqueCurrentArmSupport;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import org.frc5010.common.arch.GenericSubsystem;
-import org.frc5010.common.config.ConfigConstants;
 import org.frc5010.common.drive.GenericDrivetrain;
 import org.frc5010.common.motors.SystemIdentification;
-import org.frc5010.common.subsystems.LEDStrip;
-import org.frc5010.common.utils.geometry.AllianceFlipUtil;
-import org.frc5010.common.vision.AprilTags;
 import org.littletonrobotics.junction.Logger;
 import yams.mechanisms.config.SensorConfig;
 import yams.mechanisms.positional.Arm;
@@ -125,7 +123,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
 
   public LauncherIOReal(Map<String, Object> devices, Map<String, GenericSubsystem> subsystems) {
     this.devices = devices;
-    drivetrain = (GenericDrivetrain) subsystems.get(ConfigConstants.DRIVETRAIN);
+    drivetrain = (GenericDrivetrain) subsystems.get("drivetrain");
     intake = (Intake) subsystems.get(Constants.INTAKE);
     turret = (Pivot) devices.get("turret");
     robotToTurret =
@@ -291,7 +289,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
             .getPoseEstimator()
             .getCurrentPose3d()
             .toPose2d()
-            .minus(AprilTags.aprilTagFieldLayout.getTagPose(21).get().toPose2d())
+            .minus(FieldConstants.aprilTagFieldLayout.getTagPose(21).get().toPose2d())
             .getTranslation()
             .getNorm());
 
@@ -336,7 +334,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
         inputs.turretFeedforwardRadPerSec = params.solution().turretFeedforwardRadPerSec();
         inputs.turretFeedforwardAccelRadPerSecSq =
             (inputs.turretFeedforwardRadPerSec - previousTurretVelocityRadPerSec)
-                / org.frc5010.common.constants.Constants.loopPeriodSecs;
+                / 0.02;
         previousTurretVelocityRadPerSec = inputs.turretFeedforwardRadPerSec;
 
         ChassisSpeeds virtualTargetOffsetparams =
@@ -476,7 +474,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   /** Sets the low hard limit to 30 degrees and updates LED's */
   public void setHoodAngleLow() {
     requestHoodAngle(hood.getArmConfig().getLowerHardLimit().orElse(Degrees.of(30)));
-    LEDStrip.changeSegmentPattern(ConfigConstants.ALL_LEDS, LEDStrip.getSolidPattern(Color.kGreen));
+    LedStrip.changeSegmentPattern(LedStrip.ALL_LEDS, LedStrip.getSolidPattern(Color.kGreen));
   }
 
   public void runHoodDown() {

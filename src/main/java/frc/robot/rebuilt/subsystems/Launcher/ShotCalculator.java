@@ -22,26 +22,26 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.measure.Distance;
 import frc.robot.rebuilt.Rebuilt;
 import frc.robot.rebuilt.subsystems.Launcher.TurretControlPhysics.AimingSolution;
+import frc.robot.rebuilt.util.AllianceFlipUtil;
+import frc.robot.rebuilt.util.GeomUtil;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.BiFunction;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import lombok.experimental.ExtensionMethod;
-import org.frc5010.common.constants.Constants;
-import org.frc5010.common.utils.geometry.AllianceFlipUtil;
-import org.frc5010.common.utils.geometry.GeomUtil;
 import org.littletonrobotics.junction.Logger;
 
 @ExtensionMethod({GeomUtil.class})
 /** Calculates the turret and hood angle, and the flywheel speed for shooting */
 public class ShotCalculator {
+  private static final double LOOP_PERIOD_SECS = 0.02;
   private static ShotCalculator instance;
 
   private final LinearFilter turretAngleFilter =
-      LinearFilter.movingAverage((int) (0.1 / Constants.loopPeriodSecs));
+      LinearFilter.movingAverage((int) (0.1 / LOOP_PERIOD_SECS));
   private final LinearFilter hoodAngleFilter =
-      LinearFilter.movingAverage((int) (0.1 / Constants.loopPeriodSecs));
+      LinearFilter.movingAverage((int) (0.1 / LOOP_PERIOD_SECS));
 
   private Rotation2d lastTurretAngle;
   private double lastHoodAngle;
@@ -602,9 +602,9 @@ public class ShotCalculator {
     if (Double.isNaN(lastHoodAngle)) lastHoodAngle = hoodAngle;
     turretVelocity =
         turretAngleFilter.calculate(
-            turretAngle.minus(lastTurretAngle).getRadians() / Constants.loopPeriodSecs);
+            turretAngle.minus(lastTurretAngle).getRadians() / LOOP_PERIOD_SECS);
     hoodVelocity =
-        hoodAngleFilter.calculate((hoodAngle - lastHoodAngle) / Constants.loopPeriodSecs);
+        hoodAngleFilter.calculate((hoodAngle - lastHoodAngle) / LOOP_PERIOD_SECS);
     lastTurretAngle = turretAngle;
     lastHoodAngle = hoodAngle;
     latestParameters =

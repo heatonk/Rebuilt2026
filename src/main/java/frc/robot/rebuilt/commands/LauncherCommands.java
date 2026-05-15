@@ -23,16 +23,14 @@ import frc.robot.rebuilt.subsystems.Launcher.Launcher;
 import frc.robot.rebuilt.subsystems.Launcher.ShotCalculator;
 import frc.robot.rebuilt.subsystems.Launcher.ShotCalculator.ShootingParameters;
 import frc.robot.rebuilt.subsystems.intake.Intake;
+import frc.robot.rebuilt.util.AllianceFlipUtil;
+import frc.robot.rebuilt.util.LedStrip;
+import frc.robot.rebuilt.util.StateMachine;
+import frc.robot.rebuilt.util.StateMachine.State;
 import java.util.Map;
 import org.frc5010.common.arch.GenericSubsystem;
-import org.frc5010.common.arch.StateMachine;
-import org.frc5010.common.arch.StateMachine.State;
-import org.frc5010.common.config.ConfigConstants;
 import org.frc5010.common.drive.GenericDrivetrain;
 import org.frc5010.common.sensors.Controller;
-import org.frc5010.common.subsystems.LEDStrip;
-import org.frc5010.common.utils.geometry.AllianceFlipUtil;
-import org.frc5010.common.vision.AprilTags;
 
 /** defines commands and state launcher logic for the launcher */
 public class LauncherCommands {
@@ -99,7 +97,7 @@ public class LauncherCommands {
     launcher.setCurrentState(LauncherState.HAMMERTIME);
     launcher.setRequestedState(LauncherState.HAMMERTIME);
 
-    drivetrain = (GenericDrivetrain) this.subsystems.get(ConfigConstants.DRIVETRAIN);
+    drivetrain = (GenericDrivetrain) this.subsystems.get("drivetrain");
     configureStateMachine();
   }
   /** sets the state machine as the default command of the launcher */
@@ -275,8 +273,8 @@ public class LauncherCommands {
         Commands.runOnce(
             () -> {
               launcher.setCurrentState(LauncherState.LOW_SPEED);
-              LEDStrip.changeSegmentPattern(
-                  ConfigConstants.ALL_LEDS, LEDStrip.getSolidPattern(Color.kGreen));
+              LedStrip.changeSegmentPattern(
+                  LedStrip.ALL_LEDS, LedStrip.getSolidPattern(Color.kGreen));
             }),
         launcher.trackTargetLowCommand());
   }
@@ -286,8 +284,8 @@ public class LauncherCommands {
         Commands.runOnce(
             () -> {
               launcher.setCurrentState(LauncherState.PREP);
-              LEDStrip.changeSegmentPattern(
-                  ConfigConstants.ALL_LEDS, LEDStrip.getRainbowPattern(0));
+              LedStrip.changeSegmentPattern(
+                  LedStrip.ALL_LEDS, LedStrip.getRainbowPattern(0));
             }),
         launcher.trackTargetCommand());
   }
@@ -355,7 +353,7 @@ public class LauncherCommands {
                                   new Pose2d(
                                       new Translation2d(
                                           Inches.of(
-                                              AprilTags.aprilTagFieldLayout
+                                              FieldConstants.aprilTagFieldLayout
                                                       .getTagPose(31)
                                                       .get()
                                                       .getX()
@@ -382,7 +380,7 @@ public class LauncherCommands {
                                   new Pose2d(
                                       new Translation2d(
                                           Inches.of(
-                                              AprilTags.aprilTagFieldLayout
+                                              FieldConstants.aprilTagFieldLayout
                                                       .getTagPose(31)
                                                       .get()
                                                       .getX()
@@ -470,9 +468,8 @@ public class LauncherCommands {
         .andThen(
             Commands.run(
                     () -> {
-                      org.frc5010.common.subsystems.LEDStrip.changeSegmentPattern(
-                          org.frc5010.common.config.ConfigConstants.ALL_LEDS,
-                          org.frc5010.common.subsystems.LEDStrip.getRainbowPattern(50.0));
+                      LedStrip.changeSegmentPattern(
+                          LedStrip.ALL_LEDS, LedStrip.getRainbowPattern(50.0));
                     })
                 .withTimeout(0.5)
                 .ignoringDisable(true))

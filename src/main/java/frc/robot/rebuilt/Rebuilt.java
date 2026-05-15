@@ -23,12 +23,12 @@ import frc.robot.rebuilt.subsystems.Indexer.Indexer;
 import frc.robot.rebuilt.subsystems.Launcher.FieldRegions;
 import frc.robot.rebuilt.subsystems.Launcher.Launcher;
 import frc.robot.rebuilt.subsystems.intake.Intake;
+import frc.robot.rebuilt.util.AllianceFlipUtil;
+import frc.robot.rebuilt.util.LedStrip;
+import frc.robot.rebuilt.util.OrchestraManager;
 import org.frc5010.common.arch.GenericRobot;
-import org.frc5010.common.config.ConfigConstants;
 import org.frc5010.common.drive.GenericDrivetrain;
 import org.frc5010.common.sensors.Controller;
-import org.frc5010.common.utils.OrchestraManager;
-import org.frc5010.common.utils.geometry.AllianceFlipUtil;
 
 /** This is an example robot class. */
 /** Long's correction: Main robot class that initializes subsystems and commands */
@@ -59,7 +59,7 @@ public class Rebuilt extends GenericRobot {
     // climb = new Climb();
     intake = new Intake();
     launcher = new Launcher(subsystems);
-    drivetrain = (GenericDrivetrain) subsystems.get(ConfigConstants.DRIVETRAIN);
+    drivetrain = (GenericDrivetrain) subsystems.get("drivetrain");
     /** creates command containers */
     testCommands = new TestCommands(subsystems);
     climbCommands = new ClimbCommands(subsystems);
@@ -86,14 +86,12 @@ public class Rebuilt extends GenericRobot {
     SmartDashboard.putBoolean("Orchestra Playing", OrchestraManager.isPlaying());
     if (launcher != null && !isZeroingBurst) {
       if (launcher.isTurretAtZero()) {
-        org.frc5010.common.subsystems.LEDStrip.changeSegmentPattern(
-            org.frc5010.common.config.ConfigConstants.ALL_LEDS,
-            org.frc5010.common.subsystems.LEDStrip.getSolidPattern(
-                edu.wpi.first.wpilibj.util.Color.kGreen));
+        LedStrip.changeSegmentPattern(
+            LedStrip.ALL_LEDS,
+            LedStrip.getSolidPattern(edu.wpi.first.wpilibj.util.Color.kGreen));
       } else {
-        org.frc5010.common.subsystems.LEDStrip.changeSegmentPattern(
-            org.frc5010.common.config.ConfigConstants.ALL_LEDS,
-            org.frc5010.common.subsystems.LEDStrip.getSolidPattern(chooseAllianceWpiColor()));
+        LedStrip.changeSegmentPattern(
+            LedStrip.ALL_LEDS, LedStrip.getSolidPattern(chooseAllianceWpiColor()));
       }
     }
   }

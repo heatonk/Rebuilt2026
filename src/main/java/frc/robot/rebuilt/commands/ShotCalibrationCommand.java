@@ -16,9 +16,9 @@ import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.FieldConstants;
 import frc.robot.rebuilt.subsystems.Launcher.Launcher;
 import frc.robot.rebuilt.subsystems.Launcher.ShotCalculator;
+import frc.robot.rebuilt.util.AllianceFlipUtil;
 import org.frc5010.common.drive.GenericDrivetrain;
 import org.frc5010.common.drive.swerve.GenericSwerveDrivetrain;
-import org.frc5010.common.utils.geometry.AllianceFlipUtil;
 
 /**
  * A streamlined command to rapidly calibrate the shooter at various distances.
