@@ -22,12 +22,12 @@ import frc.robot.rebuilt.subsystems.DriverDisplay.HubStatus;
 import frc.robot.rebuilt.subsystems.Indexer.Indexer;
 import frc.robot.rebuilt.subsystems.Launcher.FieldRegions;
 import frc.robot.rebuilt.subsystems.Launcher.Launcher;
+import frc.robot.rebuilt.subsystems.drive.StubDrivetrain;
 import frc.robot.rebuilt.subsystems.intake.Intake;
 import frc.robot.rebuilt.util.AllianceFlipUtil;
 import frc.robot.rebuilt.util.LedStrip;
 import frc.robot.rebuilt.util.OrchestraManager;
 import org.frc5010.common.arch.GenericRobot;
-import org.frc5010.common.drive.GenericDrivetrain;
 import org.frc5010.common.sensors.Controller;
 
 /** This is an example robot class. */
@@ -35,7 +35,7 @@ import org.frc5010.common.sensors.Controller;
 public class Rebuilt extends GenericRobot {
   public static String configDirectory = "rebuilt_robot";
   public static HubStatus hubStatus = new HubStatus();
-  public static GenericDrivetrain drivetrain;
+  public static StubDrivetrain drivetrain;
   public static Indexer indexer;
   public static Climb climb;
   public static Intake intake;
@@ -59,7 +59,7 @@ public class Rebuilt extends GenericRobot {
     // climb = new Climb();
     intake = new Intake();
     launcher = new Launcher(subsystems);
-    drivetrain = (GenericDrivetrain) subsystems.get("drivetrain");
+    drivetrain = new StubDrivetrain();
     /** creates command containers */
     testCommands = new TestCommands(subsystems);
     climbCommands = new ClimbCommands(subsystems);

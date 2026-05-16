@@ -18,10 +18,12 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.FieldConstants;
+import frc.robot.rebuilt.Rebuilt;
 import frc.robot.rebuilt.commands.IntakeCommands.IntakeState;
 import frc.robot.rebuilt.subsystems.Launcher.Launcher;
 import frc.robot.rebuilt.subsystems.Launcher.ShotCalculator;
 import frc.robot.rebuilt.subsystems.Launcher.ShotCalculator.ShootingParameters;
+import frc.robot.rebuilt.subsystems.drive.StubDrivetrain;
 import frc.robot.rebuilt.subsystems.intake.Intake;
 import frc.robot.rebuilt.util.AllianceFlipUtil;
 import frc.robot.rebuilt.util.LedStrip;
@@ -29,7 +31,6 @@ import frc.robot.rebuilt.util.StateMachine;
 import frc.robot.rebuilt.util.StateMachine.State;
 import java.util.Map;
 import org.frc5010.common.arch.GenericSubsystem;
-import org.frc5010.common.drive.GenericDrivetrain;
 import org.frc5010.common.sensors.Controller;
 
 /** defines commands and state launcher logic for the launcher */
@@ -45,7 +46,7 @@ public class LauncherCommands {
   private State escapeHammerTimeState;
   private static Launcher launcher;
   private static Intake intake;
-  private static GenericDrivetrain drivetrain;
+  private static StubDrivetrain drivetrain;
   private Map<String, GenericSubsystem> subsystems;
   private static Translation2d hubTarget = FieldConstants.Hub.topCenterPoint.toTranslation2d();
   private static Translation2d allianceSideLeft = FieldConstants.Tower.leftUpright;
@@ -97,7 +98,7 @@ public class LauncherCommands {
     launcher.setCurrentState(LauncherState.HAMMERTIME);
     launcher.setRequestedState(LauncherState.HAMMERTIME);
 
-    drivetrain = (GenericDrivetrain) this.subsystems.get("drivetrain");
+    drivetrain = Rebuilt.drivetrain;
     configureStateMachine();
   }
   /** sets the state machine as the default command of the launcher */
