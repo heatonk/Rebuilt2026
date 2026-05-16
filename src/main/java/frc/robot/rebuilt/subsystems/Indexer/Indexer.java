@@ -7,24 +7,22 @@ package frc.robot.rebuilt.subsystems.Indexer;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.rebuilt.commands.IndexerCommands.IndexerState;
 import frc.robot.rebuilt.util.StateMachine;
-import org.frc5010.common.arch.GenericSubsystem;
 import org.frc5010.common.sensors.Controller;
 import org.littletonrobotics.junction.Logger;
 
-public class Indexer extends GenericSubsystem {
+public class Indexer extends SubsystemBase {
   private final IndexerIO io;
   private final IndexerIOInputsAutoLogged inputs = new IndexerIOInputsAutoLogged();
 
   /** Creates a new Index and selects the IO to real or simulated. */
   public Indexer() {
-    super("indexer.json");
-
     if (RobotBase.isSimulation()) {
-      io = (IndexerIO) new IndexerIOSim(devices);
+      io = new IndexerIOSim(this);
     } else {
-      io = new IndexerIOReal(devices);
+      io = new IndexerIOReal(this);
     }
   }
 

@@ -20,7 +20,7 @@ public class TestCommands {
 
   public TestCommands(Map<String, GenericSubsystem> subsystems) {
     this.subsystems = subsystems;
-    indexer = (Indexer) subsystems.get(Constants.INDEXER);
+    indexer = Rebuilt.indexer;
     intake = Rebuilt.intake;
     launcher = (Launcher) subsystems.get(Constants.LAUNCHER);
   }

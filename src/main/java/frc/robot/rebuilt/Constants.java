@@ -46,6 +46,32 @@ public class Constants {
     public static final double SPINDEXER_SPEED = 0.90;
     public static final double TRANSFER_SPEED = 1.0;
     public static final double TRANSFER_CHURN = 0.25;
+
+    // Device construction parameters (transcribed from indexer/*.json under deploy/).
+    public static class Spindexer {
+      public static final int CAN_ID = 9;
+      public static final double CURRENT_LIMIT_AMPS = 120.0;
+    }
+
+    public static class Transfer {
+      public static final int CAN_ID = 10;
+      public static final int FOLLOWER_CAN_ID = 11;
+      public static final boolean INVERTED = true;
+      public static final boolean FOLLOWER_INVERTED = false;
+      public static final String GEAR_STAGES = "1:1";
+      public static final double MASS_KG = 2.0;
+      public static final double RADIUS_M = 0.05;
+      public static final double LOWER_SOFT_LIMIT_RPM = 0.0;
+      public static final double UPPER_SOFT_LIMIT_RPM = 5000.0;
+
+      // Closed-loop gains exist in JSON but are unused (transfer runs in duty-cycle).
+      public static final double KP = 4.0;
+      public static final double KI = 0.0;
+      public static final double KD = 0.0;
+      public static final double KS = 0.0;
+      public static final double KV = 0.0;
+      public static final double KA = 0.0;
+    }
   }
 
   public static class Intake {
