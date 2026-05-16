@@ -4,6 +4,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.rebuilt.Constants;
+import frc.robot.rebuilt.Rebuilt;
 import frc.robot.rebuilt.subsystems.Indexer.Indexer;
 import frc.robot.rebuilt.subsystems.Launcher.Launcher;
 import frc.robot.rebuilt.util.LedStrip;
@@ -30,7 +31,7 @@ public class IndexerCommands {
   /** Stores the subsystem map and retrieves the indexer instance */
   public IndexerCommands(Map<String, GenericSubsystem> systems) {
     this.subsystems = systems;
-    IndexerCommands.indexer = (Indexer) subsystems.get(Constants.INDEXER);
+    IndexerCommands.indexer = Rebuilt.indexer;
     IndexerCommands.launcher = (Launcher) subsystems.get(Constants.LAUNCHER);
     configureTriggerStates();
   }
