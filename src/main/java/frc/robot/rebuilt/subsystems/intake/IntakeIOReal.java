@@ -19,10 +19,10 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.FieldConstants;
 import frc.robot.rebuilt.commands.IntakeCommands;
+import frc.robot.rebuilt.subsystems.drive.StubDrivetrain;
 import frc.robot.rebuilt.util.TorqueCurrentArmSupport;
 import java.util.Map;
 import org.frc5010.common.arch.GenericSubsystem;
-import org.frc5010.common.drive.GenericDrivetrain;
 import org.frc5010.common.motors.SystemIdentification;
 import org.littletonrobotics.junction.Logger;
 import yams.mechanisms.positional.Arm;
@@ -39,7 +39,7 @@ public class IntakeIOReal implements IntakeIO {
   private Angle hopperAngleSetpoint = Degrees.of(0.0);
   private TorqueCurrentArmSupport.Config hopperTorqueCurrentConfig =
       TorqueCurrentArmSupport.Config.defaults(false);
-  protected GenericDrivetrain drivetrain;
+  protected StubDrivetrain drivetrain;
   private boolean isNearTrench = false;
   private IntakeCommands.IntakeState lastState = IntakeCommands.IntakeState.RETRACTED;
 

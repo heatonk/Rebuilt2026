@@ -16,9 +16,8 @@ import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.FieldConstants;
 import frc.robot.rebuilt.subsystems.Launcher.Launcher;
 import frc.robot.rebuilt.subsystems.Launcher.ShotCalculator;
+import frc.robot.rebuilt.subsystems.drive.StubDrivetrain;
 import frc.robot.rebuilt.util.AllianceFlipUtil;
-import org.frc5010.common.drive.GenericDrivetrain;
-import org.frc5010.common.drive.swerve.GenericSwerveDrivetrain;
 
 /**
  * A streamlined command to rapidly calibrate the shooter at various distances.
@@ -45,7 +44,7 @@ public class ShotCalibrationCommand extends Command {
   private static final String PREFIX = "ShotCal/";
 
   private final Launcher launcher;
-  private final GenericSwerveDrivetrain drivetrain;
+  private final StubDrivetrain drivetrain;
   private final ShotCalculator shotCalculator;
 
   private CalibrationState currentState = CalibrationState.ALIGN_AND_DRIVE;
@@ -68,11 +67,11 @@ public class ShotCalibrationCommand extends Command {
 
   public ShotCalibrationCommand(
       Launcher launcher,
-      GenericDrivetrain drivetrain,
+      StubDrivetrain drivetrain,
       double initialDistance,
       double distanceStep) {
     this.launcher = launcher;
-    this.drivetrain = (GenericSwerveDrivetrain) drivetrain;
+    this.drivetrain = drivetrain;
     this.shotCalculator = ShotCalculator.getInstance();
 
     this.currentDistanceMeters = initialDistance;
@@ -279,7 +278,7 @@ public class ShotCalibrationCommand extends Command {
    */
   public static Command createWithFeed(
       Launcher launcher,
-      GenericDrivetrain drivetrain,
+      StubDrivetrain drivetrain,
       double initialDistance,
       double distanceStep) {
     return Commands.parallel(

@@ -41,7 +41,9 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.FieldConstants;
+import frc.robot.rebuilt.Rebuilt;
 import frc.robot.rebuilt.commands.IntakeCommands.IntakeState;
+import frc.robot.rebuilt.subsystems.drive.StubDrivetrain;
 import frc.robot.rebuilt.subsystems.intake.Intake;
 import frc.robot.rebuilt.util.AllianceFlipUtil;
 import frc.robot.rebuilt.util.LedStrip;
@@ -51,7 +53,6 @@ import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import org.frc5010.common.arch.GenericSubsystem;
-import org.frc5010.common.drive.GenericDrivetrain;
 import org.frc5010.common.motors.SystemIdentification;
 import org.littletonrobotics.junction.Logger;
 import yams.mechanisms.config.SensorConfig;
@@ -80,7 +81,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   private Angle hoodAngleSetpoint = Degrees.of(0.0);
   private TorqueCurrentArmSupport.Config hoodTorqueCurrentConfig =
       TorqueCurrentArmSupport.Config.defaults(true);
-  protected GenericDrivetrain drivetrain;
+  protected StubDrivetrain drivetrain;
   protected FlyWheel flyWheel;
   protected CANcoder crtEncoder40;
   protected CANcoder crtEncoder36;
@@ -123,7 +124,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
 
   public LauncherIOReal(Map<String, Object> devices, Map<String, GenericSubsystem> subsystems) {
     this.devices = devices;
-    drivetrain = (GenericDrivetrain) subsystems.get("drivetrain");
+    drivetrain = Rebuilt.drivetrain;
     intake = (Intake) subsystems.get(Constants.INTAKE);
     turret = (Pivot) devices.get("turret");
     robotToTurret =

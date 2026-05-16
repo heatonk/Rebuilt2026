@@ -3,8 +3,9 @@ package frc.robot.rebuilt.subsystems.intake;
 import static edu.wpi.first.units.Units.Inches;
 
 import frc.robot.rebuilt.Rebuilt;
+import frc.robot.rebuilt.subsystems.drive.StubDrivetrain;
 import java.util.Map;
-import org.frc5010.common.drive.GenericDrivetrain;
+import java.util.Optional;
 import swervelib.simulation.ironmaple.simulation.IntakeSimulation;
 import swervelib.simulation.ironmaple.simulation.SimulatedArena;
 import swervelib.simulation.ironmaple.simulation.drivesims.AbstractDriveTrainSimulation;
@@ -19,20 +20,27 @@ public class IntakeIOSim extends IntakeIOReal {
   /** Initializes the mapleSim intake simulation */
   public IntakeIOSim(Map<String, Object> devices) {
     super(devices);
-    driveTrainSimulation = GenericDrivetrain.getMapleSimDrive().get();
-    intakeSimulation =
-        IntakeSimulation.OverTheBumperIntake(
-            "Fuel",
-            driveTrainSimulation,
-            Inches.of(27.25),
-            Inches.of(11.25),
-            IntakeSimulation.IntakeSide.FRONT,
-            80);
+    Optional<AbstractDriveTrainSimulation> driveSim = StubDrivetrain.getMapleSimDrive();
+    if (driveSim.isPresent()) {
+      driveTrainSimulation = driveSim.get();
+      intakeSimulation =
+          IntakeSimulation.OverTheBumperIntake(
+              "Fuel",
+              driveTrainSimulation,
+              Inches.of(27.25),
+              Inches.of(11.25),
+              IntakeSimulation.IntakeSide.FRONT,
+              80);
+    }
+    // TODO: real swerve — without a maple-sim drivetrain, intake sim is a no-op.
   }
   /** Runs the intake motor and updates the state of the intake simulation */
   @Override
   public void runSpintake(double speed) {
     super.runSpintake(speed);
+    if (intakeSimulation == null) {
+      return;
+    }
     if (speed > 0) {
       intakeSimulation.startIntake();
     } else {
@@ -43,6 +51,9 @@ public class IntakeIOSim extends IntakeIOReal {
   @Override
   public void updateInputs(IntakeIOInputs inputs) {
     super.updateInputs(inputs);
+    if (intakeSimulation == null) {
+      return;
+    }
     if (inputs.speed < 0) {
       if (intakeSimulation.obtainGamePieceFromIntake()) {
         gamePiece =
