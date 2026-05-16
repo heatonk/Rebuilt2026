@@ -11,13 +11,11 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.rebuilt.commands.AutoCommands;
-import frc.robot.rebuilt.commands.ClimbCommands;
 import frc.robot.rebuilt.commands.IndexerCommands;
 import frc.robot.rebuilt.commands.IntakeCommands;
 import frc.robot.rebuilt.commands.LauncherCommands;
 import frc.robot.rebuilt.commands.NamedCommandsReg;
 import frc.robot.rebuilt.commands.TestCommands;
-import frc.robot.rebuilt.subsystems.Climb.Climb;
 import frc.robot.rebuilt.subsystems.DriverDisplay.HubStatus;
 import frc.robot.rebuilt.subsystems.Indexer.Indexer;
 import frc.robot.rebuilt.subsystems.Launcher.FieldRegions;
@@ -37,12 +35,10 @@ public class Rebuilt extends GenericRobot {
   public static HubStatus hubStatus = new HubStatus();
   public static StubDrivetrain drivetrain;
   public static Indexer indexer;
-  public static Climb climb;
   public static Intake intake;
   public static Launcher launcher;
   public static LauncherCommands launcherCommands;
   public static AutoCommands autocommands;
-  public static ClimbCommands climbCommands;
   public static IntakeCommands intakecommands;
   public static IndexerCommands indexerCommands;
   public static TestCommands testCommands;
@@ -56,13 +52,11 @@ public class Rebuilt extends GenericRobot {
     AllianceFlipUtil.configure(FieldConstants.FIELD_WIDTH, FieldConstants.FIELD_LENGTH);
     /** creating robot subsystems */
     indexer = new Indexer();
-    // climb = new Climb();
     intake = new Intake();
     launcher = new Launcher(subsystems);
     drivetrain = new StubDrivetrain();
     /** creates command containers */
     testCommands = new TestCommands(subsystems);
-    climbCommands = new ClimbCommands(subsystems);
     launcherCommands = new LauncherCommands(subsystems);
     intakecommands = new IntakeCommands(subsystems);
     indexerCommands = new IndexerCommands(subsystems);
@@ -103,7 +97,6 @@ public class Rebuilt extends GenericRobot {
       FieldRegions.setupFieldRegions();
       driver.createYButton().onTrue(Commands.runOnce(() -> drivetrain.toggleFieldOrientedDrive()));
       drivetrain.configureButtonBindings(driver, operator);
-      climbCommands.configureButtonBindings(driver, operator);
       launcherCommands.configureButtonBindings(driver, operator);
       intakecommands.configureButtonBindings(driver, operator);
       indexerCommands.configureButtonBindings(driver, operator);

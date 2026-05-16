@@ -2,7 +2,6 @@ package frc.robot.rebuilt.commands;
 
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.rebuilt.Constants;
-// import frc.robot.rebuilt.subsystems.Climb.Climb;
 import frc.robot.rebuilt.subsystems.Indexer.Indexer;
 import frc.robot.rebuilt.subsystems.Launcher.Launcher;
 import frc.robot.rebuilt.subsystems.intake.Intake;
@@ -15,14 +14,12 @@ public class TestCommands {
   private Map<String, GenericSubsystem> subsystems;
 
   Indexer indexer;
-  // Climb climb;
   Intake intake;
   static Launcher launcher;
 
   public TestCommands(Map<String, GenericSubsystem> subsystems) {
     this.subsystems = subsystems;
     indexer = (Indexer) subsystems.get(Constants.INDEXER);
-    // climb = (Climb) subsystems.get(Constants.CLIMB);
     intake = (Intake) subsystems.get(Constants.INTAKE);
     launcher = (Launcher) subsystems.get(Constants.LAUNCHER);
   }
@@ -41,7 +38,6 @@ public class TestCommands {
 
     indexer.configTestControls(controller);
     // intake.configTestController(controller);
-    // climb.configTestControls(controller);
     controller
         .createBButton()
         .whileTrue(launcher.getTurretSysIdCommand().finallyDo(() -> launcher.stopAllMotors()));

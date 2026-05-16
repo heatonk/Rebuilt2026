@@ -1,8 +1,0 @@
-{
-  "devices": [
-    {
-      "device": "yams_elevator",
-      "file": "climb/lifter.json"
-    }
-  ]
-}

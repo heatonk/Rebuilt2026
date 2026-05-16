@@ -14,11 +14,6 @@ public class NamedCommandsReg {
     NamedCommands.registerCommand("intakeIntake", IntakeCommands.shouldIntaking());
     NamedCommands.registerCommand("intakeRetracted", IntakeCommands.shouldRetracted());
     NamedCommands.registerCommand("intakeRetracting", IntakeCommands.shouldRetracting());
-    // climb
-    NamedCommands.registerCommand("climbDescend", ClimbCommands.shouldDescendCommand());
-    NamedCommands.registerCommand("climbElevate", ClimbCommands.shouldElevateCommand());
-    NamedCommands.registerCommand("climbEnable", ClimbCommands.shouldEnableCommand());
-    NamedCommands.registerCommand("climbStop", ClimbCommands.shouldStopCommand());
     // indexer
     NamedCommands.registerCommand("indexerChurn", IndexerCommands.shouldChurnCommand());
     NamedCommands.registerCommand("indexerIdle", IndexerCommands.shouldIdleCommand());
