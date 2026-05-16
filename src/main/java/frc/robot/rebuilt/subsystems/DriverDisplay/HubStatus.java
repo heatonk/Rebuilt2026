@@ -1,10 +1,10 @@
 package frc.robot.rebuilt.subsystems.DriverDisplay;
 
-import org.frc5010.common.arch.GenericSubsystem;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import org.frc5010.common.sensors.Controller;
 import org.littletonrobotics.junction.Logger;
 
-public class HubStatus extends GenericSubsystem {
+public class HubStatus extends SubsystemBase {
   private HubStatusIO io = new HubStatusIOImpl();
   private HubStatusIOInputsAutoLogged inputs = new HubStatusIOInputsAutoLogged();
 
