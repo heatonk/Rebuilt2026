@@ -5,20 +5,11 @@ import static edu.wpi.first.units.Units.Radians;
 
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Filesystem;
-import frc.robot.rebuilt.Rebuilt;
-import java.io.File;
-import java.io.IOException;
-import org.frc5010.common.config.UnitsParser;
-import org.frc5010.common.config.json.devices.YamsArmConfigurationJson;
 import yams.mechanisms.positional.Arm;
 
 public final class TorqueCurrentArmSupport {
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
   private static final double RADIANS_PER_ROTATION = 2.0 * Math.PI;
 
   private TorqueCurrentArmSupport() {}
@@ -27,34 +18,6 @@ public final class TorqueCurrentArmSupport {
       boolean useTorqueCurrentFOC, double gravityFeedforwardAmps, Angle horizontalZero) {
     public static Config defaults(boolean useTorqueCurrentFOC) {
       return new Config(useTorqueCurrentFOC, 0.0, Degrees.of(0.0));
-    }
-  }
-
-  public static Config loadConfig(
-      String relativeDevicePath, boolean defaultUseTorqueCurrentFOC, String mechanismName) {
-    File configFile =
-        new File(
-            Filesystem.getDeployDirectory(),
-            Rebuilt.configDirectory + "/subsystems/" + relativeDevicePath);
-    if (!configFile.isFile()) {
-      return Config.defaults(defaultUseTorqueCurrentFOC);
-    }
-
-    try {
-      YamsArmConfigurationJson armConfig =
-          OBJECT_MAPPER.readValue(configFile, YamsArmConfigurationJson.class);
-      return new Config(
-          armConfig.useTorqueCurrentFOC,
-          armConfig.motorSystemId.feedForward.g,
-          UnitsParser.parseAngle(armConfig.horizontalZero));
-    } catch (IOException exception) {
-      DriverStation.reportWarning(
-          "Failed to read "
-              + mechanismName
-              + " TorqueCurrentFOC config, using safe defaults: "
-              + exception.getMessage(),
-          false);
-      return Config.defaults(defaultUseTorqueCurrentFOC);
     }
   }
 

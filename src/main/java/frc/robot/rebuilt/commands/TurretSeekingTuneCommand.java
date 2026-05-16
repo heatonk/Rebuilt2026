@@ -8,8 +8,8 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.rebuilt.subsystems.Launcher.SmartTurretController;
-import org.frc5010.common.arch.GenericSubsystem;
 import org.littletonrobotics.junction.Logger;
 
 /**
@@ -38,7 +38,7 @@ public class TurretSeekingTuneCommand extends Command {
 
   private static final String PREFIX = "TurretSeekTune/";
 
-  public TurretSeekingTuneCommand(SmartTurretController controller, GenericSubsystem requirement) {
+  public TurretSeekingTuneCommand(SmartTurretController controller, SubsystemBase requirement) {
     this.controller = controller;
     this.talonFX = controller.getTalonFX();
     addRequirements(requirement);

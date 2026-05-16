@@ -12,13 +12,12 @@ import static edu.wpi.first.units.Units.RadiansPerSecond;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.rebuilt.FieldConstants;
 import frc.robot.rebuilt.Rebuilt;
 import frc.robot.rebuilt.commands.IndexerCommands.IndexerState;
 import frc.robot.rebuilt.subsystems.Indexer.Indexer;
 import frc.robot.rebuilt.subsystems.intake.IntakeIOSim;
-import java.util.Map;
-import org.frc5010.common.arch.GenericSubsystem;
 import org.littletonrobotics.junction.Logger;
 import swervelib.simulation.ironmaple.simulation.SimulatedArena;
 import swervelib.simulation.ironmaple.simulation.gamepieces.GamePieceProjectile;
@@ -27,13 +26,13 @@ import swervelib.simulation.ironmaple.simulation.seasonspecific.rebuilt2026.Rebu
 /** Add your docs here. */
 public class LauncherIOSim extends LauncherIOReal {
   protected GamePieceProjectile gamePieceProjectile;
-  protected Map<String, Object> devices;
 
-  public LauncherIOSim(Map<String, Object> devices, Map<String, GenericSubsystem> subsystems) {
-    super(devices, subsystems);
-    IntakeIOSim.intakeSimulation.addGamePiecesToIntake(8);
-    // Start with 8 gamepieces in the
-    // intake
+  public LauncherIOSim(SubsystemBase parent) {
+    super(parent);
+    if (IntakeIOSim.intakeSimulation != null) {
+      IntakeIOSim.intakeSimulation.addGamePiecesToIntake(8);
+    }
+    // TODO: real swerve — maple-sim intake is a no-op without a real drivetrain sim.
   }
 
   @Override
@@ -83,6 +82,9 @@ public class LauncherIOSim extends LauncherIOReal {
 
   @Override
   public void updateSimulation(Launcher launcher, Indexer indexer) {
+    if (IntakeIOSim.intakeSimulation == null) {
+      return;
+    }
     int amount = IntakeIOSim.intakeSimulation.getGamePiecesAmount();
     // Update simulated mechanism states here
     // We should simulate a shot rate of about 10-15 gamepieces per second

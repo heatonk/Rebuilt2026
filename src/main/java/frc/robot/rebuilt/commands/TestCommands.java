@@ -22,7 +22,7 @@ public class TestCommands {
     this.subsystems = subsystems;
     indexer = Rebuilt.indexer;
     intake = Rebuilt.intake;
-    launcher = (Launcher) subsystems.get(Constants.LAUNCHER);
+    launcher = Rebuilt.launcher;
   }
 
   public void configureButtonBindings(Controller controller) {

@@ -26,33 +26,33 @@ public class AutoCommands {
         Rebuilt.intake.getHopperCharacterizationCommand());
     selectableCommand.addOption(
         "PRO: Launcher Hood Characterization",
-        ((Launcher) subsystems.get(Constants.LAUNCHER)).getHoodCharacterizationCommand());
+        Rebuilt.launcher.getHoodCharacterizationCommand());
     selectableCommand.addOption(
         "PRO: Launcher Turret Characterization",
-        ((Launcher) subsystems.get(Constants.LAUNCHER)).getTurretCharacterizationCommand());
+        Rebuilt.launcher.getTurretCharacterizationCommand());
     selectableCommand.addOption(
         "TUNE: Shot Lookup Table Tuning",
         ShotCalibrationCommand.createWithFeed(
-            (Launcher) subsystems.get(Constants.LAUNCHER),
+            Rebuilt.launcher,
             Rebuilt.drivetrain,
             2.0,
             0.5));
     selectableCommand.addOption(
         "PRO: Turret Quasistatic (kS, kV)",
-        ((Launcher) subsystems.get(Constants.LAUNCHER)).getTurretQuasistaticCommand());
+        Rebuilt.launcher.getTurretQuasistaticCommand());
     selectableCommand.addOption(
         "PRO: Turret Dynamic (kA)",
-        ((Launcher) subsystems.get(Constants.LAUNCHER)).getTurretDynamicCommand());
+        Rebuilt.launcher.getTurretDynamicCommand());
     selectableCommand.addOption(
         "TUNE: Turret kS Map Generation",
-        ((Launcher) subsystems.get(Constants.LAUNCHER)).getTurretKsMapCommand());
+        Rebuilt.launcher.getTurretKsMapCommand());
     selectableCommand.addOption(
         "TUNE: Turret Tracking Sinusoidal Tuning",
-        ((Launcher) subsystems.get(Constants.LAUNCHER)).getTurretTrackingTuneCommand());
+        Rebuilt.launcher.getTurretTrackingTuneCommand());
 
     selectableCommand.addOption(
         "TUNE: Turret Seeking Tuning",
-        ((Launcher) subsystems.get(Constants.LAUNCHER)).getTurretSeekingTuneCommand());
+        Rebuilt.launcher.getTurretSeekingTuneCommand());
   }
 
   public void configureBasicAutoCommands(LoggedDashboardChooser<Command> selectableCommand) {

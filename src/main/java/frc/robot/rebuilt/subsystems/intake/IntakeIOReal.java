@@ -65,8 +65,7 @@ public class IntakeIOReal implements IntakeIO {
 
     intakeHopper.getMotorController().setStatorCurrentLimit(Amps.of(100));
     intakeHopper.getMotorController().setSupplyCurrentLimit(Amps.of(30));
-    hopperTorqueCurrentConfig =
-        TorqueCurrentArmSupport.loadConfig("intake/hopper.json", false, "hopper");
+    hopperTorqueCurrentConfig = TorqueCurrentArmSupport.Config.defaults(false);
     hopperAngleSetpoint = intakeHopper.getAngle();
 
     Object rawController = intakeHopper.getMotorController().getMotorController();

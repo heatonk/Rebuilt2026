@@ -11,51 +11,45 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.Rebuilt;
 import frc.robot.rebuilt.commands.LauncherCommands.LauncherState;
 import frc.robot.rebuilt.util.LedStrip;
 import frc.robot.rebuilt.util.OrchestraManager;
-import java.util.Map;
 import java.util.function.Supplier;
-import org.frc5010.common.arch.GenericSubsystem;
 import org.littletonrobotics.junction.Logger;
-import yams.mechanisms.positional.Arm;
-import yams.mechanisms.positional.Pivot;
 
-public class Launcher extends GenericSubsystem {
+public class Launcher extends SubsystemBase {
   private final LauncherIO io;
-  private final Arm hood;
   private final LauncherIOInputsAutoLogged inputs = new LauncherIOInputsAutoLogged();
   public static Transform3d robotToTurret = new Transform3d();
-  private Map<String, GenericSubsystem> subsystems;
   private SmartTurretController smartTurretController;
 
   private static final double PROFILE_PERIOD_SECONDS = 0.005; // 200 Hz
 
   /** Creates a new Launcher. */
-  public Launcher(Map<String, GenericSubsystem> subsystems) {
-    super("launcher.json");
+  public Launcher() {
+    if (RobotBase.isSimulation()) {
+      io = new LauncherIOSim(this);
+    } else {
+      io = new LauncherIOReal(this);
+    }
 
-    this.subsystems = subsystems;
-    Pivot turret = (Pivot) devices.get("turret");
-    hood = (Arm) devices.get("hood");
     robotToTurret =
         new Transform3d(
-            turret.getPivotConfig().getMechanismPositionConfig().getRelativePosition().get(),
+            new Translation3d(
+                edu.wpi.first.units.Units.Inches.of(Constants.Launcher.Turret.ROBOT_TO_MOTOR_X_IN),
+                edu.wpi.first.units.Units.Inches.of(Constants.Launcher.Turret.ROBOT_TO_MOTOR_Y_IN),
+                edu.wpi.first.units.Units.Inches.of(Constants.Launcher.Turret.ROBOT_TO_MOTOR_Z_IN)),
             new Rotation3d());
-    /** Chooses the IO implimentation to be real or simulated */
-    if (RobotBase.isSimulation()) {
-      io = new LauncherIOSim(devices, subsystems);
-    } else {
-      io = new LauncherIOReal(devices, subsystems);
-    }
 
     io.configureShotCalculator(ShotCalculator.getInstance());
 
@@ -204,7 +198,7 @@ public class Launcher extends GenericSubsystem {
   public Command trackTargetCommand(double speed) {
     return Commands.run(
         () -> {
-          io.setHoodAngle(hood.getMotorController().getConfig().getMechanismLowerLimit().get());
+          io.setHoodAngle(Degrees.of(Constants.Launcher.Hood.LOWER_SOFT_LIMIT_DEG));
           io.setTurretRotationWithFeedforward(
               inputs.turretAngleCalculated,
               inputs.turretFeedforwardRadPerSec,
@@ -379,8 +373,7 @@ public class Launcher extends GenericSubsystem {
     return Commands.runOnce(
         () -> {
           Angle newAngle = inputs.hoodAngleActual.plus(Degrees.of(0.5));
-          Angle upperLimit =
-              hood.getMotorController().getConfig().getMechanismUpperLimit().orElse(Degrees.of(60));
+          Angle upperLimit = Degrees.of(Constants.Launcher.Hood.UPPER_SOFT_LIMIT_DEG);
           if (newAngle.lt(upperLimit)) {
             io.setHoodAngle(newAngle);
           }
@@ -391,8 +384,7 @@ public class Launcher extends GenericSubsystem {
     return Commands.runOnce(
         () -> {
           Angle newAngle = inputs.hoodAngleActual.minus(Degrees.of(0.5));
-          Angle lowerLimit =
-              hood.getMotorController().getConfig().getMechanismLowerLimit().orElse(Degrees.of(30));
+          Angle lowerLimit = Degrees.of(Constants.Launcher.Hood.LOWER_SOFT_LIMIT_DEG);
           if (newAngle.gt(lowerLimit)) {
             io.setHoodAngle(newAngle);
           }

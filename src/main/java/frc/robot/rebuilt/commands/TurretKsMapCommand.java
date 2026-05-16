@@ -10,8 +10,8 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.rebuilt.subsystems.Launcher.SmartTurretController;
-import org.frc5010.common.arch.GenericSubsystem;
 import org.littletonrobotics.junction.Logger;
 
 /**
@@ -65,7 +65,7 @@ public class TurretKsMapCommand extends Command {
       SmartTurretController controller,
       Angle lowerLimit,
       Angle upperLimit,
-      GenericSubsystem requirement) {
+      SubsystemBase requirement) {
     this.controller = controller;
     this.talonFX = controller.getTalonFX();
     this.positionSignal = controller.getPositionSignal();
