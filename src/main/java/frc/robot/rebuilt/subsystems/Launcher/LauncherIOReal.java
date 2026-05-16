@@ -125,7 +125,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   public LauncherIOReal(Map<String, Object> devices, Map<String, GenericSubsystem> subsystems) {
     this.devices = devices;
     drivetrain = Rebuilt.drivetrain;
-    intake = (Intake) subsystems.get(Constants.INTAKE);
+    intake = Rebuilt.intake;
     turret = (Pivot) devices.get("turret");
     robotToTurret =
         turret

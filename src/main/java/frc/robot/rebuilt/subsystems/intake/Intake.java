@@ -10,25 +10,24 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.commands.IntakeCommands;
 import frc.robot.rebuilt.commands.IntakeCommands.IntakeState;
-import org.frc5010.common.arch.GenericSubsystem;
 import org.frc5010.common.sensors.Controller;
 import org.littletonrobotics.junction.Logger;
 
-public class Intake extends GenericSubsystem {
+public class Intake extends SubsystemBase {
   private IntakeIO io;
   private IntakeIOInputsAutoLogged inputs = new IntakeIOInputsAutoLogged();
 
   /** Creates a new Intake and selects the IO */
   public Intake() {
-    super("intake.json");
     if (RobotBase.isSimulation()) {
-      io = new IntakeIOSim(devices);
+      io = new IntakeIOSim(this);
     } else {
-      io = new IntakeIOReal(devices);
+      io = new IntakeIOReal(this);
     }
   }
 

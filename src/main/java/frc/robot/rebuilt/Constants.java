@@ -72,5 +72,79 @@ public class Constants {
         -0.2; // duty cycle for first-deploy zeroing nudge
     public static final double HOPPER_DEPLOY_NUDGE_DUTY =
         -0.35; // duty cycle for normal deploy nudge after PID
+
+    // Device construction parameters (transcribed from intake/*.json under deploy/).
+    public static class Hopper {
+      public static final int CAN_ID = 15;
+      public static final int FOLLOWER_CAN_ID = 14;
+      public static final boolean INVERTED = true;
+      public static final boolean FOLLOWER_INVERTED = true;
+      public static final double CURRENT_LIMIT_AMPS = 60.0;
+      public static final String GEAR_STAGES = "24:1";
+      public static final double LENGTH_METERS = 0.234;
+      public static final double MASS_LBS = 1.0;
+      public static final double LOWER_HARD_LIMIT_DEG = 0.0;
+      public static final double UPPER_HARD_LIMIT_DEG = 125.0;
+      public static final double LOWER_SOFT_LIMIT_DEG = 0.0;
+      public static final double UPPER_SOFT_LIMIT_DEG = 120.0;
+      public static final double STARTING_ANGLE_DEG = 125.0;
+      public static final double HORIZONTAL_ZERO_DEG = 0.0;
+
+      // Real hardware gains (PROFILED control)
+      public static final double KP = 40.0;
+      public static final double KI = 0.0;
+      public static final double KD = 5.0;
+      public static final double KS = 0.5992224858009301;
+      public static final double KV = 0.010060789918368191;
+      public static final double KA = 0.0;
+      public static final double KG = 0.65;
+      public static final double MAX_VEL_DEG_PER_SEC = 1080.0;
+      public static final double MAX_ACCEL_DEG_PER_SEC_SQ = 5000.0;
+
+      // Sim gains
+      public static final double SIM_KP = 10.0;
+      public static final double SIM_KI = 0.0;
+      public static final double SIM_KD = 0.0;
+      public static final double SIM_KS = 0.048722;
+      public static final double SIM_KV = 0.005486;
+      public static final double SIM_KA = 0.0;
+      public static final double SIM_KG = 0.04055;
+      public static final double SIM_MAX_VEL_DEG_PER_SEC = 360.0;
+      public static final double SIM_MAX_ACCEL_DEG_PER_SEC_SQ = 180.0;
+    }
+
+    public static class SpintakeInner {
+      public static final int CAN_ID = 12;
+      public static final boolean INVERTED = true;
+      public static final String GEAR_STAGES = "11:36";
+      public static final double MASS_KG = 2.0;
+      public static final double RADIUS_M = 0.05;
+      public static final double LOWER_SOFT_LIMIT_RPM = 0.0;
+      public static final double UPPER_SOFT_LIMIT_RPM = 5000.0;
+
+      public static final double KP = 4.0;
+      public static final double KI = 0.0;
+      public static final double KD = 0.0;
+      public static final double KS = 0.0;
+      public static final double KV = 0.0;
+      public static final double KA = 0.0;
+    }
+
+    public static class SpintakeOuter {
+      public static final int CAN_ID = 13;
+      public static final boolean INVERTED = true;
+      public static final String GEAR_STAGES = "11:36";
+      public static final double MASS_KG = 2.0;
+      public static final double RADIUS_M = 0.05;
+      public static final double LOWER_SOFT_LIMIT_RPM = 0.0;
+      public static final double UPPER_SOFT_LIMIT_RPM = 5000.0;
+
+      public static final double KP = 4.0;
+      public static final double KI = 0.0;
+      public static final double KD = 0.0;
+      public static final double KS = 0.0;
+      public static final double KV = 0.0;
+      public static final double KA = 0.0;
+    }
   }
 }

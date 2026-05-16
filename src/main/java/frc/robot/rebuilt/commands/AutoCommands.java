@@ -23,7 +23,7 @@ public class AutoCommands {
   public void configureCharacterizationCommands(LoggedDashboardChooser<Command> selectableCommand) {
     selectableCommand.addOption(
         "PRO: Intake Hopper Characterization",
-        ((Intake) subsystems.get(Constants.INTAKE)).getHopperCharacterizationCommand());
+        Rebuilt.intake.getHopperCharacterizationCommand());
     selectableCommand.addOption(
         "PRO: Launcher Hood Characterization",
         ((Launcher) subsystems.get(Constants.LAUNCHER)).getHoodCharacterizationCommand());

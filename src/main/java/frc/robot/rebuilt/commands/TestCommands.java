@@ -2,6 +2,7 @@ package frc.robot.rebuilt.commands;
 
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.rebuilt.Constants;
+import frc.robot.rebuilt.Rebuilt;
 import frc.robot.rebuilt.subsystems.Indexer.Indexer;
 import frc.robot.rebuilt.subsystems.Launcher.Launcher;
 import frc.robot.rebuilt.subsystems.intake.Intake;
@@ -20,7 +21,7 @@ public class TestCommands {
   public TestCommands(Map<String, GenericSubsystem> subsystems) {
     this.subsystems = subsystems;
     indexer = (Indexer) subsystems.get(Constants.INDEXER);
-    intake = (Intake) subsystems.get(Constants.INTAKE);
+    intake = Rebuilt.intake;
     launcher = (Launcher) subsystems.get(Constants.LAUNCHER);
   }
 
