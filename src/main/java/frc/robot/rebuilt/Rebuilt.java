@@ -53,7 +53,7 @@ public class Rebuilt extends GenericRobot {
     /** creating robot subsystems */
     indexer = new Indexer();
     intake = new Intake();
-    launcher = new Launcher(subsystems);
+    launcher = new Launcher();
     drivetrain = new StubDrivetrain();
     /** creates command containers */
     testCommands = new TestCommands(subsystems);

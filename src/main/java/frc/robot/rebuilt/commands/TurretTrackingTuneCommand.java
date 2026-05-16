@@ -8,8 +8,8 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.rebuilt.subsystems.Launcher.SmartTurretController;
-import org.frc5010.common.arch.GenericSubsystem;
 import org.littletonrobotics.junction.Logger;
 
 /**
@@ -41,7 +41,7 @@ public class TurretTrackingTuneCommand extends Command {
   private static final double SAFETY_MARGIN_ROT = 10.0 / 360.0; // 10 degrees
   private static final String PREFIX = "TurretTrackTune/";
 
-  public TurretTrackingTuneCommand(SmartTurretController controller, GenericSubsystem requirement) {
+  public TurretTrackingTuneCommand(SmartTurretController controller, SubsystemBase requirement) {
     this.controller = controller;
     this.talonFX = controller.getTalonFX();
     addRequirements(requirement);

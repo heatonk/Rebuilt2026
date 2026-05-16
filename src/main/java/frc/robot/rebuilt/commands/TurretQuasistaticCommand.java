@@ -12,11 +12,11 @@ import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.rebuilt.subsystems.Launcher.SmartTurretController;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import org.frc5010.common.arch.GenericSubsystem;
 import org.littletonrobotics.junction.Logger;
 
 /**
@@ -71,7 +71,7 @@ public class TurretQuasistaticCommand extends Command {
 
   private static final String PREFIX = "TurretQuasistatic/";
 
-  public TurretQuasistaticCommand(SmartTurretController controller, GenericSubsystem requirement) {
+  public TurretQuasistaticCommand(SmartTurretController controller, SubsystemBase requirement) {
     this.controller = controller;
     this.talonFX = controller.getTalonFX();
     this.positionSignal = controller.getPositionSignal();

@@ -32,7 +32,7 @@ public class IndexerCommands {
   public IndexerCommands(Map<String, GenericSubsystem> systems) {
     this.subsystems = systems;
     IndexerCommands.indexer = Rebuilt.indexer;
-    IndexerCommands.launcher = (Launcher) subsystems.get(Constants.LAUNCHER);
+    IndexerCommands.launcher = Rebuilt.launcher;
     configureTriggerStates();
   }
 
