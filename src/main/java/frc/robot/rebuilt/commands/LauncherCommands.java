@@ -94,7 +94,7 @@ public class LauncherCommands {
   public LauncherCommands(Map<String, GenericSubsystem> subsystems) {
     this.subsystems = subsystems;
     launcher = (Launcher) subsystems.get(Constants.LAUNCHER);
-    intake = (Intake) subsystems.get(Constants.INTAKE);
+    intake = Rebuilt.intake;
     launcher.setCurrentState(LauncherState.HAMMERTIME);
     launcher.setRequestedState(LauncherState.HAMMERTIME);
 

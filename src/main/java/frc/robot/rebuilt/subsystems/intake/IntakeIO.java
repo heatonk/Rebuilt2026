@@ -4,8 +4,8 @@ import static edu.wpi.first.units.Units.Degrees;
 
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.rebuilt.commands.IntakeCommands;
-import org.frc5010.common.arch.GenericSubsystem;
 import org.littletonrobotics.junction.AutoLog;
 
 public interface IntakeIO {
@@ -53,7 +53,7 @@ public interface IntakeIO {
 
   public Command getHopperSysIdCommand();
 
-  public Command getHopperCharacterizationCommand(GenericSubsystem intake);
+  public Command getHopperCharacterizationCommand(SubsystemBase intake);
 
   public default void updateInputs(IntakeIOInputs inputs) {}
 }
