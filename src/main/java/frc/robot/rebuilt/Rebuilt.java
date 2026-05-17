@@ -27,6 +27,7 @@ import frc.robot.rebuilt.subsystems.Launcher.Launcher;
 import frc.robot.rebuilt.subsystems.drive.StubDrivetrain;
 import frc.robot.rebuilt.subsystems.intake.Intake;
 import frc.robot.rebuilt.util.AllianceFlipUtil;
+import frc.robot.rebuilt.util.ButtonBindingRegistry;
 import frc.robot.rebuilt.util.Controller;
 import frc.robot.rebuilt.util.LedStrip;
 import frc.robot.rebuilt.util.OrchestraManager;
@@ -56,6 +57,10 @@ public class Rebuilt {
   public Rebuilt(Controller driver, Controller operator) {
     this.driver = driver;
     this.operator = operator;
+
+    // Open the teleop binding scope before any subsystem construction so any controller
+    // bindings done during init (e.g. the operator START button below) land in this scope.
+    ButtonBindingRegistry.beginScope("teleop");
 
     AllianceFlipUtil.configure(FieldConstants.FIELD_WIDTH, FieldConstants.FIELD_LENGTH);
 
@@ -98,6 +103,7 @@ public class Rebuilt {
   /** Configures buttons with commands. */
   public void configureButtonBindings() {
     if (!isButtonsConfigured) {
+      ButtonBindingRegistry.beginScope("teleop");
       FieldRegions.setupFieldRegions();
       driver.createYButton().onTrue(Commands.runOnce(() -> drivetrain.toggleFieldOrientedDrive()));
       drivetrain.configureButtonBindings(driver, operator);
@@ -105,13 +111,16 @@ public class Rebuilt {
       intakecommands.configureButtonBindings(driver, operator);
       indexerCommands.configureButtonBindings(driver, operator);
       hubStatus.configureButtonBindings(driver, operator);
+      ButtonBindingRegistry.assertAndPublish("teleop");
       isButtonsConfigured = true;
     }
   }
 
   public void configureAltButtonBindings() {
     if (!isAltButtonsConfigured) {
+      ButtonBindingRegistry.beginScope("test");
       testCommands.configureButtonBindings(driver);
+      ButtonBindingRegistry.assertAndPublish("test");
       isAltButtonsConfigured = true;
     }
   }
