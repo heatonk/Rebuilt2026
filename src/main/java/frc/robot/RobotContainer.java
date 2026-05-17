@@ -12,8 +12,8 @@ public class RobotContainer {
   private final Rebuilt robot;
 
   public RobotContainer() {
-    Controller driver = new Controller(0);
-    Controller operator = new Controller(1);
+    Controller driver = new Controller(0, "driver");
+    Controller operator = new Controller(1, "operator");
 
     robot = new Rebuilt(driver, operator);
 

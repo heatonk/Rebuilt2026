@@ -8,8 +8,11 @@ import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.wpilibj.GenericHID.HIDType;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.POVButton;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.rebuilt.util.ButtonBindingRegistry.Edge;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,6 +20,7 @@ public class Controller {
 
   private Joystick joystick;
   private boolean singleControllerMode;
+  private final String name;
   public JoystickButton A_BUTTON,
       B_BUTTON,
       X_BUTTON,
@@ -229,12 +233,25 @@ public class Controller {
   }
 
   public Controller(int port) {
-    joystick = new Joystick(port);
+    this(port, "controller_" + port, false);
+  }
+
+  public Controller(int port, String name) {
+    this(port, name, false);
   }
 
   public Controller(int port, boolean single) {
-    joystick = new Joystick(port);
-    singleControllerMode = single;
+    this(port, "controller_" + port, single);
+  }
+
+  private Controller(int port, String name, boolean single) {
+    this.joystick = new Joystick(port);
+    this.name = name;
+    this.singleControllerMode = single;
+  }
+
+  public String getName() {
+    return name;
   }
 
   public void setRumble(double power) {
@@ -348,76 +365,176 @@ public class Controller {
   }
 
   public JoystickButton createCustomButton(int buttonNum) {
-    return new JoystickButton(joystick, buttonNum);
+    return new TrackedJoystickButton(joystick, buttonNum, "custom_" + buttonNum);
   }
 
   public JoystickButton createAButton() {
-    A_BUTTON = new JoystickButton(joystick, ButtonNums.A_BUTTON.ordinal());
+    A_BUTTON = new TrackedJoystickButton(joystick, ButtonNums.A_BUTTON.ordinal(), "A");
     return A_BUTTON;
   }
 
   public JoystickButton createBButton() {
-    B_BUTTON = new JoystickButton(joystick, ButtonNums.B_BUTTON.ordinal());
+    B_BUTTON = new TrackedJoystickButton(joystick, ButtonNums.B_BUTTON.ordinal(), "B");
     return B_BUTTON;
   }
 
   public JoystickButton createXButton() {
-    X_BUTTON = new JoystickButton(joystick, ButtonNums.X_BUTTON.ordinal());
+    X_BUTTON = new TrackedJoystickButton(joystick, ButtonNums.X_BUTTON.ordinal(), "X");
     return X_BUTTON;
   }
 
   public JoystickButton createYButton() {
-    Y_BUTTON = new JoystickButton(joystick, ButtonNums.Y_BUTTON.ordinal());
+    Y_BUTTON = new TrackedJoystickButton(joystick, ButtonNums.Y_BUTTON.ordinal(), "Y");
     return Y_BUTTON;
   }
 
   public JoystickButton createLeftBumper() {
-    LEFT_BUMPER = new JoystickButton(joystick, ButtonNums.LEFT_BUMPER.ordinal());
+    LEFT_BUMPER =
+        new TrackedJoystickButton(joystick, ButtonNums.LEFT_BUMPER.ordinal(), "LEFT_BUMPER");
     return LEFT_BUMPER;
   }
 
   public JoystickButton createRightBumper() {
-    RIGHT_BUMPER = new JoystickButton(joystick, ButtonNums.RIGHT_BUMPER.ordinal());
+    RIGHT_BUMPER =
+        new TrackedJoystickButton(joystick, ButtonNums.RIGHT_BUMPER.ordinal(), "RIGHT_BUMPER");
     return RIGHT_BUMPER;
   }
 
   public JoystickButton createStartButton() {
-    START_BUTTON = new JoystickButton(joystick, ButtonNums.START_BUTTON.ordinal());
+    START_BUTTON = new TrackedJoystickButton(joystick, ButtonNums.START_BUTTON.ordinal(), "START");
     return START_BUTTON;
   }
 
   public JoystickButton createBackButton() {
-    BACK_BUTTON = new JoystickButton(joystick, ButtonNums.BACK_BUTTON.ordinal());
+    BACK_BUTTON = new TrackedJoystickButton(joystick, ButtonNums.BACK_BUTTON.ordinal(), "BACK");
     return BACK_BUTTON;
   }
 
   public JoystickButton createLeftStickButton() {
-    LEFT_STICK_BUTT = new JoystickButton(joystick, ButtonNums.LEFT_STICK_BUTT.ordinal());
+    LEFT_STICK_BUTT =
+        new TrackedJoystickButton(joystick, ButtonNums.LEFT_STICK_BUTT.ordinal(), "LEFT_STICK");
     return LEFT_STICK_BUTT;
   }
 
   public JoystickButton createRightStickButton() {
-    RIGHT_STICK_BUTT = new JoystickButton(joystick, ButtonNums.RIGHT_STICK_BUTT.ordinal());
+    RIGHT_STICK_BUTT =
+        new TrackedJoystickButton(joystick, ButtonNums.RIGHT_STICK_BUTT.ordinal(), "RIGHT_STICK");
     return RIGHT_STICK_BUTT;
   }
 
   public POVButton createUpPovButton() {
-    UP = new POVButton(joystick, POVDirs.UP.direction);
+    UP = new TrackedPOVButton(joystick, POVDirs.UP.direction, "POV_UP");
     return UP;
   }
 
   public POVButton createDownPovButton() {
-    DOWN = new POVButton(joystick, POVDirs.DOWN.direction);
+    DOWN = new TrackedPOVButton(joystick, POVDirs.DOWN.direction, "POV_DOWN");
     return DOWN;
   }
 
   public POVButton createLeftPovButton() {
-    LEFT = new POVButton(joystick, POVDirs.LEFT.direction);
+    LEFT = new TrackedPOVButton(joystick, POVDirs.LEFT.direction, "POV_LEFT");
     return LEFT;
   }
 
   public POVButton createRightPovButton() {
-    RIGHT = new POVButton(joystick, POVDirs.RIGHT.direction);
+    RIGHT = new TrackedPOVButton(joystick, POVDirs.RIGHT.direction, "POV_RIGHT");
     return RIGHT;
+  }
+
+  /**
+   * JoystickButton that records each binding edge with {@link ButtonBindingRegistry}. Used so
+   * duplicate (controller, input, edge) registrations can be detected at startup. Sensor-driven
+   * {@code new Trigger(...)} bindings are intentionally not tracked.
+   */
+  private class TrackedJoystickButton extends JoystickButton {
+    private final String inputName;
+
+    TrackedJoystickButton(Joystick joystick, int buttonNumber, String inputName) {
+      super(joystick, buttonNumber);
+      this.inputName = inputName;
+    }
+
+    @Override
+    public Trigger onTrue(Command command) {
+      ButtonBindingRegistry.register(name, inputName, Edge.ON_TRUE, command);
+      return super.onTrue(command);
+    }
+
+    @Override
+    public Trigger onFalse(Command command) {
+      ButtonBindingRegistry.register(name, inputName, Edge.ON_FALSE, command);
+      return super.onFalse(command);
+    }
+
+    @Override
+    public Trigger whileTrue(Command command) {
+      ButtonBindingRegistry.register(name, inputName, Edge.WHILE_TRUE, command);
+      return super.whileTrue(command);
+    }
+
+    @Override
+    public Trigger whileFalse(Command command) {
+      ButtonBindingRegistry.register(name, inputName, Edge.WHILE_FALSE, command);
+      return super.whileFalse(command);
+    }
+
+    @Override
+    public Trigger toggleOnTrue(Command command) {
+      ButtonBindingRegistry.register(name, inputName, Edge.TOGGLE_ON_TRUE, command);
+      return super.toggleOnTrue(command);
+    }
+
+    @Override
+    public Trigger toggleOnFalse(Command command) {
+      ButtonBindingRegistry.register(name, inputName, Edge.TOGGLE_ON_FALSE, command);
+      return super.toggleOnFalse(command);
+    }
+  }
+
+  /** POVButton variant of {@link TrackedJoystickButton}. */
+  private class TrackedPOVButton extends POVButton {
+    private final String inputName;
+
+    TrackedPOVButton(Joystick joystick, int angle, String inputName) {
+      super(joystick, angle);
+      this.inputName = inputName;
+    }
+
+    @Override
+    public Trigger onTrue(Command command) {
+      ButtonBindingRegistry.register(name, inputName, Edge.ON_TRUE, command);
+      return super.onTrue(command);
+    }
+
+    @Override
+    public Trigger onFalse(Command command) {
+      ButtonBindingRegistry.register(name, inputName, Edge.ON_FALSE, command);
+      return super.onFalse(command);
+    }
+
+    @Override
+    public Trigger whileTrue(Command command) {
+      ButtonBindingRegistry.register(name, inputName, Edge.WHILE_TRUE, command);
+      return super.whileTrue(command);
+    }
+
+    @Override
+    public Trigger whileFalse(Command command) {
+      ButtonBindingRegistry.register(name, inputName, Edge.WHILE_FALSE, command);
+      return super.whileFalse(command);
+    }
+
+    @Override
+    public Trigger toggleOnTrue(Command command) {
+      ButtonBindingRegistry.register(name, inputName, Edge.TOGGLE_ON_TRUE, command);
+      return super.toggleOnTrue(command);
+    }
+
+    @Override
+    public Trigger toggleOnFalse(Command command) {
+      ButtonBindingRegistry.register(name, inputName, Edge.TOGGLE_ON_FALSE, command);
+      return super.toggleOnFalse(command);
+    }
   }
 }
