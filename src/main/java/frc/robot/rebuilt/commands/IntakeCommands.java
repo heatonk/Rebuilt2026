@@ -9,19 +9,16 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.Rebuilt;
 import frc.robot.rebuilt.subsystems.intake.Intake;
+import frc.robot.rebuilt.util.Controller;
 import frc.robot.rebuilt.util.StateMachine;
-import java.util.Map;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
-import org.frc5010.common.arch.GenericSubsystem;
-import org.frc5010.common.sensors.Controller;
 
 public class IntakeCommands {
   static Intake intake;
   /** Tracks whether the hopper has been zeroed at least once this match. */
   static boolean hopperZeroed = false;
 
-  Map<String, GenericSubsystem> subsystems;
   StateMachine intakeStateMachine = new StateMachine("IntakeStateMachine");
 
   DoubleSupplier intakeSpeedSupplier =
@@ -38,11 +35,8 @@ public class IntakeCommands {
     ANGLED;
   }
 
-  public IntakeCommands(Map<String, GenericSubsystem> subsystems) {
-    this.subsystems = subsystems;
-
+  public IntakeCommands() {
     intake = Rebuilt.intake;
-
     setupTriggerStates();
   }
 

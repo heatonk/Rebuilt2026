@@ -1,7 +1,7 @@
 package frc.robot.rebuilt.subsystems.DriverDisplay;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import org.frc5010.common.sensors.Controller;
+import frc.robot.rebuilt.util.Controller;
 import org.littletonrobotics.junction.Logger;
 
 public class HubStatus extends SubsystemBase {

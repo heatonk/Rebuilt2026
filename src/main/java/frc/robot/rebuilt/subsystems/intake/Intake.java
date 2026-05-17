@@ -15,7 +15,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.commands.IntakeCommands;
 import frc.robot.rebuilt.commands.IntakeCommands.IntakeState;
-import org.frc5010.common.sensors.Controller;
+import frc.robot.rebuilt.util.Controller;
 import org.littletonrobotics.junction.Logger;
 
 public class Intake extends SubsystemBase {

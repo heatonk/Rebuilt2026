@@ -26,12 +26,10 @@ import frc.robot.rebuilt.subsystems.Launcher.ShotCalculator.ShootingParameters;
 import frc.robot.rebuilt.subsystems.drive.StubDrivetrain;
 import frc.robot.rebuilt.subsystems.intake.Intake;
 import frc.robot.rebuilt.util.AllianceFlipUtil;
+import frc.robot.rebuilt.util.Controller;
 import frc.robot.rebuilt.util.LedStrip;
 import frc.robot.rebuilt.util.StateMachine;
 import frc.robot.rebuilt.util.StateMachine.State;
-import java.util.Map;
-import org.frc5010.common.arch.GenericSubsystem;
-import org.frc5010.common.sensors.Controller;
 
 /** defines commands and state launcher logic for the launcher */
 public class LauncherCommands {
@@ -47,7 +45,6 @@ public class LauncherCommands {
   private static Launcher launcher;
   private static Intake intake;
   private static StubDrivetrain drivetrain;
-  private Map<String, GenericSubsystem> subsystems;
   private static Translation2d hubTarget = FieldConstants.Hub.topCenterPoint.toTranslation2d();
   private static Translation2d allianceSideLeft = FieldConstants.Tower.leftUpright;
   private static Translation2d allianceSideRight = FieldConstants.Tower.rightUpright;
@@ -91,8 +88,7 @@ public class LauncherCommands {
     }
   }
   /** initializes the launcher state machine and adds states */
-  public LauncherCommands(Map<String, GenericSubsystem> subsystems) {
-    this.subsystems = subsystems;
+  public LauncherCommands() {
     launcher = Rebuilt.launcher;
     intake = Rebuilt.intake;
     launcher.setCurrentState(LauncherState.HAMMERTIME);

@@ -5,24 +5,19 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj2.command.Command;
-import org.frc5010.common.arch.GenericRobot;
-import org.frc5010.common.arch.WpiHelperInterface;
-import org.frc5010.common.arch.WpiNetworkTableValuesHelper;
-import org.frc5010.common.config.RobotsParser;
-import org.frc5010.common.constants.Constants;
+import frc.robot.rebuilt.Rebuilt;
+import frc.robot.rebuilt.util.Controller;
 
-public class RobotContainer implements WpiHelperInterface {
-  private static final RobotsParser robotsParser = new RobotsParser();
-  public static Constants constants;
-  private GenericRobot robot;
+public class RobotContainer {
+  private final Rebuilt robot;
 
   public RobotContainer() {
-    constants = new Constants();
+    Controller driver = new Controller(0);
+    Controller operator = new Controller(1);
 
-    robot = robotsParser.getRobot();
+    robot = new Rebuilt(driver, operator);
 
     initAutoCommands();
-    WpiNetworkTableValuesHelper.loadRegisteredToNetworkTables();
   }
 
   /**
@@ -41,7 +36,6 @@ public class RobotContainer implements WpiHelperInterface {
     robot.configureAltButtonBindings();
   }
 
-  // Just sets up defalt commands (setUpDeftCom)
   public void setupDefaults() {
     robot.determineAlliance();
     robot.setupDefaultCommands();

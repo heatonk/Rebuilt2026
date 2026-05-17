@@ -7,15 +7,10 @@ import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.Rebuilt;
 import frc.robot.rebuilt.subsystems.Indexer.Indexer;
 import frc.robot.rebuilt.subsystems.Launcher.Launcher;
+import frc.robot.rebuilt.util.Controller;
 import frc.robot.rebuilt.util.LedStrip;
-import java.util.Map;
-import org.frc5010.common.arch.GenericSubsystem;
-import org.frc5010.common.sensors.Controller;
 
 public class IndexerCommands {
-  /** declares variables that will later hold state objects */
-  private Map<String, GenericSubsystem> subsystems;
-
   private static Indexer indexer;
   private static Launcher launcher;
 
@@ -28,9 +23,8 @@ public class IndexerCommands {
     FEED
   }
 
-  /** Stores the subsystem map and retrieves the indexer instance */
-  public IndexerCommands(Map<String, GenericSubsystem> systems) {
-    this.subsystems = systems;
+  /** Resolves the indexer/launcher instances and wires triggers. */
+  public IndexerCommands() {
     IndexerCommands.indexer = Rebuilt.indexer;
     IndexerCommands.launcher = Rebuilt.launcher;
     configureTriggerStates();

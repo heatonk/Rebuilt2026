@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.rebuilt.commands.IndexerCommands.IndexerState;
 import frc.robot.rebuilt.util.StateMachine;
-import org.frc5010.common.sensors.Controller;
+import frc.robot.rebuilt.util.Controller;
 import org.littletonrobotics.junction.Logger;
 
 public class Indexer extends SubsystemBase {
