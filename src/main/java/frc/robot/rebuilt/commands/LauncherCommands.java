@@ -281,8 +281,7 @@ public class LauncherCommands {
         Commands.runOnce(
             () -> {
               launcher.setCurrentState(LauncherState.PREP);
-              LedStrip.changeSegmentPattern(
-                  LedStrip.ALL_LEDS, LedStrip.getRainbowPattern(0));
+              LedStrip.changeSegmentPattern(LedStrip.ALL_LEDS, LedStrip.getRainbowPattern(0));
             }),
         launcher.trackTargetCommand());
   }

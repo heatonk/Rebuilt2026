@@ -9,7 +9,6 @@ import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.DegreesPerSecond;
 import static edu.wpi.first.units.Units.DegreesPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Inches;
-import static edu.wpi.first.units.Units.Kilograms;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Pounds;
@@ -265,12 +264,9 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
       Object rawController = turret.getMotorController().getMotorController();
       if (rawController instanceof com.ctre.phoenix6.hardware.TalonFX talonFXRaw) {
         ArmFeedforward yamsFf = turretConfig.getArmFeedforward().orElse(null);
-        double kS =
-            yamsFf != null ? yamsFf.getKs() : Constants.Launcher.Turret.SMART_FALLBACK_KS;
-        double kV =
-            yamsFf != null ? yamsFf.getKv() : Constants.Launcher.Turret.SMART_FALLBACK_KV;
-        double kA =
-            yamsFf != null ? yamsFf.getKa() : Constants.Launcher.Turret.SMART_FALLBACK_KA;
+        double kS = yamsFf != null ? yamsFf.getKs() : Constants.Launcher.Turret.SMART_FALLBACK_KS;
+        double kV = yamsFf != null ? yamsFf.getKv() : Constants.Launcher.Turret.SMART_FALLBACK_KV;
+        double kA = yamsFf != null ? yamsFf.getKa() : Constants.Launcher.Turret.SMART_FALLBACK_KA;
         SmartTurretConfig smartConfig =
             new SmartTurretConfig.Builder()
                 .withTalonFX(talonFXRaw)
@@ -655,9 +651,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
             .map(c -> c.maxVelocity * 2.0 * Math.PI)
             .orElse(Math.toRadians(Constants.Launcher.Turret.MAX_VEL_DEG_PER_SEC));
     double maxAccelRadPerSecSq =
-        trapConstraints
-            .map(c -> c.maxAcceleration * 2.0 * Math.PI)
-            .orElse(Math.toRadians(360.0));
+        trapConstraints.map(c -> c.maxAcceleration * 2.0 * Math.PI).orElse(Math.toRadians(360.0));
     shotCalculator.setTurretMotionConstraints(maxVelRadPerSec, maxAccelRadPerSecSq, 0.85);
 
     if (smartTurretController != null) {

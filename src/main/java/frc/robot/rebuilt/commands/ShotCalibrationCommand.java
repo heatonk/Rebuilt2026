@@ -66,10 +66,7 @@ public class ShotCalibrationCommand extends Command {
   private boolean initialGuessPopulated = false;
 
   public ShotCalibrationCommand(
-      Launcher launcher,
-      StubDrivetrain drivetrain,
-      double initialDistance,
-      double distanceStep) {
+      Launcher launcher, StubDrivetrain drivetrain, double initialDistance, double distanceStep) {
     this.launcher = launcher;
     this.drivetrain = drivetrain;
     this.shotCalculator = ShotCalculator.getInstance();
@@ -277,10 +274,7 @@ public class ShotCalibrationCommand extends Command {
    * tuning.
    */
   public static Command createWithFeed(
-      Launcher launcher,
-      StubDrivetrain drivetrain,
-      double initialDistance,
-      double distanceStep) {
+      Launcher launcher, StubDrivetrain drivetrain, double initialDistance, double distanceStep) {
     return Commands.parallel(
         new ShotCalibrationCommand(launcher, drivetrain, initialDistance, distanceStep),
         Commands.either(

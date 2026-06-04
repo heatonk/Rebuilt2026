@@ -82,7 +82,8 @@ public class IndexerIOReal implements IndexerIO {
 
     SmartMotorController smartMotor =
         SmartMotorFactory.create(leader, motorSim, motorConfig)
-            .orElseThrow(() -> new RuntimeException("Failed to build transfer SmartMotorController"));
+            .orElseThrow(
+                () -> new RuntimeException("Failed to build transfer SmartMotorController"));
 
     Distance radius = Meters.of(Constants.Indexer.Transfer.RADIUS_M);
     Mass mass = Kilograms.of(Constants.Indexer.Transfer.MASS_KG);

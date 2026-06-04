@@ -603,8 +603,7 @@ public class ShotCalculator {
     turretVelocity =
         turretAngleFilter.calculate(
             turretAngle.minus(lastTurretAngle).getRadians() / LOOP_PERIOD_SECS);
-    hoodVelocity =
-        hoodAngleFilter.calculate((hoodAngle - lastHoodAngle) / LOOP_PERIOD_SECS);
+    hoodVelocity = hoodAngleFilter.calculate((hoodAngle - lastHoodAngle) / LOOP_PERIOD_SECS);
     lastTurretAngle = turretAngle;
     lastHoodAngle = hoodAngle;
     latestParameters =

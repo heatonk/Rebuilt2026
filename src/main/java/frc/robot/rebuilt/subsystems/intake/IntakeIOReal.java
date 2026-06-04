@@ -115,7 +115,8 @@ public class IntakeIOReal implements IntakeIO {
                 Constants.Intake.Hopper.SIM_KD,
                 DegreesPerSecond.of(Constants.Intake.Hopper.SIM_MAX_VEL_DEG_PER_SEC),
                 DegreesPerSecondPerSecond.of(Constants.Intake.Hopper.SIM_MAX_ACCEL_DEG_PER_SEC_SQ))
-            .withGearing(new MechanismGearing(GearBox.fromStages(Constants.Intake.Hopper.GEAR_STAGES)))
+            .withGearing(
+                new MechanismGearing(GearBox.fromStages(Constants.Intake.Hopper.GEAR_STAGES)))
             .withControlMode(ControlMode.CLOSED_LOOP)
             .withIdleMode(MotorMode.BRAKE)
             .withTelemetry("hopperMotor", TelemetryVerbosity.LOW)
@@ -211,7 +212,8 @@ public class IntakeIOReal implements IntakeIO {
 
     SmartMotorController smartMotor =
         SmartMotorFactory.create(motor, motorSim, motorConfig)
-            .orElseThrow(() -> new RuntimeException("Failed to build " + name + " SmartMotorController"));
+            .orElseThrow(
+                () -> new RuntimeException("Failed to build " + name + " SmartMotorController"));
 
     edu.wpi.first.units.measure.Distance radius = Meters.of(radiusM);
     edu.wpi.first.units.measure.Mass mass = edu.wpi.first.units.Units.Kilograms.of(massKg);

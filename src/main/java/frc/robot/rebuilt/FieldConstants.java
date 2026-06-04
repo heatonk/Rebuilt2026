@@ -62,8 +62,7 @@ public class FieldConstants {
     public static final double neutralZoneFar = center + Units.inchesToMeters(120);
     public static final double oppHubCenter =
         aprilTagFieldLayout.getTagPose(4).get().getX() + Hub.width / 2.0;
-    public static final double oppAllianceZone =
-        aprilTagFieldLayout.getTagPose(10).get().getX();
+    public static final double oppAllianceZone = aprilTagFieldLayout.getTagPose(10).get().getX();
   }
 
   /**
@@ -123,9 +122,7 @@ public class FieldConstants {
     // Relevant reference points on the opposite side
     public static final Translation3d oppTopCenterPoint =
         new Translation3d(
-            aprilTagFieldLayout.getTagPose(4).get().getX() + width / 2.0,
-            fieldWidth / 2.0,
-            height);
+            aprilTagFieldLayout.getTagPose(4).get().getX() + width / 2.0, fieldWidth / 2.0, height);
     public static final Translation2d oppNearLeftCorner =
         new Translation2d(oppTopCenterPoint.getX() - width / 2.0, fieldWidth / 2.0 + width / 2.0);
     public static final Translation2d oppNearRightCorner =
@@ -136,16 +133,12 @@ public class FieldConstants {
         new Translation2d(oppTopCenterPoint.getX() + width / 2.0, fieldWidth / 2.0 - width / 2.0);
 
     // Hub faces
-    public static final Pose2d nearFace =
-        aprilTagFieldLayout.getTagPose(26).get().toPose2d();
+    public static final Pose2d nearFace = aprilTagFieldLayout.getTagPose(26).get().toPose2d();
     public static final Translation2d centerFace =
         new Translation2d(nearFace.getX(), fieldWidth / 2.0);
-    public static final Pose2d farFace =
-        aprilTagFieldLayout.getTagPose(20).get().toPose2d();
-    public static final Pose2d rightFace =
-        aprilTagFieldLayout.getTagPose(18).get().toPose2d();
-    public static final Pose2d leftFace =
-        aprilTagFieldLayout.getTagPose(21).get().toPose2d();
+    public static final Pose2d farFace = aprilTagFieldLayout.getTagPose(20).get().toPose2d();
+    public static final Pose2d rightFace = aprilTagFieldLayout.getTagPose(18).get().toPose2d();
+    public static final Pose2d leftFace = aprilTagFieldLayout.getTagPose(21).get().toPose2d();
   }
 
   /** Left Bump related constants */
