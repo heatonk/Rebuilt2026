@@ -189,3 +189,4 @@ compile_commands.json
 /src/main/resources/pose_optimizer
 src/main/java/frc/robot/BuildConstants.java
 src/main/java/frc/robot/BuildConstants.java
+.claude/settings.local.json
