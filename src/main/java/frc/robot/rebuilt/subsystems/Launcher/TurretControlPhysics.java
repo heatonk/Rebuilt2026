@@ -216,9 +216,9 @@ public class TurretControlPhysics {
       double minRangeMeters,
       double maxRangeMeters) {
     this.turretOffsetRobotFrame = turretOffsetRobotFrame;
-    SmartDashboard.putNumber("Turret Offset X", turretOffsetRobotFrame.getX());
-    SmartDashboard.putNumber("Turret Offset Y", turretOffsetRobotFrame.getY());
-    SmartDashboard.putNumber("Turret Offset Angle", turretOffsetRobotFrame.getAngle().getDegrees());
+    // SmartDashboard.putNumber("Turret Offset X", turretOffsetRobotFrame.getX());
+    // SmartDashboard.putNumber("Turret Offset Y", turretOffsetRobotFrame.getY());
+    // SmartDashboard.putNumber("Turret Offset Angle", turretOffsetRobotFrame.getAngle().getDegrees());
 
     this.minTurretAngle = minTurretAngle;
     this.maxTurretAngle = maxTurretAngle;

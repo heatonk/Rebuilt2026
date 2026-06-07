@@ -215,15 +215,15 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
                 /* maxIterations */ 30);
 
     easyCrtSolver = new EasyCRT(easyCrt);
-    SmartDashboard.putNumber(
-        "EasyCRT/Unique Coverage", easyCrt.getUniqueCoverage().orElse(Degrees.of(0.0)).in(Degrees));
-    SmartDashboard.putBoolean("EasyCRT/Coverage Satisfies Range", easyCrt.coverageSatisfiesRange());
-    SmartDashboard.putNumber("EasyCRT/Enc 1", easyCrt.getAbsoluteEncoder1Angle().in(Degrees));
-    SmartDashboard.putNumber(
-        "EasyCRT/Enc 1 Ratio", easyCrt.getEncoder1RotationsPerMechanismRotation());
-    SmartDashboard.putNumber("EasyCRT/Enc 2", easyCrt.getAbsoluteEncoder2Angle().in(Degrees));
-    SmartDashboard.putNumber(
-        "EasyCRT/Enc 2 Ratio", easyCrt.getEncoder2RotationsPerMechanismRotation());
+    // SmartDashboard.putNumber(
+    //     "EasyCRT/Unique Coverage", easyCrt.getUniqueCoverage().orElse(Degrees.of(0.0)).in(Degrees));
+    // SmartDashboard.putBoolean("EasyCRT/Coverage Satisfies Range", easyCrt.coverageSatisfiesRange());
+    // SmartDashboard.putNumber("EasyCRT/Enc 1", easyCrt.getAbsoluteEncoder1Angle().in(Degrees));
+    // SmartDashboard.putNumber(
+    //     "EasyCRT/Enc 1 Ratio", easyCrt.getEncoder1RotationsPerMechanismRotation());
+    // SmartDashboard.putNumber("EasyCRT/Enc 2", easyCrt.getAbsoluteEncoder2Angle().in(Degrees));
+    // SmartDashboard.putNumber(
+    //     "EasyCRT/Enc 2 Ratio", easyCrt.getEncoder2RotationsPerMechanismRotation());
     Angle calculatedAngle;
     Optional<Angle> optionalAngle = (easyCrtSolver.getAngleOptional());
     if (optionalAngle.isPresent()) {
@@ -232,9 +232,9 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
       calculatedAngle = Degrees.of(0);
     }
 
-    SmartDashboard.putNumber("EasyCRT/CRT Angle", calculatedAngle.in(Degrees));
-    SmartDashboard.putString("EasyCRT/CRT Status", easyCrtSolver.getLastStatus().name());
-    SmartDashboard.putNumber("EasyCRT/CRT Error Rot", easyCrtSolver.getLastErrorRotations());
+    // SmartDashboard.putNumber("EasyCRT/CRT Angle", calculatedAngle.in(Degrees));
+    // SmartDashboard.putString("EasyCRT/CRT Status", easyCrtSolver.getLastStatus().name());
+    // SmartDashboard.putNumber("EasyCRT/CRT Error Rot", easyCrtSolver.getLastErrorRotations());
     turret.getMotor().setEncoderPosition(calculatedAngle);
 
     // Create the 2-state SmartTurretController (replaces TurretProfileController).
@@ -506,27 +506,27 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   @Override()
   /** Updating launcher sensor data, calculates shot parameters, and populates input telemetry */
   public void updateInputs(LauncherIOInputs inputs) {
-    SmartDashboard.putNumber("EasyCRT/Encoder 40", crtSensor40.getAsDouble("angle"));
-    SmartDashboard.putNumber("EasyCRT/Enc 2", easyCrt.getAbsoluteEncoder2Angle().in(Degrees));
-    SmartDashboard.putNumber("EasyCRT/Encoder 36", crtSensor36.getAsDouble("angle"));
-    SmartDashboard.putNumber("EasyCRT/Enc 1", easyCrt.getAbsoluteEncoder1Angle().in(Degrees));
+    // SmartDashboard.putNumber("EasyCRT/Encoder 40", crtSensor40.getAsDouble("angle"));
+    // SmartDashboard.putNumber("EasyCRT/Enc 2", easyCrt.getAbsoluteEncoder2Angle().in(Degrees));
+    // SmartDashboard.putNumber("EasyCRT/Encoder 36", crtSensor36.getAsDouble("angle"));
+    // SmartDashboard.putNumber("EasyCRT/Enc 1", easyCrt.getAbsoluteEncoder1Angle().in(Degrees));
     org.littletonrobotics.junction.Logger.recordOutput(
         "Turret Zero Button", turretZeroButton.get());
-    SmartDashboard.putNumber(
-        "Distance to tag 27",
-        drivetrain
-            .getPoseEstimator()
-            .getCurrentPose3d()
-            .toPose2d()
-            .minus(FieldConstants.aprilTagFieldLayout.getTagPose(21).get().toPose2d())
-            .getTranslation()
-            .getNorm());
+    // SmartDashboard.putNumber(
+    //     "Distance to tag 27",
+    //     drivetrain
+    //         .getPoseEstimator()
+    //         .getCurrentPose3d()
+    //         .toPose2d()
+    //         .minus(FieldConstants.aprilTagFieldLayout.getTagPose(21).get().toPose2d())
+    //         .getTranslation()
+    //         .getNorm());
 
     Pose2d currentPose = drivetrain.getPoseEstimator().getCurrentPose();
     Optional<Translation2d> targetPose = FieldRegions.determineTargetPose(currentPose);
     TargetProfile targetProfile = TargetProfile.NONE;
     inputs.isValidCalculation = false;
-    SmartDashboard.putNumber("Flywheel Multiplier", ShotCalculator.getFlywheelMultiplier());
+    // SmartDashboard.putNumber("Flywheel Multiplier", ShotCalculator.getFlywheelMultiplier());
 
     Translation2d SOTMOffset = new Translation2d();
     Distance distanceToVirtualTarget = Meters.of(0.0001);
@@ -601,7 +601,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
             SOTMOffset,
             distanceToVirtualTarget,
             targetProfile);
-    SmartDashboard.putString("Launcher/Target Profile", targetProfile.name());
+    // SmartDashboard.putString("Launcher/Target Profile", targetProfile.name());
     Logger.recordOutput("Launcher/Lower Turret Tolerance Deg", turretAngleToleranceDegrees[0]);
     Logger.recordOutput("Launcher/Upper Turret Tolerance Deg", turretAngleToleranceDegrees[1]);
 
@@ -719,13 +719,13 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   /** Sets the angle of the turret via the SmartTurretController (zero feedforward). */
   public void setTurretRotation(Angle angle) {
     if (angle.gt(turretHighLimit)) {
-      SmartDashboard.putBoolean("Launcher/Turret Limit", true);
+      // SmartDashboard.putBoolean("Launcher/Turret Limit", true);
       angle = turretHighLimit;
     } else if (angle.lt(turretLowLimit)) {
-      SmartDashboard.putBoolean("Launcher/Turret Limit", true);
+      // SmartDashboard.putBoolean("Launcher/Turret Limit", true);
       angle = turretLowLimit;
     } else {
-      SmartDashboard.putBoolean("Launcher/Turret Limit", false);
+      // SmartDashboard.putBoolean("Launcher/Turret Limit", false);
     }
     if (smartTurretController != null) {
       smartTurretController.setTarget(angle, 0.0, 0.0);
@@ -738,13 +738,13 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   public void setTurretRotationWithFeedforward(
       Angle angle, double feedforwardRadPerSec, double accelerationRadPerSecSq) {
     if (angle.gt(turretHighLimit)) {
-      SmartDashboard.putBoolean("Launcher/Turret Limit", true);
+      // SmartDashboard.putBoolean("Launcher/Turret Limit", true);
       angle = turretHighLimit;
     } else if (angle.lt(turretLowLimit)) {
-      SmartDashboard.putBoolean("Launcher/Turret Limit", true);
+      // SmartDashboard.putBoolean("Launcher/Turret Limit", true);
       angle = turretLowLimit;
     } else {
-      SmartDashboard.putBoolean("Launcher/Turret Limit", false);
+      // SmartDashboard.putBoolean("Launcher/Turret Limit", false);
     }
 
     if (smartTurretController != null) {

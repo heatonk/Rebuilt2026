@@ -314,10 +314,10 @@ public class IntakeIOReal implements IntakeIO {
         ((currentX > lowerOppTrenchLeftX && currentX < lowerOppTrenchRightX)
             && currentY < lowerTrenchY);
 
-    SmartDashboard.putBoolean("Near Top Opp Alliance", nearOppAllianceTop);
-    SmartDashboard.putBoolean("Near Top Alliance", nearAllianceTop);
-    SmartDashboard.putBoolean("Near Bottom Opp Alliance", nearOppAllianceBottom);
-    SmartDashboard.putBoolean("Near Bottom Alliance", nearAllianceBottom);
+    // SmartDashboard.putBoolean("Near Top Opp Alliance", nearOppAllianceTop);
+    // SmartDashboard.putBoolean("Near Top Alliance", nearAllianceTop);
+    // SmartDashboard.putBoolean("Near Bottom Opp Alliance", nearOppAllianceBottom);
+    // SmartDashboard.putBoolean("Near Bottom Alliance", nearAllianceBottom);
 
     return nearAllianceTop || nearOppAllianceTop || nearAllianceBottom || nearOppAllianceBottom;
   }

@@ -130,10 +130,10 @@ public class TurretDynamicCommand extends Command {
 
     // Publish defaults — kV comes from the controller config; kS is not needed as an input
     // because this command measures kS_dynamic directly from the data.
-    SmartDashboard.putNumber(
-        "Dynamic kV", SmartDashboard.getNumber("Dynamic kV", controller.getConfig().getKV()));
-    SmartDashboard.putNumber(
-        "Dynamic Step Amps", SmartDashboard.getNumber("Dynamic Step Amps", DEFAULT_STEP_AMPS));
+    // SmartDashboard.putNumber(
+    //     "Dynamic kV", SmartDashboard.getNumber("Dynamic kV", controller.getConfig().getKV()));
+    // SmartDashboard.putNumber(
+    //     "Dynamic Step Amps", SmartDashboard.getNumber("Dynamic Step Amps", DEFAULT_STEP_AMPS));
 
     inputKV = SmartDashboard.getNumber("Dynamic kV", controller.getConfig().getKV());
     stepAmps = SmartDashboard.getNumber("Dynamic Step Amps", DEFAULT_STEP_AMPS);
@@ -321,7 +321,7 @@ public class TurretDynamicCommand extends Command {
    * starting value for the next characterization run and for use in other commands.
    */
   private void outputKSDynamic(double kSDynamic, int sampleCount) {
-    SmartDashboard.putNumber("Dynamic kS", kSDynamic);
+    // SmartDashboard.putNumber("Dynamic kS", kSDynamic);
     System.out.println(
         "[TurretDynamic] kS_dynamic="
             + kSDynamic

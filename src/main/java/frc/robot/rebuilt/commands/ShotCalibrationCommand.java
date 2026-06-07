@@ -97,23 +97,23 @@ public class ShotCalibrationCommand extends Command {
     hubTarget = AllianceFlipUtil.apply(FieldConstants.Hub.topCenterPoint.toTranslation2d());
 
     // Setup dashboard fields
-    SmartDashboard.putNumber(PREFIX + "Distance Step (m)", distanceStepMeters);
-    SmartDashboard.putNumber(
-        PREFIX + "Test Hood Angle", Constants.Launcher.offsetLegacyHoodAngleDegrees(35.0));
-    SmartDashboard.putNumber(PREFIX + "Test Flywheel RPM", 1800.0);
-    SmartDashboard.putNumber(PREFIX + "Flywheel Multiplier", 1.0);
-    SmartDashboard.putBoolean(PREFIX + "Force Firing", false);
-    SmartDashboard.putBoolean(PREFIX + "Confirm & Next", false);
-    SmartDashboard.putBoolean(PREFIX + "Apply Guess", false);
+    // SmartDashboard.putNumber(PREFIX + "Distance Step (m)", distanceStepMeters);
+    // SmartDashboard.putNumber(
+    //     PREFIX + "Test Hood Angle", Constants.Launcher.offsetLegacyHoodAngleDegrees(35.0));
+    // SmartDashboard.putNumber(PREFIX + "Test Flywheel RPM", 1800.0);
+    // SmartDashboard.putNumber(PREFIX + "Flywheel Multiplier", 1.0);
+    // SmartDashboard.putBoolean(PREFIX + "Force Firing", false);
+    // SmartDashboard.putBoolean(PREFIX + "Confirm & Next", false);
+    // SmartDashboard.putBoolean(PREFIX + "Apply Guess", false);
 
     System.out.println("[ShotCalibration] Starting interactive calibration.");
   }
 
   @Override
   public void execute() {
-    SmartDashboard.putString(PREFIX + "State", currentState.name());
-    SmartDashboard.putNumber(PREFIX + "Current Target Dist", currentDistanceMeters);
-    SmartDashboard.putNumber(PREFIX + "Actual Target Dist", getActualDistance());
+    // SmartDashboard.putString(PREFIX + "State", currentState.name());
+    // SmartDashboard.putNumber(PREFIX + "Current Target Dist", currentDistanceMeters);
+    // SmartDashboard.putNumber(PREFIX + "Actual Target Dist", getActualDistance());
 
     switch (currentState) {
       case ALIGN_AND_DRIVE:
@@ -160,12 +160,12 @@ public class ShotCalibrationCommand extends Command {
             xSpeed, ySpeed, thetaSpeed, currentPose.getRotation());
     drivetrain.drive(speeds);
 
-    SmartDashboard.putNumber(PREFIX + "X Error", xController.getPositionError());
-    SmartDashboard.putNumber(PREFIX + "Y Error", yController.getPositionError());
-    SmartDashboard.putNumber(PREFIX + "Theta Error", thetaController.getPositionError());
-    SmartDashboard.putBoolean(PREFIX + "X At Goal", xController.atGoal());
-    SmartDashboard.putBoolean(PREFIX + "Y At Goal", yController.atGoal());
-    SmartDashboard.putBoolean(PREFIX + "Theta At Goal", thetaController.atGoal());
+    // SmartDashboard.putNumber(PREFIX + "X Error", xController.getPositionError());
+    // SmartDashboard.putNumber(PREFIX + "Y Error", yController.getPositionError());
+    // SmartDashboard.putNumber(PREFIX + "Theta Error", thetaController.getPositionError());
+    // SmartDashboard.putBoolean(PREFIX + "X At Goal", xController.atGoal());
+    // SmartDashboard.putBoolean(PREFIX + "Y At Goal", yController.atGoal());
+    // SmartDashboard.putBoolean(PREFIX + "Theta At Goal", thetaController.atGoal());
 
     // Check transition
     if (xController.atGoal() && yController.atGoal() && thetaController.atGoal()) {
@@ -181,23 +181,23 @@ public class ShotCalibrationCommand extends Command {
     // 1. Give an initial guess if we just arrived or if the operator requested it
     if (!initialGuessPopulated || applyGuess) {
       if (applyGuess) {
-        SmartDashboard.putBoolean(PREFIX + "Apply Guess", false); // reset
+        // SmartDashboard.putBoolean(PREFIX + "Apply Guess", false); // reset
       }
 
       double multiplier = SmartDashboard.getNumber(PREFIX + "Flywheel Multiplier", 1.0);
       double[] guess = shotCalculator.getBallisticGuess(currentDistanceMeters);
 
       if (false && guess != null) {
-        SmartDashboard.putNumber(PREFIX + "Test Hood Angle", guess[0]);
-        SmartDashboard.putNumber(PREFIX + "Test Flywheel RPM", guess[1] * multiplier);
+        // SmartDashboard.putNumber(PREFIX + "Test Hood Angle", guess[0]);
+        // SmartDashboard.putNumber(PREFIX + "Test Flywheel RPM", guess[1] * multiplier);
       } else {
         // Fallback interpolation from lookup if ballistic isn't set up
-        SmartDashboard.putNumber(
-            PREFIX + "Test Hood Angle",
-            shotCalculator.getLookupHoodAngleDegrees(currentDistanceMeters));
-        SmartDashboard.putNumber(
-            PREFIX + "Test Flywheel RPM",
-            shotCalculator.getLookupFlywheelSpeed(currentDistanceMeters) * multiplier);
+        // SmartDashboard.putNumber(
+        //     PREFIX + "Test Hood Angle",
+        //     shotCalculator.getLookupHoodAngleDegrees(currentDistanceMeters));
+        // SmartDashboard.putNumber(
+        //     PREFIX + "Test Flywheel RPM",
+        //     shotCalculator.getLookupFlywheelSpeed(currentDistanceMeters) * multiplier);
       }
       initialGuessPopulated = true;
     }
@@ -215,9 +215,9 @@ public class ShotCalibrationCommand extends Command {
     launcher.usePresets(Degrees.of(hoodSetpoint), Degrees.of(0), RPM.of(rpmSetpoint));
 
     // Telemetry feedback
-    SmartDashboard.putNumber(PREFIX + "Actual Hood", launcher.getHoodAngleActual().in(Degrees));
-    SmartDashboard.putNumber(PREFIX + "Actual RPM", launcher.getFlywheelSpeedActual().in(RPM));
-    SmartDashboard.putBoolean(PREFIX + "Is At Goal", launcher.isAtGoal());
+    // SmartDashboard.putNumber(PREFIX + "Actual Hood", launcher.getHoodAngleActual().in(Degrees));
+    // SmartDashboard.putNumber(PREFIX + "Actual RPM", launcher.getFlywheelSpeedActual().in(RPM));
+    // SmartDashboard.putBoolean(PREFIX + "Is At Goal", launcher.isAtGoal());
 
     // 4. Handle "Force Firing" integration -> we can't fully control the indexer natively inside a
     // standard command without parallel racing,
@@ -227,7 +227,7 @@ public class ShotCalibrationCommand extends Command {
 
     // 5. Transition
     if (nextRequested) {
-      SmartDashboard.putBoolean(PREFIX + "Confirm & Next", false); // reset
+      // SmartDashboard.putBoolean(PREFIX + "Confirm & Next", false); // reset
 
       // Log it!
       System.out.println(

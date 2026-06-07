@@ -59,15 +59,15 @@ public class TurretTrackingTuneCommand extends Command {
     // Initialize SmartDashboard defaults.
     amplitudeRotations = SmartDashboard.getNumber(PREFIX + "Amplitude (rot)", 0.1);
     frequencyHz = SmartDashboard.getNumber(PREFIX + "Frequency (Hz)", 0.5);
-    SmartDashboard.putNumber(PREFIX + "Amplitude (rot)", amplitudeRotations);
-    SmartDashboard.putNumber(PREFIX + "Frequency (Hz)", frequencyHz);
+    // SmartDashboard.putNumber(PREFIX + "Amplitude (rot)", amplitudeRotations);
+    // SmartDashboard.putNumber(PREFIX + "Frequency (Hz)", frequencyHz);
 
     double currentKP = controller.getConfig().getTrackingKP();
     double currentKI = controller.getConfig().getTrackingKI();
     double currentKD = controller.getConfig().getTrackingKD();
-    SmartDashboard.putNumber(PREFIX + "Tracking kP", currentKP);
-    SmartDashboard.putNumber(PREFIX + "Tracking kI", currentKI);
-    SmartDashboard.putNumber(PREFIX + "Tracking kD", currentKD);
+    // SmartDashboard.putNumber(PREFIX + "Tracking kP", currentKP);
+    // SmartDashboard.putNumber(PREFIX + "Tracking kI", currentKI);
+    // SmartDashboard.putNumber(PREFIX + "Tracking kD", currentKD);
     lastKP = currentKP;
     lastKI = currentKI;
     lastKD = currentKD;
@@ -75,8 +75,8 @@ public class TurretTrackingTuneCommand extends Command {
     // Publish tunable feedforward gains (Amps). kV and kA run in the firmware slot.
     double currentKV = controller.getConfig().getKV();
     double currentKA = controller.getConfig().getKA();
-    SmartDashboard.putNumber(PREFIX + "Tracking kV (A/rps)", currentKV);
-    SmartDashboard.putNumber(PREFIX + "Tracking kA (A/rps2)", currentKA);
+    // SmartDashboard.putNumber(PREFIX + "Tracking kV (A/rps)", currentKV);
+    // SmartDashboard.putNumber(PREFIX + "Tracking kA (A/rps2)", currentKA);
     lastKV = currentKV;
     lastKA = currentKA;
 

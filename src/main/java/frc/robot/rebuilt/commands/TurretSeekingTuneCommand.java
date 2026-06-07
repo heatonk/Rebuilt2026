@@ -55,34 +55,34 @@ public class TurretSeekingTuneCommand extends Command {
     double upperDeg = config.getUpperLimitRotations() * 360.0;
 
     // Target positions (degrees) — default to ±50% of range from center.
-    SmartDashboard.putNumber(
-        PREFIX + "Target A (deg)",
-        SmartDashboard.getNumber(PREFIX + "Target A (deg)", lowerDeg * 0.5));
-    SmartDashboard.putNumber(
-        PREFIX + "Target B (deg)",
-        SmartDashboard.getNumber(PREFIX + "Target B (deg)", upperDeg * 0.5));
-    SmartDashboard.putNumber(
-        PREFIX + "Dwell Time (s)", SmartDashboard.getNumber(PREFIX + "Dwell Time (s)", 2.0));
+    // SmartDashboard.putNumber(
+    //     PREFIX + "Target A (deg)",
+    //     SmartDashboard.getNumber(PREFIX + "Target A (deg)", lowerDeg * 0.5));
+    // SmartDashboard.putNumber(
+    //     PREFIX + "Target B (deg)",
+    //     SmartDashboard.getNumber(PREFIX + "Target B (deg)", upperDeg * 0.5));
+    // SmartDashboard.putNumber(
+    //     PREFIX + "Dwell Time (s)", SmartDashboard.getNumber(PREFIX + "Dwell Time (s)", 2.0));
 
     // Slot0 PID gains.
-    SmartDashboard.putNumber(PREFIX + "Seeking kP", config.getSeekingKP());
-    SmartDashboard.putNumber(PREFIX + "Seeking kI", config.getSeekingKI());
-    SmartDashboard.putNumber(PREFIX + "Seeking kD", config.getSeekingKD());
+    // SmartDashboard.putNumber(PREFIX + "Seeking kP", config.getSeekingKP());
+    // SmartDashboard.putNumber(PREFIX + "Seeking kI", config.getSeekingKI());
+    // SmartDashboard.putNumber(PREFIX + "Seeking kD", config.getSeekingKD());
     lastKP = config.getSeekingKP();
     lastKI = config.getSeekingKI();
     lastKD = config.getSeekingKD();
 
     // Slot0 feedforward gains (Amps — TorqueCurrentFOC).
-    SmartDashboard.putNumber(PREFIX + "Seeking kS (A)", config.getKS());
-    SmartDashboard.putNumber(PREFIX + "Seeking kV (A/rps)", config.getKV());
-    SmartDashboard.putNumber(PREFIX + "Seeking kA (A/rps2)", config.getKA());
+    // SmartDashboard.putNumber(PREFIX + "Seeking kS (A)", config.getKS());
+    // SmartDashboard.putNumber(PREFIX + "Seeking kV (A/rps)", config.getKV());
+    // SmartDashboard.putNumber(PREFIX + "Seeking kA (A/rps2)", config.getKA());
     lastKS = config.getKS();
     lastKV = config.getKV();
     lastKA = config.getKA();
 
     // Expo plant model (Volts — always V/rps and V/rps^2).
-    SmartDashboard.putNumber(PREFIX + "Expo kV (V/rps)", config.getExpoKV());
-    SmartDashboard.putNumber(PREFIX + "Expo kA (V/rps2)", config.getExpoKA());
+    // SmartDashboard.putNumber(PREFIX + "Expo kV (V/rps)", config.getExpoKV());
+    // SmartDashboard.putNumber(PREFIX + "Expo kA (V/rps2)", config.getExpoKA());
     lastExpoKV = config.getExpoKV();
     lastExpoKA = config.getExpoKA();
   }

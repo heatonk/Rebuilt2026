@@ -81,7 +81,7 @@ public class Rebuilt {
   }
 
   public void disabledPeriodic() {
-    SmartDashboard.putBoolean("Orchestra Playing", OrchestraManager.isPlaying());
+    // SmartDashboard.putBoolean("Orchestra Playing", OrchestraManager.isPlaying());
     if (launcher != null && !isZeroingBurst) {
       if (launcher.isTurretAtZero()) {
         LedStrip.changeSegmentPattern(LedStrip.ALL_LEDS, LedStrip.getSolidPattern(Color.kGreen));
@@ -141,10 +141,10 @@ public class Rebuilt {
     if (AutoBuilder.isConfigured()) {
       selectableCommand =
           new LoggedDashboardChooser<>("Auto Modes", AutoBuilder.buildAutoChooser());
-      SmartDashboard.putData("Auto Modes", selectableCommand.getSendableChooser());
+      // SmartDashboard.putData("Auto Modes", selectableCommand.getSendableChooser());
     } else {
       selectableCommand = new LoggedDashboardChooser<>("Auto Modes");
-      SmartDashboard.putData("Auto Modes", selectableCommand.getSendableChooser());
+      // SmartDashboard.putData("Auto Modes", selectableCommand.getSendableChooser());
     }
     selectableCommand.addOption("Do Nothing", Commands.none());
     drivetrain.addAutoCommands(selectableCommand);

@@ -139,11 +139,11 @@ public class FieldRegions {
     Boolean inLowerMidField = lowerMidField.contains(currentPose.getTranslation());
     Boolean inOppUpperField = oppUpperField.contains(currentPose.getTranslation());
     Boolean inOppLowerField = oppLowerField.contains(currentPose.getTranslation());
-    SmartDashboard.putBoolean("In Alliance Field", inAllianceField);
-    SmartDashboard.putBoolean("In Upper Mid Field", inUpperMidField);
-    SmartDashboard.putBoolean("In Lower Mid Field", inLowerMidField);
-    SmartDashboard.putBoolean("In Opp Upper Field", inOppUpperField);
-    SmartDashboard.putBoolean("In Opp Lower Field", inOppLowerField);
+    // SmartDashboard.putBoolean("In Alliance Field", inAllianceField);
+    // SmartDashboard.putBoolean("In Upper Mid Field", inUpperMidField);
+    // SmartDashboard.putBoolean("In Lower Mid Field", inLowerMidField);
+    // SmartDashboard.putBoolean("In Opp Upper Field", inOppUpperField);
+    // SmartDashboard.putBoolean("In Opp Lower Field", inOppLowerField);
     if (inAllianceField) {
       return Optional.of(FieldConstants.Hub.topCenterPoint.toTranslation2d());
     } else if (inUpperMidField) {
