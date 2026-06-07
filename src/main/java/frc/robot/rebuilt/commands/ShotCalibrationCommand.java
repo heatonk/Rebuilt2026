@@ -16,7 +16,7 @@ import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.FieldConstants;
 import frc.robot.rebuilt.subsystems.Launcher.Launcher;
 import frc.robot.rebuilt.subsystems.Launcher.ShotCalculator;
-import frc.robot.rebuilt.subsystems.drive.StubDrivetrain;
+import frc.robot.rebuilt.subsystems.drive.RebuiltDrivetrain;
 import frc.robot.rebuilt.util.AllianceFlipUtil;
 
 /**
@@ -44,7 +44,7 @@ public class ShotCalibrationCommand extends Command {
   private static final String PREFIX = "ShotCal/";
 
   private final Launcher launcher;
-  private final StubDrivetrain drivetrain;
+  private final RebuiltDrivetrain drivetrain;
   private final ShotCalculator shotCalculator;
 
   private CalibrationState currentState = CalibrationState.ALIGN_AND_DRIVE;
@@ -67,7 +67,7 @@ public class ShotCalibrationCommand extends Command {
 
   public ShotCalibrationCommand(
       Launcher launcher,
-      StubDrivetrain drivetrain,
+      RebuiltDrivetrain drivetrain,
       double initialDistance,
       double distanceStep) {
     this.launcher = launcher;
@@ -278,7 +278,7 @@ public class ShotCalibrationCommand extends Command {
    */
   public static Command createWithFeed(
       Launcher launcher,
-      StubDrivetrain drivetrain,
+      RebuiltDrivetrain drivetrain,
       double initialDistance,
       double distanceStep) {
     return Commands.parallel(

@@ -23,7 +23,7 @@ import frc.robot.rebuilt.commands.IntakeCommands.IntakeState;
 import frc.robot.rebuilt.subsystems.Launcher.Launcher;
 import frc.robot.rebuilt.subsystems.Launcher.ShotCalculator;
 import frc.robot.rebuilt.subsystems.Launcher.ShotCalculator.ShootingParameters;
-import frc.robot.rebuilt.subsystems.drive.StubDrivetrain;
+import frc.robot.rebuilt.subsystems.drive.RebuiltDrivetrain;
 import frc.robot.rebuilt.subsystems.intake.Intake;
 import frc.robot.rebuilt.util.AllianceFlipUtil;
 import frc.robot.rebuilt.util.Controller;
@@ -44,7 +44,7 @@ public class LauncherCommands {
   private State escapeHammerTimeState;
   private static Launcher launcher;
   private static Intake intake;
-  private static StubDrivetrain drivetrain;
+  private static RebuiltDrivetrain drivetrain;
   private static Translation2d hubTarget = FieldConstants.Hub.topCenterPoint.toTranslation2d();
   private static Translation2d allianceSideLeft = FieldConstants.Tower.leftUpright;
   private static Translation2d allianceSideRight = FieldConstants.Tower.rightUpright;

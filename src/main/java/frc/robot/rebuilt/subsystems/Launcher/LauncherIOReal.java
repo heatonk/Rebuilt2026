@@ -52,7 +52,7 @@ import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.FieldConstants;
 import frc.robot.rebuilt.Rebuilt;
 import frc.robot.rebuilt.commands.IntakeCommands.IntakeState;
-import frc.robot.rebuilt.subsystems.drive.StubDrivetrain;
+import frc.robot.rebuilt.subsystems.drive.RebuiltDrivetrain;
 import frc.robot.rebuilt.subsystems.intake.Intake;
 import frc.robot.rebuilt.util.AllianceFlipUtil;
 import frc.robot.rebuilt.util.LedStrip;
@@ -95,7 +95,7 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
       new MotionMagicTorqueCurrentFOC(0).withSlot(0);
   private Angle hoodAngleSetpoint = Degrees.of(0.0);
   private TorqueCurrentArmSupport.Config hoodTorqueCurrentConfig;
-  protected StubDrivetrain drivetrain;
+  protected RebuiltDrivetrain drivetrain;
   protected FlyWheel flyWheel;
   protected CANcoder crtEncoder40;
   protected CANcoder crtEncoder36;
