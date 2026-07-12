@@ -24,7 +24,7 @@ import frc.robot.rebuilt.subsystems.DriverDisplay.HubStatus;
 import frc.robot.rebuilt.subsystems.Indexer.Indexer;
 import frc.robot.rebuilt.subsystems.Launcher.FieldRegions;
 import frc.robot.rebuilt.subsystems.Launcher.Launcher;
-import frc.robot.rebuilt.subsystems.drive.StubDrivetrain;
+import frc.robot.rebuilt.subsystems.drive.RebuiltDrivetrain;
 import frc.robot.rebuilt.subsystems.intake.Intake;
 import frc.robot.rebuilt.util.AllianceFlipUtil;
 import frc.robot.rebuilt.util.Controller;
@@ -35,7 +35,7 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 /** Main robot class that initializes subsystems and commands. */
 public class Rebuilt {
   public static HubStatus hubStatus;
-  public static StubDrivetrain drivetrain;
+  public static RebuiltDrivetrain drivetrain;
   public static Indexer indexer;
   public static Intake intake;
   public static Launcher launcher;
@@ -63,7 +63,7 @@ public class Rebuilt {
     indexer = new Indexer();
     intake = new Intake();
     launcher = new Launcher();
-    drivetrain = new StubDrivetrain();
+    drivetrain = new RebuiltDrivetrain();
 
     testCommands = new TestCommands();
     launcherCommands = new LauncherCommands();

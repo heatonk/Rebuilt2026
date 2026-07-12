@@ -28,7 +28,7 @@ import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.FieldConstants;
 import frc.robot.rebuilt.Rebuilt;
 import frc.robot.rebuilt.commands.IntakeCommands;
-import frc.robot.rebuilt.subsystems.drive.StubDrivetrain;
+import frc.robot.rebuilt.subsystems.drive.RebuiltDrivetrain;
 import frc.robot.rebuilt.util.TorqueCurrentArmSupport;
 import org.littletonrobotics.junction.Logger;
 import yams.gearing.GearBox;
@@ -54,7 +54,7 @@ public class IntakeIOReal implements IntakeIO {
   private Angle hopperAngleSetpoint = Degrees.of(0.0);
   private TorqueCurrentArmSupport.Config hopperTorqueCurrentConfig =
       TorqueCurrentArmSupport.Config.defaults(false);
-  protected StubDrivetrain drivetrain;
+  protected RebuiltDrivetrain drivetrain;
   private IntakeCommands.IntakeState lastState = IntakeCommands.IntakeState.RETRACTED;
 
   public IntakeIOReal(SubsystemBase parent) {

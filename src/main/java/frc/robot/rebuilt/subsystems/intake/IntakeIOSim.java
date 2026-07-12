@@ -4,7 +4,7 @@ import static edu.wpi.first.units.Units.Inches;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.rebuilt.Rebuilt;
-import frc.robot.rebuilt.subsystems.drive.StubDrivetrain;
+import frc.robot.rebuilt.subsystems.drive.RebuiltDrivetrain;
 import java.util.Optional;
 import swervelib.simulation.ironmaple.simulation.IntakeSimulation;
 import swervelib.simulation.ironmaple.simulation.SimulatedArena;
@@ -20,7 +20,7 @@ public class IntakeIOSim extends IntakeIOReal {
   /** Initializes the mapleSim intake simulation */
   public IntakeIOSim(SubsystemBase parent) {
     super(parent);
-    Optional<AbstractDriveTrainSimulation> driveSim = StubDrivetrain.getMapleSimDrive();
+    Optional<AbstractDriveTrainSimulation> driveSim = RebuiltDrivetrain.getMapleSimDrive();
     if (driveSim.isPresent()) {
       driveTrainSimulation = driveSim.get();
       intakeSimulation =
