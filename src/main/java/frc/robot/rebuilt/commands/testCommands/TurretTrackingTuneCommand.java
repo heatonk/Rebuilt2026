@@ -1,4 +1,4 @@
-package frc.robot.rebuilt.commands;
+package frc.robot.rebuilt.commands.testCommands;
 
 import static edu.wpi.first.units.Units.Rotations;
 

@@ -202,14 +202,6 @@ public class LauncherCommands {
         .createRightPovButton()
         .onTrue(Commands.runOnce(() -> ShotCalculator.incrementFlywheelMultiplier(0.01)));
 
-    operator.createAButton().whileTrue(towerPresetStateCommand()).onFalse(shouldLowCommand());
-
-    operator
-        .createBButton()
-        .whileTrue(rightCornerPresetStateCommandr())
-        .onFalse(shouldLowCommand());
-
-    operator.createXButton().whileTrue(leftCornerPresetStateCommand()).onFalse(shouldLowCommand());
     operator
         .createYButton()
         .whileTrue(turretForwardPresetStateCommand())
@@ -334,79 +326,6 @@ public class LauncherCommands {
 
   public static Command shouldHammerTimeCommand() {
     return Commands.runOnce(() -> launcher.setRequestedState(LauncherState.HAMMERTIME));
-  }
-
-  // Order is Hood Angle, Turret Angle, Flywheel Speed
-  // Values are placeholders and need to be tuned
-  public static Command leftCornerPresetStateCommand() {
-    return shouldPresetCommand()
-        .andThen(
-            Commands.runOnce(
-                () -> {
-                  ShootingParameters params =
-                      launcher.getShootingParameters(
-                          () ->
-                              AllianceFlipUtil.apply(
-                                  new Pose2d(
-                                      new Translation2d(
-                                          Inches.of(
-                                              FieldConstants.aprilTagFieldLayout
-                                                      .getTagPose(31)
-                                                      .get()
-                                                      .getX()
-                                                  + 25),
-                                          FieldConstants.FIELD_WIDTH.minus(Inches.of(17.25))),
-                                      new Rotation2d())),
-                          () -> FieldConstants.Hub.topCenterPoint.toTranslation2d());
-                  presetHoodAngle = Radians.of(params.hoodAngle());
-                  presetTurretAngle = params.turretAngle().getMeasure();
-                  presetFlywheelSpeed =
-                      RPM.of(params.flywheelSpeed() * ShotCalculator.getFlywheelMultiplier());
-                }));
-  }
-
-  public static Command rightCornerPresetStateCommandr() {
-    return shouldPresetCommand()
-        .andThen(
-            Commands.runOnce(
-                () -> {
-                  ShootingParameters params =
-                      launcher.getShootingParameters(
-                          () ->
-                              AllianceFlipUtil.apply(
-                                  new Pose2d(
-                                      new Translation2d(
-                                          Inches.of(
-                                              FieldConstants.aprilTagFieldLayout
-                                                      .getTagPose(31)
-                                                      .get()
-                                                      .getX()
-                                                  + 25),
-                                          Inches.of(17.5)),
-                                      new Rotation2d())),
-                          () -> FieldConstants.Hub.topCenterPoint.toTranslation2d());
-                  presetHoodAngle = Radians.of(params.hoodAngle());
-                  presetTurretAngle = params.turretAngle().getMeasure();
-                  presetFlywheelSpeed =
-                      RPM.of(params.flywheelSpeed() * ShotCalculator.getFlywheelMultiplier());
-                }));
-  }
-
-  public static Command towerPresetStateCommand() {
-    return shouldPresetCommand()
-        .andThen(
-            Commands.runOnce(
-                () -> {
-                  ShootingParameters params =
-                      launcher.getShootingParameters(
-                          () ->
-                              AllianceFlipUtil.apply(FieldConstants.Tower.face.plus(rearToCenter)),
-                          () -> FieldConstants.Hub.topCenterPoint.toTranslation2d());
-                  presetHoodAngle = Radians.of(params.hoodAngle());
-                  presetTurretAngle = Constants.Launcher.TURRET_FORWARD;
-                  presetFlywheelSpeed =
-                      RPM.of(params.flywheelSpeed() * ShotCalculator.flywheelMultiplier);
-                }));
   }
 
   public static Command turretForwardPresetStateCommand() {

@@ -1,4 +1,4 @@
-package frc.robot.rebuilt.commands;
+package frc.robot.rebuilt.commands.testCommands;
 
 /**
  * A single high-frequency characterization sample collected at ~250 Hz.

@@ -1,4 +1,4 @@
-package frc.robot.rebuilt.commands;
+package frc.robot.rebuilt.commands.testCommands;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;

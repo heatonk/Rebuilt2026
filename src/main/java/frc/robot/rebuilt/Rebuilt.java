@@ -19,7 +19,7 @@ import frc.robot.rebuilt.commands.IndexerCommands;
 import frc.robot.rebuilt.commands.IntakeCommands;
 import frc.robot.rebuilt.commands.LauncherCommands;
 import frc.robot.rebuilt.commands.NamedCommandsReg;
-import frc.robot.rebuilt.commands.TestCommands;
+import frc.robot.rebuilt.commands.testCommands.TestCommands;
 import frc.robot.rebuilt.subsystems.DriverDisplay.HubStatus;
 import frc.robot.rebuilt.subsystems.Indexer.Indexer;
 import frc.robot.rebuilt.subsystems.Launcher.FieldRegions;

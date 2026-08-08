@@ -1,4 +1,4 @@
-package frc.robot.rebuilt.commands;
+package frc.robot.rebuilt.commands.testCommands;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.RPM;
@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.FieldConstants;
+import frc.robot.rebuilt.commands.IndexerCommands;
 import frc.robot.rebuilt.subsystems.Launcher.Launcher;
 import frc.robot.rebuilt.subsystems.Launcher.ShotCalculator;
 import frc.robot.rebuilt.subsystems.drive.RebuiltDrivetrain;

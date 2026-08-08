@@ -952,33 +952,33 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   @Override
   public Command getTurretQuasistaticCommand(SubsystemBase launcher) {
     if (smartTurretController == null) return Commands.none();
-    return new frc.robot.rebuilt.commands.TurretQuasistaticCommand(smartTurretController, launcher);
+    return new frc.robot.rebuilt.commands.testCommands.TurretQuasistaticCommand(smartTurretController, launcher);
   }
 
   @Override
   public Command getTurretDynamicCommand(SubsystemBase launcher) {
     if (smartTurretController == null) return Commands.none();
-    return new frc.robot.rebuilt.commands.TurretDynamicCommand(smartTurretController, launcher);
+    return new frc.robot.rebuilt.commands.testCommands.TurretDynamicCommand(smartTurretController, launcher);
   }
 
   @Override
   public Command getTurretKsMapCommand(SubsystemBase launcher) {
     if (smartTurretController == null) return Commands.none();
-    return new frc.robot.rebuilt.commands.TurretKsMapCommand(
+    return new frc.robot.rebuilt.commands.testCommands.TurretKsMapCommand(
         smartTurretController, turretLowLimit, turretHighLimit, launcher);
   }
 
   @Override
   public Command getTurretTrackingTuneCommand(SubsystemBase launcher) {
     if (smartTurretController == null) return Commands.none();
-    return new frc.robot.rebuilt.commands.TurretTrackingTuneCommand(
+    return new frc.robot.rebuilt.commands.testCommands.TurretTrackingTuneCommand(
         smartTurretController, launcher);
   }
 
   @Override
   public Command getTurretSeekingTuneCommand(SubsystemBase launcher) {
     if (smartTurretController == null) return Commands.none();
-    return new frc.robot.rebuilt.commands.TurretSeekingTuneCommand(smartTurretController, launcher);
+    return new frc.robot.rebuilt.commands.testCommands.TurretSeekingTuneCommand(smartTurretController, launcher);
   }
 
   @Override

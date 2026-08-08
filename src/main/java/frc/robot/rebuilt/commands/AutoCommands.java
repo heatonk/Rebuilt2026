@@ -3,6 +3,8 @@ package frc.robot.rebuilt.commands;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.rebuilt.Rebuilt;
+import frc.robot.rebuilt.commands.testCommands.ShotCalibrationCommand;
+
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 public class AutoCommands {

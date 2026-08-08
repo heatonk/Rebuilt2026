@@ -1,4 +1,4 @@
-package frc.robot.rebuilt.commands;
+package frc.robot.rebuilt.commands.testCommands;
 
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.rebuilt.Rebuilt;
