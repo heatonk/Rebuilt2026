@@ -158,16 +158,6 @@ public class Constants {
       public static final double SIM_KV = 2.1962;
       public static final double SIM_KA = 0.38848;
     }
-
-    public static class CrtEncoders {
-      public static final int ENCODER_40_CAN_ID = 21;
-      public static final int ENCODER_36_CAN_ID = 22;
-      public static final String CAN_BUS = "canivore";
-      public static final double ENCODER_40_OFFSET_ROT = -0.46923828125;
-      public static final double ENCODER_36_OFFSET_ROT = 0.129638671875;
-      public static final double SIM_ENCODER_40_VALUE = 0.391;
-      public static final double SIM_ENCODER_36_VALUE = 0.274;
-    }
   }
 
   public static class Indexer {

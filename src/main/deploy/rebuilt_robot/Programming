@@ -1690,20 +1690,6 @@
             }
           },
           {
-            "title": "CRT Angle",
-            "x": 0.0,
-            "y": 384.0,
-            "width": 256.0,
-            "height": 128.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/SmartDashboard/CRT Angle",
-              "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": false
-            }
-          },
-          {
             "title": "Coverage Satisfies Range",
             "x": 768.0,
             "y": 512.0,
@@ -1787,20 +1773,6 @@
               "topic": "/AdvantageKit/Launcher/TurretAngleError",
               "period": 0.06,
               "data_type": "double",
-              "show_submit_button": false
-            }
-          },
-          {
-            "title": "CRT Status",
-            "x": 384.0,
-            "y": 512.0,
-            "width": 128.0,
-            "height": 128.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/SmartDashboard/CRT Status",
-              "period": 0.06,
-              "data_type": "string",
               "show_submit_button": false
             }
           },

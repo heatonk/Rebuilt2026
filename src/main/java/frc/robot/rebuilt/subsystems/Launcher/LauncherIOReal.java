@@ -78,12 +78,10 @@ import yams.motorcontrollers.SmartMotorControllerConfig.MotorMode;
 import yams.motorcontrollers.SmartMotorControllerConfig.TelemetryVerbosity;
 import yams.motorcontrollers.SmartMotorFactory;
 import yams.motorcontrollers.simulation.Sensor;
-import yams.units.EasyCRT;
-import yams.units.EasyCRTConfig;
 
 /** Add your docs here. */
 public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
-  protected static final Angle HARD_STOP = Radians.of(2.9437091319525455);
+  protected static final Angle HARD_STOP = Radians.of(2.9145634969827183);
   private static final double MIN_DYNAMIC_TURRET_TOLERANCE_DEGREES = 2.0;
   private static final double MIN_DYNAMIC_TURRET_SHUTTLE_TOLERANCE_DEGREES = 4.0;
   private static final double MAX_DYNAMIC_TURRET_SHUTTLE_TOLERANCE_DEGREES = 20.0;
@@ -97,13 +95,6 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   private TorqueCurrentArmSupport.Config hoodTorqueCurrentConfig;
   protected RebuiltDrivetrain drivetrain;
   protected FlyWheel flyWheel;
-  protected CANcoder crtEncoder40;
-  protected CANcoder crtEncoder36;
-  protected final Sensor crtSensor40;
-  protected final Sensor crtSensor36;
-  protected EasyCRT easyCrtSolver;
-  /** Initializes the launcher hardware, encoders, simulated sensors, and angle solver */
-  EasyCRTConfig easyCrt;
 
   private enum TargetProfile {
     NONE,
@@ -171,72 +162,6 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
         turret.getMotorController().getConfig().getMechanismLowerLimit().orElse(turretLowLimit);
     turretHighLimit =
         turret.getMotorController().getConfig().getMechanismUpperLimit().orElse(turretHighLimit);
-
-    CANBus canivoreBus = new CANBus(Constants.Launcher.CrtEncoders.CAN_BUS);
-    crtEncoder40 = new CANcoder(Constants.Launcher.CrtEncoders.ENCODER_40_CAN_ID, canivoreBus);
-    crtEncoder36 = new CANcoder(Constants.Launcher.CrtEncoders.ENCODER_36_CAN_ID, canivoreBus);
-    crtSensor40 =
-        new SensorConfig("CRT sensor 40")
-            .withField("angle", () -> crtEncoder40.getAbsolutePosition().getValueAsDouble(), 0.0)
-            .withSimulatedValue(
-                "angle",
-                Seconds.of(0),
-                Seconds.of(0.5),
-                Constants.Launcher.CrtEncoders.SIM_ENCODER_40_VALUE)
-            .getSensor();
-    crtSensor36 =
-        new SensorConfig("CRT sensor 36")
-            .withField("angle", () -> crtEncoder36.getAbsolutePosition().getValueAsDouble(), 0.0)
-            .withSimulatedValue(
-                "angle",
-                Seconds.of(0),
-                Seconds.of(0.5),
-                Constants.Launcher.CrtEncoders.SIM_ENCODER_36_VALUE)
-            .getSensor();
-
-    easyCrt =
-        new EasyCRTConfig(
-                () -> Rotations.of(crtSensor40.getAsDouble("angle")),
-                () -> Rotations.of(crtSensor36.getAsDouble("angle")))
-            .withCommonDriveGear(
-                /* commonRatio (mech:drive) */ 30.0,
-                /* driveGearTeeth */ 12,
-                /* encoder1Pinion */ 40,
-                /* encoder2Pinion */ 36)
-            .withAbsoluteEncoderOffsets(
-                Rotations.of(Constants.Launcher.CrtEncoders.ENCODER_40_OFFSET_ROT),
-                Rotations.of(Constants.Launcher.CrtEncoders.ENCODER_36_OFFSET_ROT))
-            .withMechanismRange(Degrees.of(-168), Degrees.of(173)) // -360 deg to +720 deg
-            .withMatchTolerance(Rotations.of(0.06)) // ~1.08 deg at encoder2 for the example ratio
-            .withAbsoluteEncoderInversions(true, false)
-            .withCrtGearRecommendationConstraints(
-                /* coverageMargin */ 1.2,
-                /* minTeeth */ 15,
-                /* maxTeeth */ 45,
-                /* maxIterations */ 30);
-
-    easyCrtSolver = new EasyCRT(easyCrt);
-    SmartDashboard.putNumber(
-        "EasyCRT/Unique Coverage", easyCrt.getUniqueCoverage().orElse(Degrees.of(0.0)).in(Degrees));
-    SmartDashboard.putBoolean("EasyCRT/Coverage Satisfies Range", easyCrt.coverageSatisfiesRange());
-    SmartDashboard.putNumber("EasyCRT/Enc 1", easyCrt.getAbsoluteEncoder1Angle().in(Degrees));
-    SmartDashboard.putNumber(
-        "EasyCRT/Enc 1 Ratio", easyCrt.getEncoder1RotationsPerMechanismRotation());
-    SmartDashboard.putNumber("EasyCRT/Enc 2", easyCrt.getAbsoluteEncoder2Angle().in(Degrees));
-    SmartDashboard.putNumber(
-        "EasyCRT/Enc 2 Ratio", easyCrt.getEncoder2RotationsPerMechanismRotation());
-    Angle calculatedAngle;
-    Optional<Angle> optionalAngle = (easyCrtSolver.getAngleOptional());
-    if (optionalAngle.isPresent()) {
-      calculatedAngle = optionalAngle.get();
-    } else {
-      calculatedAngle = Degrees.of(0);
-    }
-
-    SmartDashboard.putNumber("EasyCRT/CRT Angle", calculatedAngle.in(Degrees));
-    SmartDashboard.putString("EasyCRT/CRT Status", easyCrtSolver.getLastStatus().name());
-    SmartDashboard.putNumber("EasyCRT/CRT Error Rot", easyCrtSolver.getLastErrorRotations());
-    turret.getMotor().setEncoderPosition(calculatedAngle);
 
     // Create the 2-state SmartTurretController (replaces TurretProfileController).
     // Uses MotionMagicTorqueCurrentFOC for seeking and PositionTorqueCurrentFOC for tracking.
@@ -510,10 +435,6 @@ public class LauncherIOReal implements LauncherIO { // -0.030679615757712823
   @Override()
   /** Updating launcher sensor data, calculates shot parameters, and populates input telemetry */
   public void updateInputs(LauncherIOInputs inputs) {
-    SmartDashboard.putNumber("EasyCRT/Encoder 40", crtSensor40.getAsDouble("angle"));
-    SmartDashboard.putNumber("EasyCRT/Enc 2", easyCrt.getAbsoluteEncoder2Angle().in(Degrees));
-    SmartDashboard.putNumber("EasyCRT/Encoder 36", crtSensor36.getAsDouble("angle"));
-    SmartDashboard.putNumber("EasyCRT/Enc 1", easyCrt.getAbsoluteEncoder1Angle().in(Degrees));
     org.littletonrobotics.junction.Logger.recordOutput(
         "Turret Zero Button", turretZeroButton.get());
     SmartDashboard.putNumber(
