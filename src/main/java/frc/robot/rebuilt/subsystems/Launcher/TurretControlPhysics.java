@@ -197,7 +197,7 @@ public class TurretControlPhysics {
    * @param minTurretAngle Minimum physical rotation limit (e.g. -165 deg).
    * @param maxTurretAngle Maximum physical rotation limit (e.g. +165 deg).
    * @param feedforwardPaddingAngle Buffer zone near limits where velocity is ramped down.
-   * @param settlingGain Gain for settling time estimation (<1.0 underestimates to prevent
+   * @param settlingGain Gain for settling time estimation (\<1.0 underestimates to prevent
    *     oscillation).
    * @param timeOfFlightFunc Function returning projectile flight time (s) given distance (m).
    * @param settlingTimeFunc Function returning turret settling time (s) given angle error (rad) and
