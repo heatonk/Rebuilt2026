@@ -20,8 +20,9 @@ public class NamedCommandsReg {
     NamedCommands.registerCommand("indexerFeed", IndexerCommands.shouldFeedCommand());
     // preset
     NamedCommands.registerCommand("iForcePreset", IndexerCommands.shouldForceCommand());
-    NamedCommands.registerCommand("hubPreset", LauncherCommands.leftCornerPresetStateCommand());
-    NamedCommands.registerCommand("towerPreset", LauncherCommands.towerPresetStateCommand());
+    // TODO: restore hub/tower preset auto commands — leftCornerPresetStateCommand and
+    // towerPresetStateCommand were removed from LauncherCommands and need reinstating
+    // (unrelated to YAMS removal — pre-existing gap).
     NamedCommands.registerCommand(
         "towerForwardPreset", LauncherCommands.turretForwardPresetStateCommand());
     NamedCommands.registerCommand("WaitUntilIntaking", IntakeCommands.waitUntilIntaking());

@@ -5,6 +5,7 @@
 package frc.robot.rebuilt.subsystems.Launcher;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
@@ -12,7 +13,9 @@ import static edu.wpi.first.units.Units.RadiansPerSecond;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.FieldConstants;
 import frc.robot.rebuilt.Rebuilt;
 import frc.robot.rebuilt.commands.IndexerCommands.IndexerState;
@@ -23,40 +26,37 @@ import swervelib.simulation.ironmaple.simulation.SimulatedArena;
 import swervelib.simulation.ironmaple.simulation.gamepieces.GamePieceProjectile;
 import swervelib.simulation.ironmaple.simulation.seasonspecific.rebuilt2026.RebuiltFuelOnFly;
 
-/** Add your docs here. */
+/** Simulation IO layer for the Launcher. Extends the real layer for shared plumbing. */
 public class LauncherIOSim extends LauncherIOReal {
   protected GamePieceProjectile gamePieceProjectile;
+
+  private static final Translation3d FLYWHEEL_RELATIVE_POSITION =
+      new Translation3d(
+          Inches.of(Constants.Launcher.FlyWheel.ROBOT_TO_MOTOR_X_IN).in(Meters),
+          Inches.of(Constants.Launcher.FlyWheel.ROBOT_TO_MOTOR_Y_IN).in(Meters),
+          Inches.of(Constants.Launcher.FlyWheel.ROBOT_TO_MOTOR_Z_IN).in(Meters));
 
   public LauncherIOSim(SubsystemBase parent) {
     super(parent);
     if (IntakeIOSim.intakeSimulation != null) {
       IntakeIOSim.intakeSimulation.addGamePiecesToIntake(8);
     }
-    // TODO: real swerve — maple-sim intake is a no-op without a real drivetrain sim.
   }
 
   @Override
-  /** Configures the shot calculator and calculates measurements for parts of the lancher */
   public void configureShotCalculator(ShotCalculator shotCalculator) {
     super.configureShotCalculator(shotCalculator);
-    double circumferenceMeters = flyWheel.getShooterConfig().getCircumference().in(Meters);
-    double wheelRadiusMeters = circumferenceMeters / (2.0 * Math.PI);
+    double wheelRadiusMeters = Inches.of(Constants.Launcher.FlyWheel.RADIUS_INCHES).in(Meters);
     double minFlywheelRadPerSec =
-        flyWheel.getShooterConfig().getLowerSoftLimit().orElse(RPM.of(0.0)).in(RadiansPerSecond);
+        RPM.of(Constants.Launcher.FlyWheel.LOWER_SOFT_LIMIT_RPM).in(RadiansPerSecond);
     double maxFlywheelRadPerSec =
-        flyWheel.getShooterConfig().getUpperSoftLimit().orElse(RPM.of(5000.0)).in(RadiansPerSecond);
-    /** Reads the hood angle limits */
-    Rotation2d minHoodAngle =
-        Rotation2d.fromDegrees(
-            hood.getMotorController().getConfig().getMechanismLowerLimit().get().in(Degrees));
-    Rotation2d maxHoodAngle =
-        Rotation2d.fromDegrees(
-            hood.getMotorController().getConfig().getMechanismUpperLimit().get().in(Degrees));
+        RPM.of(Constants.Launcher.FlyWheel.UPPER_SOFT_LIMIT_RPM).in(RadiansPerSecond);
+    Rotation2d minHoodAngle = Rotation2d.fromDegrees(Constants.Launcher.Hood.LOWER_SOFT_LIMIT_DEG);
+    Rotation2d maxHoodAngle = Rotation2d.fromDegrees(Constants.Launcher.Hood.UPPER_SOFT_LIMIT_DEG);
     Rotation2d hoodStep = Rotation2d.fromDegrees(0.5);
 
-    double launchHeight = flyWheel.getRelativeMechanismPosition().getZ();
+    double launchHeight = FLYWHEEL_RELATIVE_POSITION.getZ();
     double targetHeight = FieldConstants.Hub.height;
-    /** Creates ballistic configuration for the shot calculator */
     ShotCalculator.BallisticConfig config =
         new ShotCalculator.BallisticConfig(
             1.0,
@@ -86,11 +86,6 @@ public class LauncherIOSim extends LauncherIOReal {
       return;
     }
     int amount = IntakeIOSim.intakeSimulation.getGamePiecesAmount();
-    // Update simulated mechanism states here
-    // We should simulate a shot rate of about 10-15 gamepieces per second
-    // Every other time this is called, determine a randome number and if > 0.5, shoot a gamepiece.
-    // This would mean we try to shoot 25 times per second, and on average shoot about 12-13
-    // gamepieces per second.
     if (Math.random() > 0.5 && amount > 0) {
       if ((indexer.isCurrent(IndexerState.FEED) && launcher.isShooting())
           || (indexer.isCurrent(IndexerState.FORCE))) {
@@ -99,20 +94,23 @@ public class LauncherIOSim extends LauncherIOReal {
           gamePieceProjectile =
               new RebuiltFuelOnFly(
                       worldPose.getTranslation(),
-                      flyWheel.getRelativeMechanismPosition().toTranslation2d(),
+                      FLYWHEEL_RELATIVE_POSITION.toTranslation2d(),
                       Rebuilt.drivetrain.getFieldVelocity(),
                       Rotation2d.fromDegrees(
-                          worldPose.getRotation().getMeasure().plus(turret.getAngle()).in(Degrees)),
-                      flyWheel.getRelativeMechanismPosition().getMeasureZ(),
-                      getFlyWheelExitSpeed(flyWheel.getSpeed()),
-                      Degrees.of(90.0).minus(hood.getAngle()))
+                          worldPose
+                              .getRotation()
+                              .getMeasure()
+                              .plus(getTurretAngle())
+                              .in(Degrees)),
+                      Meters.of(FLYWHEEL_RELATIVE_POSITION.getZ()),
+                      getFlyWheelExitSpeed(getFlywheelSpeed()),
+                      Degrees.of(90.0).minus(getHoodAngle()))
                   .withProjectileTrajectoryDisplayCallBack(
                       (pose3ds) -> {
                         Logger.recordOutput(
                             "Launcher/GamePieceTrajectory", pose3ds.toArray(Pose3d[]::new));
                       });
           SimulatedArena.getInstance().addGamePieceProjectile(gamePieceProjectile);
-          // Create a new gamepiece on-the-fly and add it to the field simulation
         }
       }
     }

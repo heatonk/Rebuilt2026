@@ -76,7 +76,7 @@ public class Constants {
       public static final double SIM_KV = 0.00087341;
       public static final double SIM_KA = 0.98956;
 
-      // SmartTurretController fallback feedforward (used when yams config doesn't provide one)
+      // SmartTurretController feedforward (Amps, TorqueCurrentFOC units)
       public static final double SMART_FALLBACK_KS = 12.12;
       public static final double SMART_FALLBACK_KV = 3.06;
       public static final double SMART_FALLBACK_KA = 2.0;

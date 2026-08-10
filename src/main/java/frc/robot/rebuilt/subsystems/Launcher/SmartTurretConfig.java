@@ -1,7 +1,6 @@
 package frc.robot.rebuilt.subsystems.Launcher;
 
 import com.ctre.phoenix6.hardware.TalonFX;
-import yams.motorcontrollers.SmartMotorController;
 
 /**
  * Configuration for the {@link SmartTurretController} 2-state turret control system.
@@ -14,11 +13,6 @@ public class SmartTurretConfig {
 
   // Hardware
   private final TalonFX talonFX;
-  /**
-   * YAMS SmartMotorController — its closed-loop Notifier will be stopped when SmartTurretController
-   * takes over.
-   */
-  private final SmartMotorController yamsController;
 
   private final double gearRatio;
 
@@ -42,7 +36,6 @@ public class SmartTurretConfig {
   private final double kA;
 
   // MotionMagicExpo plant model — ALWAYS in Volts regardless of control mode.
-  // These define the mechanism's voltage-domain model for the expo velocity profile.
   private final double expoKV; // V/(mechanism rot/s)
   private final double expoKA; // V/(mechanism rot/s^2)
 
@@ -61,12 +54,10 @@ public class SmartTurretConfig {
   private final double feedforwardPaddingRotations;
 
   // Tracking-mode kS deadband (mechanism rotations).
-  // When |positionError| < this value, external kS feedforward is zeroed to prevent chattering.
   private final double trackingDeadbandRotations;
 
   private SmartTurretConfig(Builder builder) {
     this.talonFX = builder.talonFX;
-    this.yamsController = builder.yamsController;
     this.gearRatio = builder.gearRatio;
     this.maxVelocityMechRotPerSec = builder.maxVelocityMechRotPerSec;
     this.maxAccelMechRotPerSecSq = builder.maxAccelMechRotPerSecSq;
@@ -92,11 +83,6 @@ public class SmartTurretConfig {
 
   public TalonFX getTalonFX() {
     return talonFX;
-  }
-
-  /** Returns the YAMS SmartMotorController, or {@code null} if not configured. */
-  public SmartMotorController getYamsController() {
-    return yamsController;
   }
 
   public double getGearRatio() {
@@ -187,7 +173,6 @@ public class SmartTurretConfig {
 
   public static class Builder {
     private TalonFX talonFX;
-    private SmartMotorController yamsController = null;
     private double gearRatio = 30.0;
     private double maxVelocityMechRotPerSec = 3.0;
     private double maxAccelMechRotPerSecSq = 2.78;
@@ -200,8 +185,6 @@ public class SmartTurretConfig {
     private double kS = 10.0;
     private double kV = 0.0;
     private double kA = 5.0;
-    // Expo defaults: computed from motion constraints in build() if not explicitly set.
-    // -1 signals "auto-compute from maxVelocity/maxAccel".
     private double expoKV = -1;
     private double expoKA = -1;
     private double seekingThresholdRotations = 10.0 / 360.0;
@@ -209,21 +192,11 @@ public class SmartTurretConfig {
     private double lowerLimitRotations = -150.0 / 360.0;
     private double upperLimitRotations = 150.0 / 360.0;
     private double peakTorqueCurrentAmps = 240.0;
-    private double feedforwardPaddingRotations = 10.0 / 360.0; // 10 degrees
-    private double trackingDeadbandRotations = 0.25 / 360.0; // 0.25 degrees
+    private double feedforwardPaddingRotations = 10.0 / 360.0;
+    private double trackingDeadbandRotations = 0.25 / 360.0;
 
     public Builder withTalonFX(TalonFX talonFX) {
       this.talonFX = talonFX;
-      return this;
-    }
-
-    /**
-     * Provides the YAMS {@link SmartMotorController} so {@link SmartTurretController} can stop its
-     * background closed-loop Notifier thread on construction, preventing interference with our
-     * direct TorqueCurrentFOC control.
-     */
-    public Builder withYAMSController(SmartMotorController yamsController) {
-      this.yamsController = yamsController;
       return this;
     }
 
@@ -308,8 +281,6 @@ public class SmartTurretConfig {
       if (talonFX == null) {
         throw new IllegalStateException("TalonFX must be set");
       }
-      // Auto-compute expo plant model from motion constraints if not explicitly set.
-      // V_max / kV_expo = max achievable velocity; V_max / kA_expo = max achievable acceleration.
       if (expoKV < 0) {
         expoKV = 12.0 / maxVelocityMechRotPerSec;
       }

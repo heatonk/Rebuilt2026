@@ -134,26 +134,6 @@ public class Launcher extends SubsystemBase {
     return io.getTurretCharacterizationCommand(this);
   }
 
-  public Command getTurretQuasistaticCommand() {
-    return io.getTurretQuasistaticCommand(this);
-  }
-
-  public Command getTurretDynamicCommand() {
-    return io.getTurretDynamicCommand(this);
-  }
-
-  public Command getTurretKsMapCommand() {
-    return io.getTurretKsMapCommand(this);
-  }
-
-  public Command getTurretTrackingTuneCommand() {
-    return io.getTurretTrackingTuneCommand(this);
-  }
-
-  public Command getTurretSeekingTuneCommand() {
-    return io.getTurretSeekingTuneCommand(this);
-  }
-
   public Translation2d getRobotTarget() {
     return io.determineTarget().get();
   }

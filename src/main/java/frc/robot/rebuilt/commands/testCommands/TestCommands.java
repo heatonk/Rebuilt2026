@@ -39,40 +39,5 @@ public class TestCommands {
     controller
         .createAButton()
         .whileTrue(launcher.getFlyWheelSysIdCommand().finallyDo(() -> launcher.stopAllMotors()));
-
-    // SmartTurret tuning commands
-    controller
-        .createXButton()
-        .whileTrue(
-            launcher.getTurretQuasistaticCommand().finallyDo(() -> launcher.stopAllMotors()));
-    controller
-        .createYButton()
-        .whileTrue(launcher.getTurretKsMapCommand().finallyDo(() -> launcher.stopAllMotors()));
-    controller
-        .createLeftBumper()
-        .whileTrue(launcher.getTurretDynamicCommand().finallyDo(() -> launcher.stopAllMotors()));
-    controller
-        .createRightBumper()
-        .whileTrue(
-            launcher.getTurretTrackingTuneCommand().finallyDo(() -> launcher.stopAllMotors()));
-
-    // Seeking (MotionMagicExpo) tuning — D-pad up to hold
-    controller
-        .createUpPovButton()
-        .whileTrue(
-            launcher.getTurretSeekingTuneCommand().finallyDo(() -> launcher.stopAllMotors()));
-
-    // // Turret PID tuning — hold right bumper to enter tuning mode
-    // controller
-    //     .createRightBumper()
-    //     .whileTrue(new TurretTuningCommand(launcher).finallyDo(() -> launcher.stopAllMotors()));
-
-    // // D-pad left/right cycles turret presets while tuning
-    // controller
-    //     .createRightPovButton()
-    //     .onTrue(Commands.runOnce(() -> TurretTuningCommand.nextPreset()));
-    // controller
-    //     .createLeftPovButton()
-    //     .onTrue(Commands.runOnce(() -> TurretTuningCommand.previousPreset()));
   }
 }

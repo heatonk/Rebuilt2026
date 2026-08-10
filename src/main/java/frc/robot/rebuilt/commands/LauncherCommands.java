@@ -3,10 +3,8 @@ package frc.robot.rebuilt.commands;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.RPM;
-import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Seconds;
 
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -22,10 +20,8 @@ import frc.robot.rebuilt.Rebuilt;
 import frc.robot.rebuilt.commands.IntakeCommands.IntakeState;
 import frc.robot.rebuilt.subsystems.Launcher.Launcher;
 import frc.robot.rebuilt.subsystems.Launcher.ShotCalculator;
-import frc.robot.rebuilt.subsystems.Launcher.ShotCalculator.ShootingParameters;
 import frc.robot.rebuilt.subsystems.drive.RebuiltDrivetrain;
 import frc.robot.rebuilt.subsystems.intake.Intake;
-import frc.robot.rebuilt.util.AllianceFlipUtil;
 import frc.robot.rebuilt.util.Controller;
 import frc.robot.rebuilt.util.LedStrip;
 import frc.robot.rebuilt.util.StateMachine;
@@ -273,8 +269,7 @@ public class LauncherCommands {
         Commands.runOnce(
             () -> {
               launcher.setCurrentState(LauncherState.PREP);
-              LedStrip.changeSegmentPattern(
-                  LedStrip.ALL_LEDS, LedStrip.getRainbowPattern(0));
+              LedStrip.changeSegmentPattern(LedStrip.ALL_LEDS, LedStrip.getRainbowPattern(0));
             }),
         launcher.trackTargetCommand());
   }

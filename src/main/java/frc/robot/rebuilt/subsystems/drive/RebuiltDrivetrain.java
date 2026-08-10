@@ -6,7 +6,6 @@ import static edu.wpi.first.units.Units.RotationsPerSecond;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -20,9 +19,9 @@ import swervelib.simulation.ironmaple.simulation.drivesims.AbstractDriveTrainSim
 /**
  * Real swerve drivetrain backed by the CTRE Tuner X generated {@link CommandSwerveDrivetrain}.
  *
- * <p>Provides the rebuilt-side API surface that the rest of the code (Rebuilt.java,
- * ShotCalculator, LauncherIO*, IntakeIOSim, etc.) already calls. The CTRE
- * SwerveRequest pattern is hidden behind a few simple methods.
+ * <p>Provides the rebuilt-side API surface that the rest of the code (Rebuilt.java, ShotCalculator,
+ * LauncherIO*, IntakeIOSim, etc.) already calls. The CTRE SwerveRequest pattern is hidden behind a
+ * few simple methods.
  */
 public class RebuiltDrivetrain extends CommandSwerveDrivetrain {
 

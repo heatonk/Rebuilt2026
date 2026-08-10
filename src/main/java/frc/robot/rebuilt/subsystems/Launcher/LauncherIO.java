@@ -12,7 +12,6 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.rebuilt.commands.LauncherCommands;
 import frc.robot.rebuilt.subsystems.Indexer.Indexer;
@@ -140,26 +139,6 @@ public interface LauncherIO {
   public boolean isNearTrench();
 
   public Optional<Translation2d> determineTarget();
-
-  public default Command getTurretQuasistaticCommand(SubsystemBase launcher) {
-    return Commands.none();
-  }
-
-  public default Command getTurretDynamicCommand(SubsystemBase launcher) {
-    return Commands.none();
-  }
-
-  public default Command getTurretKsMapCommand(SubsystemBase launcher) {
-    return Commands.none();
-  }
-
-  public default Command getTurretTrackingTuneCommand(SubsystemBase launcher) {
-    return Commands.none();
-  }
-
-  public default Command getTurretSeekingTuneCommand(SubsystemBase launcher) {
-    return Commands.none();
-  }
 
   public void zeroTurret();
 

@@ -1,37 +1,28 @@
 package frc.robot.rebuilt.subsystems.Indexer;
 
-import static edu.wpi.first.units.Units.DegreesPerSecond;
-import static edu.wpi.first.units.Units.Kilograms;
-import static edu.wpi.first.units.Units.Meters;
-
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.DutyCycleOut;
+import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.hardware.TalonFX;
-import edu.wpi.first.math.Pair;
-import edu.wpi.first.math.controller.SimpleMotorFeedforward;
-import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.units.measure.Mass;
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.MotorAlignmentValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.rebuilt.Constants;
-import yams.gearing.GearBox;
-import yams.gearing.MechanismGearing;
-import yams.mechanisms.config.FlyWheelConfig;
-import yams.mechanisms.velocity.FlyWheel;
-import yams.motorcontrollers.SmartMotorController;
-import yams.motorcontrollers.SmartMotorControllerConfig;
-import yams.motorcontrollers.SmartMotorControllerConfig.ControlMode;
-import yams.motorcontrollers.SmartMotorControllerConfig.MotorMode;
-import yams.motorcontrollers.SmartMotorControllerConfig.TelemetryVerbosity;
-import yams.motorcontrollers.SmartMotorFactory;
 
-/** Implements the hardware Indexer IO */
+/** Implements the hardware Indexer IO. */
 public class IndexerIOReal implements IndexerIO {
   protected TalonFX spindexer;
-  protected FlyWheel transferFront;
+  protected TalonFX transferLeader;
+  protected TalonFX transferFollower;
+
+  private final DutyCycleOut spindexerDutyCycle = new DutyCycleOut(0);
+  private final DutyCycleOut transferDutyCycle = new DutyCycleOut(0);
 
   public IndexerIOReal(SubsystemBase parent) {
     spindexer = buildSpindexer();
-    transferFront = buildTransfer(parent);
+    transferLeader = buildTransferLeader();
+    transferFollower = buildTransferFollower(transferLeader);
   }
 
   private static TalonFX buildSpindexer() {
@@ -43,81 +34,45 @@ public class IndexerIOReal implements IndexerIO {
     return motor;
   }
 
-  private static FlyWheel buildTransfer(SubsystemBase parent) {
-    TalonFX leader = new TalonFX(Constants.Indexer.Transfer.CAN_ID);
-    TalonFX follower = new TalonFX(Constants.Indexer.Transfer.FOLLOWER_CAN_ID);
-    DCMotor motorSim = DCMotor.getKrakenX60(2);
-
-    @SuppressWarnings("unchecked")
-    Pair<Object, Boolean>[] followers =
-        new Pair[] {new Pair<>(follower, Constants.Indexer.Transfer.FOLLOWER_INVERTED)};
-
-    SmartMotorControllerConfig motorConfig =
-        new SmartMotorControllerConfig(parent)
-            .withFeedforward(
-                new SimpleMotorFeedforward(
-                    Constants.Indexer.Transfer.KS,
-                    Constants.Indexer.Transfer.KV,
-                    Constants.Indexer.Transfer.KA))
-            .withSimFeedforward(
-                new SimpleMotorFeedforward(
-                    Constants.Indexer.Transfer.KS,
-                    Constants.Indexer.Transfer.KV,
-                    Constants.Indexer.Transfer.KA))
-            .withClosedLoopController(
-                Constants.Indexer.Transfer.KP,
-                Constants.Indexer.Transfer.KI,
-                Constants.Indexer.Transfer.KD)
-            .withSimClosedLoopController(
-                Constants.Indexer.Transfer.KP,
-                Constants.Indexer.Transfer.KI,
-                Constants.Indexer.Transfer.KD)
-            .withGearing(
-                new MechanismGearing(GearBox.fromStages(Constants.Indexer.Transfer.GEAR_STAGES)))
-            .withControlMode(ControlMode.CLOSED_LOOP)
-            .withIdleMode(MotorMode.BRAKE)
-            .withTelemetry("transferMotor", TelemetryVerbosity.LOW)
-            .withMotorInverted(Constants.Indexer.Transfer.INVERTED)
-            .withFollowers(followers);
-
-    SmartMotorController smartMotor =
-        SmartMotorFactory.create(leader, motorSim, motorConfig)
-            .orElseThrow(() -> new RuntimeException("Failed to build transfer SmartMotorController"));
-
-    Distance radius = Meters.of(Constants.Indexer.Transfer.RADIUS_M);
-    Mass mass = Kilograms.of(Constants.Indexer.Transfer.MASS_KG);
-
-    FlyWheelConfig transferConfig =
-        new FlyWheelConfig(smartMotor)
-            .withDiameter(radius.times(2.0))
-            .withMass(mass)
-            .withUpperSoftLimit(
-                DegreesPerSecond.of(Constants.Indexer.Transfer.UPPER_SOFT_LIMIT_RPM * 6.0))
-            .withLowerSoftLimit(
-                DegreesPerSecond.of(Constants.Indexer.Transfer.LOWER_SOFT_LIMIT_RPM * 6.0))
-            .withSpeedometerSimulation(
-                DegreesPerSecond.of(Constants.Indexer.Transfer.UPPER_SOFT_LIMIT_RPM * 6.0))
-            .withTelemetry("transfer", TelemetryVerbosity.LOW);
-    transferConfig.withMOI(radius, mass);
-    return new FlyWheel(transferConfig);
+  private static TalonFX buildTransferLeader() {
+    TalonFX motor = new TalonFX(Constants.Indexer.Transfer.CAN_ID);
+    TalonFXConfiguration config = new TalonFXConfiguration();
+    config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    config.MotorOutput.Inverted =
+        Constants.Indexer.Transfer.INVERTED
+            ? InvertedValue.Clockwise_Positive
+            : InvertedValue.CounterClockwise_Positive;
+    motor.getConfigurator().apply(config);
+    return motor;
   }
 
-  /** Updates indexer input values with current motor speed */
+  private static TalonFX buildTransferFollower(TalonFX leader) {
+    TalonFX motor = new TalonFX(Constants.Indexer.Transfer.FOLLOWER_CAN_ID);
+    TalonFXConfiguration config = new TalonFXConfiguration();
+    config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    motor.getConfigurator().apply(config);
+    motor.setControl(
+        new Follower(
+            leader.getDeviceID(),
+            Constants.Indexer.Transfer.FOLLOWER_INVERTED
+                ? MotorAlignmentValue.Opposed
+                : MotorAlignmentValue.Aligned));
+    return motor;
+  }
+
   @Override
   public void updateInputs(IndexerIOInputs inputs) {
-    inputs.spindexerSpeed = spindexer.get();
-    inputs.transferFrontSpeed = transferFront.getMotor().getDutyCycle();
+    inputs.spindexerSpeed = spindexer.getDutyCycle().getValueAsDouble();
+    inputs.transferFrontSpeed = transferLeader.getDutyCycle().getValueAsDouble();
   }
 
-  /** Sets the spindexer motor speed */
   @Override
   public void runSpindexer(double speed) {
-    spindexer.set(speed);
+    spindexer.setControl(spindexerDutyCycle.withOutput(speed));
   }
 
-  /** Sets the front transfer motor speed */
   @Override
   public void runTransferFront(double speed) {
-    transferFront.getMotor().setDutyCycle(speed);
+    transferLeader.setControl(transferDutyCycle.withOutput(speed));
   }
 }

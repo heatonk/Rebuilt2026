@@ -81,14 +81,14 @@ public class SmartTurretController {
    * Constructs a SmartTurretController and configures the TalonFX with two PID slots, MotionMagic
    * parameters, and torque current limits.
    *
-   * <p>Uses read-modify-write on the TalonFX configuration to preserve YAMS-set fields (inversion,
-   * neutral mode, sensor ratio, etc.).
+   * <p>Uses read-modify-write on the TalonFX configuration to preserve fields set by the IO layer
+   * (inversion, neutral mode, sensor ratio, etc.).
    */
   public SmartTurretController(SmartTurretConfig config) {
     this.config = config;
     this.talonFX = config.getTalonFX();
 
-    // Read existing config to preserve YAMS-applied settings.
+    // Read existing config to preserve fields set by the IO layer (inversion, ratio, etc.).
     TalonFXConfiguration fxConfig = new TalonFXConfiguration();
     talonFX.getConfigurator().refresh(fxConfig);
 
@@ -147,14 +147,6 @@ public class SmartTurretController {
         accelerationSignal,
         torqueCurrentSignal);
     ParentDevice.optimizeBusUtilizationForAll(talonFX);
-
-    // Stop the YAMS SmartMotorController's background closed-loop Notifier. YAMS runs its own
-    // 20ms update loop that continuously sends position setpoints to the TalonFX. Since
-    // SmartTurretController now owns this motor via direct TorqueCurrentFOC commands, that loop
-    // must be permanently disabled to prevent interference.
-    if (config.getYamsController() != null) {
-      config.getYamsController().stopClosedLoopController();
-    }
   }
 
   /**
