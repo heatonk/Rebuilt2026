@@ -4,7 +4,6 @@
 
 package frc.robot.rebuilt.subsystems.Launcher;
 
-import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
@@ -499,8 +498,7 @@ public class LauncherIOReal implements LauncherIO {
   public LinearVelocity getFlyWheelExitSpeed(AngularVelocity velocity) {
     double circumferenceMeters =
         2.0 * Math.PI * Inches.of(Constants.Launcher.FlyWheel.RADIUS_INCHES).in(Meters);
-    return MetersPerSecond.of(
-        circumferenceMeters * Math.PI * velocity.in(RadiansPerSecond));
+    return MetersPerSecond.of(circumferenceMeters * Math.PI * velocity.in(RadiansPerSecond));
   }
 
   // ---- Characterization / SysId commands are provided by Phoenix Tuner X post-migration ----
@@ -587,9 +585,7 @@ public class LauncherIOReal implements LauncherIO {
     Rotation2d desiredFieldHeading =
         currentPose
             .getRotation()
-            .plus(
-                Rotation2d.fromRadians(
-                    desiredTurretAngle.in(edu.wpi.first.units.Units.Radians)));
+            .plus(Rotation2d.fromRadians(desiredTurretAngle.in(edu.wpi.first.units.Units.Radians)));
 
     if (targetProfile == TargetProfile.HUB) {
       return getHubTurretAngleToleranceDegrees(
@@ -637,8 +633,7 @@ public class LauncherIOReal implements LauncherIO {
         FieldConstants.TrenchZoneBottom.nearAlliance.getX() - 0.5 * FieldConstants.LeftTrench.depth;
     Translation2d upperFieldEdge =
         AllianceFlipUtil.apply(new Translation2d(allianceZoneFarX, FieldConstants.fieldWidth));
-    Translation2d lowerFieldEdge =
-        AllianceFlipUtil.apply(new Translation2d(allianceZoneFarX, 0.0));
+    Translation2d lowerFieldEdge = AllianceFlipUtil.apply(new Translation2d(allianceZoneFarX, 0.0));
     Translation2d upperLaneEdge =
         AllianceFlipUtil.apply(
             new Translation2d(allianceZoneFarX, FieldConstants.Hub.nearLeftCorner.getY()));

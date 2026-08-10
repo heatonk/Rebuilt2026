@@ -237,7 +237,8 @@ public class IntakeIOReal implements IntakeIO {
   }
 
   public boolean isHopperAtLocation(Angle location) {
-    return getDegreesDifference(getHopperAngle(), location) < Constants.Intake.HOPPER_ANGLE_TOLERANCE;
+    return getDegreesDifference(getHopperAngle(), location)
+        < Constants.Intake.HOPPER_ANGLE_TOLERANCE;
   }
 
   private void requestHopperAngle(Angle angle) {

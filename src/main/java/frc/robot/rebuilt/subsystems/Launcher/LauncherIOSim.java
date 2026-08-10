@@ -97,11 +97,7 @@ public class LauncherIOSim extends LauncherIOReal {
                       FLYWHEEL_RELATIVE_POSITION.toTranslation2d(),
                       Rebuilt.drivetrain.getFieldVelocity(),
                       Rotation2d.fromDegrees(
-                          worldPose
-                              .getRotation()
-                              .getMeasure()
-                              .plus(getTurretAngle())
-                              .in(Degrees)),
+                          worldPose.getRotation().getMeasure().plus(getTurretAngle()).in(Degrees)),
                       Meters.of(FLYWHEEL_RELATIVE_POSITION.getZ()),
                       getFlyWheelExitSpeed(getFlywheelSpeed()),
                       Degrees.of(90.0).minus(getHoodAngle()))
