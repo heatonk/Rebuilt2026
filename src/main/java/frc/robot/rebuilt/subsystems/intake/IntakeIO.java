@@ -5,14 +5,11 @@ import static edu.wpi.first.units.Units.Degrees;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.rebuilt.commands.IntakeCommands;
 import org.littletonrobotics.junction.AutoLog;
 
 public interface IntakeIO {
   @AutoLog
   public static class IntakeIOInputs {
-    public IntakeCommands.IntakeState stateRequested = IntakeCommands.IntakeState.UNKNOWN;
-    public IntakeCommands.IntakeState stateCurrent = IntakeCommands.IntakeState.UNKNOWN;
     public double speed = 0.0;
     public Angle hopperAngleActual = Degrees.of(0.0);
     public double hopperAngleDegrees = 0.0;
@@ -30,6 +27,9 @@ public interface IntakeIO {
   }
 
   public void runSpintake(double speed);
+
+  /** Sets the MotionMagic position target for the hopper directly, for use in periodic(). */
+  public default void setHopperTarget(Angle angle) {}
 
   public void runSpintakes(double outerSpeed, double innerSpeed);
 

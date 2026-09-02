@@ -23,7 +23,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.FieldConstants;
 import frc.robot.rebuilt.Rebuilt;
-import frc.robot.rebuilt.commands.IntakeCommands;
 import frc.robot.rebuilt.subsystems.drive.RebuiltDrivetrain;
 import org.littletonrobotics.junction.Logger;
 
@@ -45,9 +44,6 @@ public class IntakeIOReal implements IntakeIO {
   private Angle hopperAngleSetpoint = Degrees.of(0.0);
 
   protected RebuiltDrivetrain drivetrain;
-
-  @SuppressWarnings("unused")
-  private IntakeCommands.IntakeState lastState = IntakeCommands.IntakeState.RETRACTED;
 
   public IntakeIOReal(SubsystemBase parent) {
     spintakeOuter =
@@ -239,6 +235,11 @@ public class IntakeIOReal implements IntakeIO {
   public boolean isHopperAtLocation(Angle location) {
     return getDegreesDifference(getHopperAngle(), location)
         < Constants.Intake.HOPPER_ANGLE_TOLERANCE;
+  }
+
+  @Override
+  public void setHopperTarget(Angle angle) {
+    requestHopperAngle(angle);
   }
 
   private void requestHopperAngle(Angle angle) {

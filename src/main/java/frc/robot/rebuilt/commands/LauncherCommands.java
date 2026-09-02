@@ -18,7 +18,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.FieldConstants;
 import frc.robot.rebuilt.Rebuilt;
-import frc.robot.rebuilt.commands.IntakeCommands.IntakeState;
+import frc.robot.rebuilt.subsystems.intake.Intake.HopperState;
 import frc.robot.rebuilt.subsystems.Launcher.Launcher;
 import frc.robot.rebuilt.subsystems.Launcher.ShotCalculator;
 import frc.robot.rebuilt.subsystems.drive.RebuiltDrivetrain;
@@ -211,21 +211,21 @@ public class LauncherCommands {
     Trigger intakeUpTrigger =
         new Trigger(
             () ->
-                intake.isCurrent(IntakeState.RETRACTING)
-                    || intake.isCurrent(IntakeState.RETRACTED));
+                intake.isCurrent(HopperState.RETRACTING)
+                    || intake.isCurrent(HopperState.RETRACTED));
     intakeUpTrigger.onTrue(shouldHammerTimeCommand());
 
     // When intake deploys away from turret, return to LOW_SPEED
     Trigger intakeDeployingTrigger =
         new Trigger(
             () ->
-                ((intake.isCurrent(IntakeState.DEPLOYING)
+                ((intake.isCurrent(HopperState.DEPLOYING)
                             && intake
                                 .getHopperAngle()
                                 .lt(
                                     Constants.Intake.HOPPER_RETRACTED_ANGLE.minus(
                                         Constants.Launcher.HOPPER_EXTENSION_BUFFER_BEFORE_AIM)))
-                        || intake.isCurrent(IntakeState.INTAKING))
+                        || intake.isCurrent(HopperState.DEPLOYED))
                     && launcher.isCurrent(LauncherState.HAMMERTIME));
     intakeDeployingTrigger.onTrue(shouldLowCommand());
 
