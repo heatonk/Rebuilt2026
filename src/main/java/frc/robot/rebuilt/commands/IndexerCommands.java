@@ -2,12 +2,12 @@ package frc.robot.rebuilt.commands;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.Rebuilt;
 import frc.robot.rebuilt.subsystems.Indexer.Indexer;
 import frc.robot.rebuilt.subsystems.Launcher.Launcher;
-import frc.robot.rebuilt.util.Controller;
 import frc.robot.rebuilt.util.LedStrip;
 
 public class IndexerCommands {
@@ -30,12 +30,13 @@ public class IndexerCommands {
     configureTriggerStates();
   }
 
-  public void configureButtonBindings(Controller driver, Controller operator) {
-    // driver.createLeftBumper().onTrue(toggleForceFeed());
-    // driver.createLeftBumper().whileTrue(shouldForceCommand()).onFalse(shouldChurnCommand());
-    driver.createLeftBumper().whileTrue(shouldHardChurnCommand()).onFalse(shouldChurnCommand());
+  public void configureButtonBindings(
+      CommandXboxController driver, CommandXboxController operator) {
+    // driver.leftBumper().onTrue(toggleForceFeed());
+    // driver.leftBumper().whileTrue(shouldForceCommand()).onFalse(shouldChurnCommand());
+    driver.leftBumper().whileTrue(shouldHardChurnCommand()).onFalse(shouldChurnCommand());
     operator
-        .createLeftBumper()
+        .leftBumper()
         .whileTrue(
             Commands.either(
                 shouldForceCommand(), shouldChurnCommand(), () -> launcher.isOKToFire()))

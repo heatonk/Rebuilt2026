@@ -13,6 +13,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.FieldConstants;
@@ -22,7 +23,6 @@ import frc.robot.rebuilt.subsystems.Launcher.Launcher;
 import frc.robot.rebuilt.subsystems.Launcher.ShotCalculator;
 import frc.robot.rebuilt.subsystems.drive.RebuiltDrivetrain;
 import frc.robot.rebuilt.subsystems.intake.Intake;
-import frc.robot.rebuilt.util.Controller;
 import frc.robot.rebuilt.util.LedStrip;
 import frc.robot.rebuilt.util.StateMachine;
 import frc.robot.rebuilt.util.StateMachine.State;
@@ -184,26 +184,24 @@ public class LauncherCommands {
         || (launcher != null && launcher.isFlywheelAtOrAboveGoal());
   }
 
-  public void configureButtonBindings(Controller driver, Controller operator) {
+  public void configureButtonBindings(
+      CommandXboxController driver, CommandXboxController operator) {
 
-    // driver.createAButton().onTrue(shouldPrepCommand());
-    driver.createBButton().whileTrue(shouldPrepCommand()).onFalse(shouldLowCommand());
+    // driver.a().onTrue(shouldPrepCommand());
+    driver.b().whileTrue(shouldPrepCommand()).onFalse(shouldLowCommand());
 
-    driver.createAButton().onTrue(shouldLowCommand()).onFalse(shouldLowCommand());
+    driver.a().onTrue(shouldLowCommand()).onFalse(shouldLowCommand());
 
     operator
-        .createLeftPovButton()
+        .povLeft()
         .onTrue(Commands.runOnce(() -> ShotCalculator.incrementFlywheelMultiplier(-0.01)));
     operator
-        .createRightPovButton()
+        .povRight()
         .onTrue(Commands.runOnce(() -> ShotCalculator.incrementFlywheelMultiplier(0.01)));
 
-    operator
-        .createYButton()
-        .whileTrue(turretForwardPresetStateCommand())
-        .onFalse(shouldLowCommand());
+    operator.y().whileTrue(turretForwardPresetStateCommand()).onFalse(shouldLowCommand());
 
-    operator.createBackButton().whileTrue(zeroHoodSequence());
+    operator.back().whileTrue(zeroHoodSequence());
 
     // This allowed auto-hammer time
     // Trigger isTrenchTrigger = new Trigger(() -> launcher.isNearTrench());
@@ -232,12 +230,12 @@ public class LauncherCommands {
     intakeDeployingTrigger.onTrue(shouldLowCommand());
 
     operator
-        .createUpPovButton()
+        .povUp()
         .onTrue(
             Commands.runOnce(() -> ShotCalculator.incrementFlywheelMultiplier(0.01))
                 .ignoringDisable(true));
     operator
-        .createDownPovButton()
+        .povDown()
         .onTrue(
             Commands.runOnce(() -> ShotCalculator.incrementFlywheelMultiplier(-0.01))
                 .ignoringDisable(true));

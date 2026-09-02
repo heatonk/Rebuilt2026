@@ -8,8 +8,8 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.rebuilt.commands.IndexerCommands.IndexerState;
-import frc.robot.rebuilt.util.Controller;
 import frc.robot.rebuilt.util.StateMachine;
 import org.littletonrobotics.junction.Logger;
 
@@ -42,8 +42,8 @@ public class Indexer extends SubsystemBase {
     io.runTransferFront(speed);
   }
 
-  public void configTestControls(Controller controller) {
-    controller.createLeftBumper().whileTrue((spindexerCommand(.25)).alongWith(feederCommand(0.25)));
+  public void configTestControls(CommandXboxController controller) {
+    controller.leftBumper().whileTrue((spindexerCommand(.25)).alongWith(feederCommand(0.25)));
   }
   /** Command that runs the feeder at a given speed and stops when done */
   public Command feederCommand(double speed) {

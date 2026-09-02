@@ -1,14 +1,15 @@
 package frc.robot.rebuilt.subsystems.DriverDisplay;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.rebuilt.util.Controller;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import org.littletonrobotics.junction.Logger;
 
 public class HubStatus extends SubsystemBase {
   private HubStatusIO io = new HubStatusIOImpl();
   private HubStatusIOInputsAutoLogged inputs = new HubStatusIOInputsAutoLogged();
 
-  public void configureButtonBindings(Controller driver, Controller operator) {
+  public void configureButtonBindings(
+      CommandXboxController driver, CommandXboxController operator) {
     // Trigger rumble = new Trigger(() -> inputs.timeRemainingInCurrentShift.lte(Seconds.of(3)));
     // rumble.and(() -> inputs.timeRemainingInCurrentShift.gt(Seconds.of(2.5)));
     // rumble

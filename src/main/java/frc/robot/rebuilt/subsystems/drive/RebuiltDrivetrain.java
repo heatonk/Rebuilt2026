@@ -11,8 +11,9 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.rebuilt.util.Controller;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import java.util.Optional;
+import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import swervelib.simulation.ironmaple.simulation.drivesims.AbstractDriveTrainSimulation;
 
@@ -32,6 +33,11 @@ public class RebuiltDrivetrain extends CommandSwerveDrivetrain {
   private final PoseEstimator poseEstimator = new PoseEstimator();
 
   private boolean fieldOriented = true;
+
+  private CommandXboxController driver = null;
+  private double lastVx = 0;
+  private double lastVy = 0;
+  private double lastOmega = 0;
 
   private final SwerveRequest.FieldCentric fieldCentricRequest =
       new SwerveRequest.FieldCentric()
@@ -70,17 +76,22 @@ public class RebuiltDrivetrain extends CommandSwerveDrivetrain {
     fieldOriented = !fieldOriented;
   }
 
-  public void configureButtonBindings(Controller driver, Controller operator) {
+  public void configureButtonBindings(
+      CommandXboxController driver, CommandXboxController operator) {
     // No-op: matches the original stub. Button bindings can be wired here later
     // (brake / seedFieldCentric / sysid chords) once the team picks the layout.
   }
 
-  public Command createDefaultCommand(Controller driver) {
+  public Command createDefaultCommand(CommandXboxController driver) {
+    this.driver = driver;
     return applyRequest(
         () -> {
-          double vx = -driver.getLeftYAxis() * MAX_LINEAR_SPEED;
-          double vy = -driver.getLeftXAxis() * MAX_LINEAR_SPEED;
-          double omega = -driver.getRightXAxis() * MAX_ANGULAR_RATE;
+          double vx = -driver.getLeftY() * MAX_LINEAR_SPEED;
+          double vy = -driver.getLeftX() * MAX_LINEAR_SPEED;
+          double omega = -driver.getRightX() * MAX_ANGULAR_RATE;
+          lastVx = vx;
+          lastVy = vy;
+          lastOmega = omega;
           return fieldOriented
               ? fieldCentricRequest.withVelocityX(vx).withVelocityY(vy).withRotationalRate(omega)
               : robotCentricRequest.withVelocityX(vx).withVelocityY(vy).withRotationalRate(omega);
@@ -99,6 +110,27 @@ public class RebuiltDrivetrain extends CommandSwerveDrivetrain {
   public void addAutoCommands(LoggedDashboardChooser<Command> selectableCommand) {
     // No-op: PathPlanner-generated autos populate via AutoBuilder.buildAutoChooser()
     // in Rebuilt.buildAutoCommands once setAutoBuilder() is wired.
+  }
+
+  @Override
+  public void periodic() {
+    super.periodic();
+    var state = getState();
+    Logger.recordOutput("Drivetrain/Pose", state.Pose);
+    Logger.recordOutput("Drivetrain/Speeds", state.Speeds);
+    Logger.recordOutput("Drivetrain/ModuleStates", state.ModuleStates);
+    Logger.recordOutput("Drivetrain/ModuleTargets", state.ModuleTargets);
+    Logger.recordOutput("Drivetrain/OdometryPeriod", state.OdometryPeriod);
+    Logger.recordOutput("Drivetrain/FailedDaqs", (long) state.FailedDaqs);
+    Logger.recordOutput("Drivetrain/FieldOriented", fieldOriented);
+    if (driver != null) {
+      Logger.recordOutput("Drivetrain/Input/StickLeftX", driver.getLeftX());
+      Logger.recordOutput("Drivetrain/Input/StickLeftY", driver.getLeftY());
+      Logger.recordOutput("Drivetrain/Input/StickRightX", driver.getRightX());
+    }
+    Logger.recordOutput("Drivetrain/Input/CommandedVx", lastVx);
+    Logger.recordOutput("Drivetrain/Input/CommandedVy", lastVy);
+    Logger.recordOutput("Drivetrain/Input/CommandedOmega", lastOmega);
   }
 
   public ChassisSpeeds getFieldVelocity() {

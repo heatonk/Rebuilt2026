@@ -5,15 +5,15 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.rebuilt.Rebuilt;
-import frc.robot.rebuilt.util.Controller;
 
 public class RobotContainer {
   private final Rebuilt robot;
 
   public RobotContainer() {
-    Controller driver = new Controller(0);
-    Controller operator = new Controller(1);
+    CommandXboxController driver = new CommandXboxController(0);
+    CommandXboxController operator = new CommandXboxController(1);
 
     robot = new Rebuilt(driver, operator);
 

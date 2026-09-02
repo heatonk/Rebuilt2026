@@ -11,11 +11,11 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.commands.IntakeCommands;
 import frc.robot.rebuilt.commands.IntakeCommands.IntakeState;
-import frc.robot.rebuilt.util.Controller;
 import org.littletonrobotics.junction.Logger;
 
 public class Intake extends SubsystemBase {
@@ -36,7 +36,11 @@ public class Intake extends SubsystemBase {
   }
 
   public void runSpintakes(double outerSpeed, double innerSpeed) {
-    io.runSpintakes(innerSpeed, outerSpeed);
+    if (Math.abs(innerSpeed) > Math.abs(outerSpeed)) {
+      io.runSpintakes(innerSpeed, outerSpeed);
+    } else {
+      io.runSpintakes(outerSpeed, innerSpeed);
+    }
   }
 
   /** Creates a command that runs the spintake at the given speed and stops when done */
@@ -71,12 +75,11 @@ public class Intake extends SubsystemBase {
     io.runHopper(speed);
   }
   /** Configures test controller bindings for the spintake, hopper control, and sysid */
-  public void configTestController(Controller controller) {
-    controller.createRightBumper().whileTrue(spintakeCommand(0.5));
-    controller.createYButton().whileTrue(getHopperSysIdCommand());
-    controller.setRightYAxis(controller.createRightYAxis());
-    Trigger rightYAxis = new Trigger(() -> controller.getRightYAxis() > 0.01);
-    rightYAxis.whileTrue(Commands.run(() -> runHopper(controller.getRightYAxis())));
+  public void configTestController(CommandXboxController controller) {
+    controller.rightBumper().whileTrue(spintakeCommand(0.5));
+    controller.y().whileTrue(getHopperSysIdCommand());
+    Trigger rightYAxis = new Trigger(() -> controller.getRightY() > 0.01);
+    rightYAxis.whileTrue(Commands.run(() -> runHopper(controller.getRightY())));
   }
   /** Updates intake inputs from the io periodically and logs them each robot cycle */
   @Override

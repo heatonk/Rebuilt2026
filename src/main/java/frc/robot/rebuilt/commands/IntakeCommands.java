@@ -5,11 +5,11 @@ import static edu.wpi.first.units.Units.Degrees;
 import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.rebuilt.Constants;
 import frc.robot.rebuilt.Rebuilt;
 import frc.robot.rebuilt.subsystems.intake.Intake;
-import frc.robot.rebuilt.util.Controller;
 import frc.robot.rebuilt.util.StateMachine;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -97,33 +97,28 @@ public class IntakeCommands {
         .onTrue(angledCommand());
   }
 
-  public void configureButtonBindings(Controller controller, Controller operator) {
-    controller.setRightTrigger(
-        controller.createRightTrigger().limit(Constants.Intake.INTAKE_MAX_IN));
-    Trigger rightTrigger =
-        new Trigger(() -> controller.getRightTrigger() > Constants.Intake.INTAKE_DEADZONE);
-    controller.setLeftTrigger(
-        controller
-            .createLeftTrigger()
-            .limit(Constants.Intake.INTAKE_MAX_IN)); // Axis are positive only hence IN
-    Trigger leftTrigger =
-        new Trigger(() -> controller.getLeftTrigger() > Constants.Intake.INTAKE_DEADZONE);
+  public void configureButtonBindings(
+      CommandXboxController controller, CommandXboxController operator) {
+    Trigger rightTrigger = controller.rightTrigger(Constants.Intake.INTAKE_DEADZONE);
+    Trigger leftTrigger = controller.leftTrigger(Constants.Intake.INTAKE_DEADZONE);
 
     rightTrigger.onTrue(shouldIntaking());
     leftTrigger.onTrue(shouldIntaking());
 
-    controller.createRightBumper().onTrue(shouldRetracting());
-    controller.createStartButton().onTrue(Commands.run(() -> intake.setHopperRetracted()));
-    controller.createBackButton().onTrue(Commands.run(() -> intake.setHopperDeployed()));
+    controller.rightBumper().onTrue(shouldRetracting());
+    controller.start().onTrue(Commands.run(() -> intake.setHopperRetracted()));
+    controller.back().onTrue(Commands.run(() -> intake.setHopperDeployed()));
 
-    operator.createDownPovButton().onTrue(operatorHopperDownCommand());
-    controller.createXButton().onTrue(operatorHopperDownCommand());
-    operator.createRightBumper().onTrue(shouldAngled()).onFalse(shouldIntaking());
+    operator.povDown().onTrue(operatorHopperDownCommand());
+    controller.x().onTrue(operatorHopperDownCommand());
+    operator.rightBumper().onTrue(shouldAngled()).onFalse(shouldIntaking());
 
     intakeSpeedSupplier =
         () -> {
-          double rightTriggerSpeed = controller.getRightTrigger();
-          double leftTriggerSpeed = controller.getLeftTrigger();
+          double rightTriggerSpeed =
+              Math.min(controller.getRightTriggerAxis(), Constants.Intake.INTAKE_MAX_IN);
+          double leftTriggerSpeed =
+              Math.min(controller.getLeftTriggerAxis(), Constants.Intake.INTAKE_MAX_IN);
           double speed = Constants.Intake.INTAKE_IN; // Default speed if neither trigger is pressed
           if (rightTriggerSpeed > Constants.Intake.INTAKE_DEADZONE
               || leftTriggerSpeed > Constants.Intake.INTAKE_DEADZONE) {
@@ -234,7 +229,7 @@ public class IntakeCommands {
 
   public static Command retractedCommand() {
     return Commands.runOnce(() -> intake.setCurrentState(IntakeState.RETRACTED), intake)
-        .andThen(() -> intake.runSpintake(0), intake)
+        .andThen(() -> intake.runSpintake(.5), intake)
         .andThen(() -> intake.runHopper(0), intake);
   }
 

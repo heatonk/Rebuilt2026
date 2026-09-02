@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.rebuilt.commands.AutoCommands;
 import frc.robot.rebuilt.commands.IndexerCommands;
 import frc.robot.rebuilt.commands.IntakeCommands;
@@ -27,7 +28,6 @@ import frc.robot.rebuilt.subsystems.Launcher.Launcher;
 import frc.robot.rebuilt.subsystems.drive.RebuiltDrivetrain;
 import frc.robot.rebuilt.subsystems.intake.Intake;
 import frc.robot.rebuilt.util.AllianceFlipUtil;
-import frc.robot.rebuilt.util.Controller;
 import frc.robot.rebuilt.util.LedStrip;
 import frc.robot.rebuilt.util.OrchestraManager;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
@@ -47,23 +47,23 @@ public class Rebuilt {
   public static boolean isZeroingBurst = false;
   private static boolean everEnabled = false;
 
-  private final Controller driver;
-  private final Controller operator;
+  private final CommandXboxController driver;
+  private final CommandXboxController operator;
   private boolean isButtonsConfigured = false;
   private boolean isAltButtonsConfigured = false;
   private LoggedDashboardChooser<Command> selectableCommand;
 
-  public Rebuilt(Controller driver, Controller operator) {
+  public Rebuilt(CommandXboxController driver, CommandXboxController operator) {
     this.driver = driver;
     this.operator = operator;
 
     AllianceFlipUtil.configure(FieldConstants.FIELD_WIDTH, FieldConstants.FIELD_LENGTH);
 
+    drivetrain = new RebuiltDrivetrain();
     hubStatus = new HubStatus();
     indexer = new Indexer();
     intake = new Intake();
     launcher = new Launcher();
-    drivetrain = new RebuiltDrivetrain();
 
     testCommands = new TestCommands();
     launcherCommands = new LauncherCommands();
@@ -73,7 +73,7 @@ public class Rebuilt {
 
     RobotController.setBrownoutVoltage(Volts.of(4.6));
 
-    operator.createStartButton().onTrue(launcher.zeroTurretCommand());
+    operator.start().onTrue(launcher.zeroTurretCommand());
   }
 
   public void disabledInit() {
@@ -99,7 +99,8 @@ public class Rebuilt {
   public void configureButtonBindings() {
     if (!isButtonsConfigured) {
       FieldRegions.setupFieldRegions();
-      driver.createYButton().onTrue(Commands.runOnce(() -> drivetrain.toggleFieldOrientedDrive()));
+      // driver.createYButton().onTrue(Commands.runOnce(() ->
+      // drivetrain.toggleFieldOrientedDrive()));
       drivetrain.configureButtonBindings(driver, operator);
       launcherCommands.configureButtonBindings(driver, operator);
       intakecommands.configureButtonBindings(driver, operator);
