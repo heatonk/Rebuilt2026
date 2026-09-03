@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.rebuilt.Constants;
 import org.littletonrobotics.junction.Logger;
@@ -23,7 +24,8 @@ public class Intake extends SubsystemBase {
     DEPLOYING,
     DEPLOYED,
     RETRACTING,
-    RETRACTED
+    RETRACTED,
+    MANUAL_ZEROING
   }
 
   private IntakeIO io;
@@ -50,18 +52,54 @@ public class Intake extends SubsystemBase {
 
   // === Public API ===
 
-  /** Request the hopper to deploy. No-op if already deploying or deployed. */
+  /**
+   * Request the hopper to deploy. No-op if already deploying/deployed, or while the operator is
+   * running a manual zero (the operator is in charge until they release the button).
+   */
   public void requestDeploy() {
+    if (state == HopperState.MANUAL_ZEROING) return;
     if (state != HopperState.DEPLOYING && state != HopperState.DEPLOYED) {
       deployNudgePhase = false;
       state = HopperState.DEPLOYING;
     }
   }
 
-  /** Request the hopper to retract. No-op if already retracting or retracted. */
+  /**
+   * Request the hopper to retract. No-op if already retracting/retracted, or while the operator is
+   * running a manual zero.
+   */
   public void requestRetract() {
+    if (state == HopperState.MANUAL_ZEROING) return;
     if (state != HopperState.RETRACTING && state != HopperState.RETRACTED) {
       state = HopperState.RETRACTING;
+    }
+  }
+
+  /**
+   * Operator-driven manual zero. Hold the bound button: drives the hopper toward its deploy-side
+   * hard stop; when a current spike is detected (via the same debounced hard-stop signal used by
+   * first-deploy homing) the encoder is zeroed and the state advances to DEPLOYED. Release before
+   * the hard stop is hit and the motor stops and the hopper is left in UNKNOWN.
+   *
+   * <p>Intended as a recovery path when a redirect during the initial homing left the hopper in an
+   * unzeroed state (see the {@code !hopperZeroed} guards in RETRACTING/RETRACTED).
+   */
+  public Command manualZeroCommand() {
+    return Commands.startEnd(this::beginManualZero, this::endManualZero, this);
+  }
+
+  private void beginManualZero() {
+    hopperZeroed = false;
+    deployNudgePhase = false;
+    state = HopperState.MANUAL_ZEROING;
+  }
+
+  private void endManualZero() {
+    // If we succeeded, the switch already advanced to DEPLOYED — leave it alone.
+    // If the operator released early, stop the motor and drop to UNKNOWN.
+    if (state == HopperState.MANUAL_ZEROING) {
+      io.runHopper(0);
+      state = HopperState.UNKNOWN;
     }
   }
 
@@ -120,15 +158,18 @@ public class Intake extends SubsystemBase {
     boolean hardStop = hardStopDebouncer.calculate(inputs.hopperHardStopDetected);
 
     // Safety: if zeroed and the encoder drifts past the hard stop, re-zero.
-    if (hopperZeroed && inputs.hopperAngleActual.in(Degrees) < Constants.Intake.HOPPER_AUTO_REZERO_THRESHOLD) {
+    if (hopperZeroed
+        && inputs.hopperAngleActual.in(Degrees) < Constants.Intake.HOPPER_AUTO_REZERO_THRESHOLD) {
       io.setHopperPosition(Degrees.of(0));
     }
 
-    // Safety: if zeroed, deployed-side, and hard stop is detected but encoder is slightly off, correct it.
+    // Safety: if zeroed, deployed-side, and hard stop is detected but encoder is slightly off,
+    // correct it.
     if (hopperZeroed
         && (state == HopperState.DEPLOYING || state == HopperState.DEPLOYED)
         && hardStop
-        && inputs.hopperAngleActual.in(Degrees) < Constants.Intake.HOPPER_DEPLOY_STOP_REZERO_MAX_ANGLE
+        && inputs.hopperAngleActual.in(Degrees)
+            < Constants.Intake.HOPPER_DEPLOY_STOP_REZERO_MAX_ANGLE
         && inputs.hopperAngleActual.in(Degrees) > Constants.Intake.HOPPER_ANGLE_TOLERANCE) {
       io.setHopperPosition(Degrees.of(0));
     }
@@ -158,7 +199,14 @@ public class Intake extends SubsystemBase {
         } else {
           // Nudge open-loop to confirm contact with the mechanical hard stop.
           io.runHopper(Constants.Intake.HOPPER_DEPLOY_NUDGE_DUTY);
-          if (hardStop || deployNudgeTimer.hasElapsed(1.5)) {
+          boolean nudgeTimedOut =
+              deployNudgeTimer.hasElapsed(Constants.Intake.HOPPER_DEPLOY_NUDGE_TIMEOUT);
+          if (hardStop || nudgeTimedOut) {
+            if (nudgeTimedOut && !hardStop) {
+              // Reached DEPLOYED without ever seeing the hard stop — likely a broken/miswired
+              // switch or a mechanical bind. Surface it so it's visible in logs.
+              Logger.recordOutput("Intake/NudgeTimedOut", true);
+            }
             io.runHopper(0);
             deployNudgePhase = false;
             state = HopperState.DEPLOYED;
@@ -173,20 +221,40 @@ public class Intake extends SubsystemBase {
         } else {
           io.setHopperTarget(Constants.Intake.HOPPER_DEPLOYED_ANGLE);
         }
-        io.runSpintake(requestedSpintakeSpeed);
+        // Always run the spintake at a fixed deployed speed when the hopper is fully deployed.
+        io.runSpintake(Constants.Intake.INTAKE_DEPLOYED_SPEED);
         break;
 
       case RETRACTING:
         io.runSpintake(0);
-        io.setHopperTarget(Constants.Intake.HOPPER_RETRACTED_ANGLE);
-        if (io.isRetracted()) {
-          state = HopperState.RETRACTED;
+        if (!hopperZeroed) {
+          // Encoder reference is untrusted — refuse to PID. Operator must run manualZeroCommand().
+          io.runHopper(0);
+        } else {
+          io.setHopperTarget(Constants.Intake.HOPPER_RETRACTED_ANGLE);
+          if (io.isRetracted()) {
+            state = HopperState.RETRACTED;
+          }
         }
         break;
 
       case RETRACTED:
         io.runSpintake(0);
-        io.setHopperTarget(Constants.Intake.HOPPER_RETRACTED_ANGLE);
+        if (!hopperZeroed) {
+          io.runHopper(0);
+        } else {
+          io.setHopperTarget(Constants.Intake.HOPPER_RETRACTED_ANGLE);
+        }
+        break;
+
+      case MANUAL_ZEROING:
+        io.runSpintake(0);
+        io.runHopper(Constants.Intake.HOPPER_FIRST_DEPLOY_DUTY);
+        if (hardStop) {
+          markZeroed();
+          io.runHopper(0);
+          state = HopperState.DEPLOYED;
+        }
         break;
     }
 

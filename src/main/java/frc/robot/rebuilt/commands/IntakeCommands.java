@@ -1,6 +1,5 @@
 package frc.robot.rebuilt.commands;
 
-import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -19,36 +18,18 @@ public class IntakeCommands {
   public void setupDefaultCommands() {}
 
   public void configureButtonBindings(
-      CommandXboxController controller, CommandXboxController operator) {
-    Trigger rightTrigger = controller.rightTrigger(Constants.Intake.INTAKE_DEADZONE);
-    Trigger leftTrigger = controller.leftTrigger(Constants.Intake.INTAKE_DEADZONE);
-    Trigger eitherTrigger = rightTrigger.or(leftTrigger);
+      CommandXboxController driver, CommandXboxController operator) {
+    Trigger leftTrigger = driver.leftTrigger(Constants.Intake.INTAKE_DEADZONE);
+    Trigger rightTrigger = driver.rightTrigger(Constants.Intake.INTAKE_DEADZONE);
 
-    eitherTrigger
-        .onTrue(Commands.runOnce(() -> intake.requestDeploy()))
-        .whileTrue(
-            Commands.run(
-                () -> {
-                  double right =
-                      Math.min(
-                          controller.getRightTriggerAxis(), Constants.Intake.INTAKE_MAX_IN);
-                  double left =
-                      Math.min(
-                          controller.getLeftTriggerAxis(), Constants.Intake.INTAKE_MAX_IN);
-                  double speed;
-                  if (RobotState.isAutonomous()) {
-                    speed = Constants.Intake.INTAKE_AUTO;
-                  } else if (right > Constants.Intake.INTAKE_DEADZONE
-                      || left > Constants.Intake.INTAKE_DEADZONE) {
-                    speed = right - left;
-                  } else {
-                    speed = Constants.Intake.INTAKE_IN;
-                  }
-                  intake.setSpintakeSpeed(speed);
-                }))
-        .onFalse(Commands.runOnce(() -> intake.setSpintakeSpeed(0)));
+    leftTrigger.onTrue(Commands.runOnce(() -> intake.requestDeploy()));
+    rightTrigger.onTrue(Commands.runOnce(() -> intake.requestRetract()));
 
-    controller.rightBumper().onTrue(shouldRetracting());
+    // Hold to manually zero the hopper after a failed first-deploy: drives toward the deploy hard
+    // stop until a current spike, then zeros the encoder. Release before the spike aborts safely.
+    operator.rightBumper().whileTrue(intake.manualZeroCommand());
+
+    // driver.rightBumper().onTrue(shouldRetracting());
   }
 
   // Named-command helpers — kept for PathPlanner / AutoCommands compatibility.

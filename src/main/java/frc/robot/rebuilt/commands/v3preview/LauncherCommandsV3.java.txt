@@ -1,0 +1,430 @@
+// ============================================================================
+// WPILib Commands v3 PREVIEW  --  will not compile until 2027 alpha is on your
+// classpath.  Extension is .java.txt so Gradle ignores it.
+//
+// To view with Java syntax highlighting in VS Code:
+//   right-click the file  ->  "Change Language Mode..."  ->  Java
+// ============================================================================
+//
+// Full rewrite of  LauncherCommands.java  in the v3 command style.
+//
+// Big-picture changes vs. the v2 file:
+//   * Static utility class  ->  regular object.  Every command factory needs a
+//     Launcher reference to call launcher.run(...), so `static` no longer fits.
+//     Mutable class-level state (presets, requireFlywheelAtGoalForChurn) moved
+//     to instance fields; pure geometric constants stayed static.
+//   * State command factories collapse from
+//         Commands.parallel(runOnce(setState), launcher.trackTargetCommand())
+//     to a single coroutine body:
+//         launcher.run(co -> { setState(); co.await(trackTargetCommand()); })
+//     -- the "set state, then run the loop" flow is now literal top-to-bottom
+//     Java instead of a parallel composition.
+//   * zeroHoodSequence: beforeStarting / finallyDo -> plain try/finally.
+//   * .andThen chains disappear.  Every command has .named(...) -- v3 requires
+//     it, which cleans up the driver-station scheduler view.
+//
+// Not changed here:
+//   * The StateMachine util class itself is v2-only today.  This preview
+//     assumes it has been ported to a v3preview package with the same API.
+//   * Trigger wiring in configureButtonBindings looks identical to v2 except
+//     for the import.  v3 kept .onTrue / .whileTrue / .onFalse.
+//
+// Caveat: package and helper names below (org.wpilib.commands3, Commands.run,
+// withTimeout, ignoringDisable, coroutine.await, coroutine.yield) are based on
+// the 2027.0.0-alpha docs.  Treat exact names as approximate until beta.
+// ============================================================================
+
+package frc.robot.rebuilt.commands.v3preview;
+
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.RPM;
+
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.wpilibj.util.Color;
+
+import org.wpilib.commands3.Command;
+import org.wpilib.commands3.Commands;
+import org.wpilib.commands3.button.Trigger;
+
+import frc.robot.rebuilt.Constants;
+import frc.robot.rebuilt.FieldConstants;
+import frc.robot.rebuilt.Rebuilt;
+import frc.robot.rebuilt.commands.IntakeCommands.IntakeState;
+import frc.robot.rebuilt.subsystems.Launcher.Launcher;
+import frc.robot.rebuilt.subsystems.Launcher.ShotCalculator;
+import frc.robot.rebuilt.subsystems.drive.RebuiltDrivetrain;
+import frc.robot.rebuilt.subsystems.intake.Intake;
+import frc.robot.rebuilt.util.Controller;
+import frc.robot.rebuilt.util.LedStrip;
+// Assumes StateMachine ported to a v3preview package with the same API.
+import frc.robot.rebuilt.util.v3preview.StateMachine;
+import frc.robot.rebuilt.util.v3preview.StateMachine.State;
+
+/** V3 preview: launcher command logic and state machine. */
+public class LauncherCommandsV3 {
+
+  // --- Pure geometric constants: stay static, no v3 impact. ---
+  public static final Translation2d hubTarget =
+      FieldConstants.Hub.topCenterPoint.toTranslation2d();
+  public static final Translation2d allianceSideLeft = FieldConstants.Tower.leftUpright;
+  public static final Translation2d allianceSideRight = FieldConstants.Tower.rightUpright;
+  public static final Translation2d intakeToCenterTranslation =
+      new Translation2d(Inches.of(25), Inches.of(0));
+  public static final Transform2d intakeToCenter =
+      new Transform2d(intakeToCenterTranslation, Rotation2d.fromDegrees(180));
+  public static final Translation2d rearToCenterTranslation =
+      new Translation2d(Inches.of(13.5), Inches.of(0));
+  public static final Transform2d rearToCenter =
+      new Transform2d(rearToCenterTranslation, Rotation2d.fromDegrees(0));
+
+  // --- Was static in v2; now instance because the class is instance-based. ---
+  private final Launcher launcher;
+  private final Intake intake;
+  private final RebuiltDrivetrain drivetrain;
+
+  private StateMachine stateMachine;
+  private State idleState;
+  private State lowState;
+  private State prepState;
+  private State presetState;
+  private State hammerTimeState;
+  private State autoHammerTimeState;
+  private State escapeHammerTimeState;
+
+  private Angle presetHoodAngle = Constants.Launcher.LOW_HOOD_ANGLE;
+  private Angle presetTurretAngle = Constants.Launcher.TURRET_FORWARD;
+  private AngularVelocity presetFlywheelSpeed = RPM.of(0);
+
+  /** When true, the indexer only churns once the flywheel has reached goal. */
+  public boolean requireFlywheelAtGoalForChurn = true;
+
+  public enum LauncherState {
+    IDLE, LOW_SPEED, PREP, HAMMERTIME, AUTO_HAMMERTIME, ESCAPE_HAMMERTIME, PRESET;
+    @Override public String toString() { return this.name(); }
+  }
+
+  public LauncherCommandsV3() {
+    this.launcher = Rebuilt.launcher;
+    this.intake = Rebuilt.intake;
+    this.drivetrain = Rebuilt.drivetrain;
+    launcher.setCurrentState(LauncherState.HAMMERTIME);
+    launcher.setRequestedState(LauncherState.HAMMERTIME);
+    configureStateMachine();
+  }
+
+  public Translation2d getRobotToTarget(Translation2d target) {
+    return target.minus(drivetrain.getPoseEstimator().getCurrentPose().getTranslation());
+  }
+
+  public boolean isFlywheelReadyForChurn() {
+    return !requireFlywheelAtGoalForChurn
+        || (launcher != null && launcher.isFlywheelAtOrAboveGoal());
+  }
+
+  public void setDefaultCommands() {
+    if (launcher != null) {
+      stateMachine.addRequirements(launcher);
+      launcher.setDefaultCommand(stateMachine);
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // State machine wiring.  Identical shape to v2 -- only the underlying
+  // StateMachine/Command types are v3.
+  // --------------------------------------------------------------------------
+  public void configureStateMachine() {
+    stateMachine = new StateMachine("LauncherStateMachine");
+    presetState        = stateMachine.addState("PRESET-SHOOT",        presetStateCommand());
+    idleState          = stateMachine.addState("IDLE",                idleStateCommand());
+    lowState           = stateMachine.addState("LOW-SPEED",           lowStateCommand());
+    prepState          = stateMachine.addState("PREP-SHOOT",          prepStateCommand());
+    hammerTimeState    = stateMachine.addState("HAMMER-TIME",         hammerTimeStateCommand());
+    autoHammerTimeState= stateMachine.addState("AUTO-HAMMER-TIME",    autoHammerTimeStateCommand());
+    escapeHammerTimeState =
+        stateMachine.addState("ESCAPE-HAMMER-TIME", escapeHammerTimeStateCommand());
+    stateMachine.setInitialState(hammerTimeState);
+
+    // Idle -> ...
+    idleState.switchTo(lowState).when(() -> launcher.isRequested(LauncherState.LOW_SPEED));
+    idleState.switchTo(prepState).when(() -> launcher.isRequested(LauncherState.PREP));
+    idleState.switchTo(presetState).when(() -> launcher.isRequested(LauncherState.PRESET));
+    idleState.switchTo(hammerTimeState).when(() -> launcher.isRequested(LauncherState.HAMMERTIME));
+    idleState.switchTo(autoHammerTimeState)
+        .when(() -> launcher.isRequested(LauncherState.AUTO_HAMMERTIME));
+
+    // Low -> ...
+    lowState.switchTo(idleState).when(() -> launcher.isRequested(LauncherState.IDLE));
+    lowState.switchTo(prepState).when(() -> launcher.isRequested(LauncherState.PREP));
+    lowState.switchTo(presetState).when(() -> launcher.isRequested(LauncherState.PRESET));
+    lowState.switchTo(hammerTimeState).when(() -> launcher.isRequested(LauncherState.HAMMERTIME));
+    lowState.switchTo(autoHammerTimeState)
+        .when(() -> launcher.isRequested(LauncherState.AUTO_HAMMERTIME));
+
+    // Prep -> ...
+    prepState.switchTo(lowState).when(() -> launcher.isRequested(LauncherState.LOW_SPEED));
+    prepState.switchTo(idleState).when(() -> launcher.isRequested(LauncherState.IDLE));
+    prepState.switchTo(presetState).when(() -> launcher.isRequested(LauncherState.PRESET));
+    prepState.switchTo(hammerTimeState).when(() -> launcher.isRequested(LauncherState.HAMMERTIME));
+    prepState.switchTo(autoHammerTimeState)
+        .when(() -> launcher.isRequested(LauncherState.AUTO_HAMMERTIME));
+
+    // Preset -> ...
+    presetState.switchTo(idleState).when(() -> launcher.isRequested(LauncherState.IDLE));
+    presetState.switchTo(lowState).when(() -> launcher.isRequested(LauncherState.LOW_SPEED));
+    presetState.switchTo(prepState).when(() -> launcher.isRequested(LauncherState.PREP));
+    presetState.switchTo(hammerTimeState).when(() -> launcher.isRequested(LauncherState.HAMMERTIME));
+    presetState.switchTo(autoHammerTimeState)
+        .when(() -> launcher.isRequested(LauncherState.AUTO_HAMMERTIME));
+
+    autoHammerTimeState.switchTo(escapeHammerTimeState)
+        .when(() -> launcher.isRequested(LauncherState.ESCAPE_HAMMERTIME));
+
+    escapeHammerTimeState.switchTo(idleState).when(() -> launcher.isRequested(LauncherState.IDLE));
+    escapeHammerTimeState.switchTo(lowState)
+        .when(() -> launcher.isRequested(LauncherState.LOW_SPEED));
+    escapeHammerTimeState.switchTo(prepState).when(() -> launcher.isRequested(LauncherState.PREP));
+
+    // Hammer Time toggle (special case)
+    hammerTimeState.switchTo(lowState).when(() -> launcher.isRequested(LauncherState.LOW_SPEED));
+    hammerTimeState.switchTo(prepState).when(() -> launcher.isRequested(LauncherState.PREP));
+    hammerTimeState.switchTo(presetState).when(() -> launcher.isRequested(LauncherState.PRESET));
+
+    // Feed/churn/idle wiring based on prep readiness.
+    Trigger readyToFireTrigger = new Trigger(
+        () -> launcher.isCurrent(LauncherState.PREP) && launcher.isAtGoal());
+    readyToFireTrigger.onTrue(IndexerCommandsV3.shouldFeedCommand());
+
+    Trigger churnWhileFiring = new Trigger(
+        () -> launcher.isCurrent(LauncherState.PREP) && !launcher.isAtGoal());
+    churnWhileFiring.onTrue(IndexerCommandsV3.shouldChurnCommand());
+
+    readyToFireTrigger.negate().and(churnWhileFiring.negate())
+        .onTrue(IndexerCommandsV3.shouldIdleCommand());
+  }
+
+  // --------------------------------------------------------------------------
+  // Button bindings.  Trigger API is unchanged in shape; only the import moves.
+  // --------------------------------------------------------------------------
+  public void configureButtonBindings(Controller driver, Controller operator) {
+    driver.createBButton().whileTrue(shouldPrepCommand()).onFalse(shouldLowCommand());
+    driver.createAButton().onTrue(shouldLowCommand()).onFalse(shouldLowCommand());
+
+    operator.createLeftPovButton().onTrue(
+        Commands.runOnce(() -> ShotCalculator.incrementFlywheelMultiplier(-0.01))
+                .named("FlywheelMultDown"));
+    operator.createRightPovButton().onTrue(
+        Commands.runOnce(() -> ShotCalculator.incrementFlywheelMultiplier(0.01))
+                .named("FlywheelMultUp"));
+
+    operator.createYButton().whileTrue(turretForwardPresetStateCommand())
+                            .onFalse(shouldLowCommand());
+    operator.createBackButton().whileTrue(zeroHoodSequence());
+
+    // Intake retracting/retracted forces HAMMERTIME (hopper arm interferes).
+    Trigger intakeUpTrigger = new Trigger(() ->
+        intake.isCurrent(IntakeState.RETRACTING) || intake.isCurrent(IntakeState.RETRACTED));
+    intakeUpTrigger.onTrue(shouldHammerTimeCommand());
+
+    // Intake deploying away from turret -> return to LOW_SPEED.
+    Trigger intakeDeployingTrigger = new Trigger(() ->
+        ((intake.isCurrent(IntakeState.DEPLOYING)
+                && intake.getHopperAngle().lt(
+                    Constants.Intake.HOPPER_RETRACTED_ANGLE.minus(
+                        Constants.Launcher.HOPPER_EXTENSION_BUFFER_BEFORE_AIM)))
+            || intake.isCurrent(IntakeState.INTAKING))
+        && launcher.isCurrent(LauncherState.HAMMERTIME));
+    intakeDeployingTrigger.onTrue(shouldLowCommand());
+
+    operator.createUpPovButton().onTrue(
+        Commands.runOnce(() -> ShotCalculator.incrementFlywheelMultiplier(0.01))
+                .ignoringDisable()
+                .named("FlywheelMultUpDisabled"));
+    operator.createDownPovButton().onTrue(
+        Commands.runOnce(() -> ShotCalculator.incrementFlywheelMultiplier(-0.01))
+                .ignoringDisable()
+                .named("FlywheelMultDownDisabled"));
+  }
+
+  // --------------------------------------------------------------------------
+  // State command bodies.  In v2 each was
+  //     Commands.parallel(runOnce(setState), longRunningCommand())
+  // In v3 the "set state, then run" flow is literal top-to-bottom code.
+  // Note: coroutine.await(launcher.xCommand()) is safe even though both the
+  // outer body and the awaited child require `launcher` -- v3 proxies child
+  // requirements so the parent temporarily yields the requirement.
+  // --------------------------------------------------------------------------
+
+  private Command idleStateCommand() {
+    return launcher.run(coroutine -> {
+      launcher.setCurrentState(LauncherState.IDLE);
+      coroutine.await(launcher.stopTrackingCommand());
+    }).named("Idle");
+  }
+
+  private Command lowStateCommand() {
+    return launcher.run(coroutine -> {
+      launcher.setCurrentState(LauncherState.LOW_SPEED);
+      LedStrip.changeSegmentPattern(LedStrip.ALL_LEDS, LedStrip.getSolidPattern(Color.kGreen));
+      coroutine.await(launcher.trackTargetLowCommand());
+    }).named("LowSpeed");
+  }
+
+  private Command prepStateCommand() {
+    return launcher.run(coroutine -> {
+      launcher.setCurrentState(LauncherState.PREP);
+      LedStrip.changeSegmentPattern(LedStrip.ALL_LEDS, LedStrip.getRainbowPattern(0));
+      coroutine.await(launcher.trackTargetCommand());
+    }).named("PrepShoot");
+  }
+
+  private Command presetStateCommand() {
+    return launcher.run(coroutine -> {
+      launcher.setCurrentState(LauncherState.PRESET);
+      while (true) {
+        launcher.usePresets(presetHoodAngle, presetTurretAngle, presetFlywheelSpeed);
+        coroutine.yield();
+      }
+    }).named("Preset");
+  }
+
+  private Command hammerTimeStateCommand() {
+    return launcher.run(coroutine -> {
+      while (true) {
+        launcher.setCurrentState(LauncherState.HAMMERTIME);
+        launcher.usePresets(
+            Constants.Launcher.LOW_HOOD_ANGLE,
+            Degrees.of(0),
+            Constants.Launcher.LOW_FLYWHEEL_RPM);
+        coroutine.yield();
+      }
+    }).named("HammerTime");
+  }
+
+  private Command autoHammerTimeStateCommand() {
+    return launcher.run(coroutine -> {
+      while (true) {
+        launcher.setCurrentState(LauncherState.AUTO_HAMMERTIME);
+        launcher.usePresets(
+            Constants.Launcher.LOW_HOOD_ANGLE,
+            Degrees.of(0),
+            Constants.Launcher.LOW_FLYWHEEL_RPM);
+        coroutine.yield();
+      }
+    }).named("AutoHammerTime");
+  }
+
+  private Command escapeHammerTimeStateCommand() {
+    // v2 was two runOnces chained with andThen; both are instant so they merge.
+    return Commands.runOnce(() -> {
+      launcher.setCurrentState(LauncherState.ESCAPE_HAMMERTIME);
+      launcher.setRequestedState(launcher.getPreTrenchState());
+    }).named("EscapeHammerTime");
+  }
+
+  // --------------------------------------------------------------------------
+  // "Request X" commands -- one-shot state changes bound to triggers.
+  // --------------------------------------------------------------------------
+
+  public Command shouldIdleCommand() {
+    return Commands.runOnce(() -> launcher.setRequestedState(LauncherState.IDLE))
+                   .named("RequestIdle");
+  }
+
+  public Command shouldLowCommand() {
+    return Commands.runOnce(() -> launcher.setRequestedState(LauncherState.LOW_SPEED))
+                   .named("RequestLow");
+  }
+
+  public Command shouldPrepCommand() {
+    return Commands.runOnce(() -> launcher.setRequestedState(LauncherState.PREP))
+                   .named("RequestPrep");
+  }
+
+  public Command shouldPresetCommand() {
+    return Commands.runOnce(() -> launcher.setRequestedState(LauncherState.PRESET))
+                   .named("RequestPreset");
+  }
+
+  public Command shouldAutoHammerTimeCommand() {
+    return Commands.runOnce(() -> launcher.setRequestedState(LauncherState.AUTO_HAMMERTIME))
+                   .named("RequestAutoHammerTime");
+  }
+
+  public Command shouldEscapeHammerTimeCommand() {
+    return Commands.runOnce(() -> launcher.setRequestedState(LauncherState.ESCAPE_HAMMERTIME))
+                   .named("RequestEscapeHammerTime");
+  }
+
+  public Command shouldHammerTimeCommand() {
+    return Commands.runOnce(() -> launcher.setRequestedState(LauncherState.HAMMERTIME))
+                   .named("RequestHammerTime");
+  }
+
+  public Command shouldToggleHammerTimeCommand() {
+    return Commands.runOnce(() -> {
+      if (launcher.getCurrentState() == LauncherState.HAMMERTIME) {
+        launcher.setRequestedState(LauncherState.LOW_SPEED);
+      } else {
+        launcher.setRequestedState(LauncherState.HAMMERTIME);
+      }
+    }).named("ToggleHammerTime");
+  }
+
+  /**
+   * v2 was: shouldPresetCommand().andThen(runOnce(setPresetFields))
+   * v3: collapse to a single atomic action -- set the preset fields AND
+   * request the state in one runOnce body.
+   */
+  public Command turretForwardPresetStateCommand() {
+    return Commands.runOnce(() -> {
+      presetHoodAngle    = Constants.Launcher.FWD_HOOD_ANGLE;
+      presetTurretAngle  = Constants.Launcher.TURRET_FORWARD;
+      presetFlywheelSpeed = Constants.Launcher.FWD_FLYWHEEL_RPM;
+      launcher.setRequestedState(LauncherState.PRESET);
+    }).named("TurretForwardPreset");
+  }
+
+  public LauncherState getCurrentState() {
+    return launcher.getCurrentState();
+  }
+
+  // --------------------------------------------------------------------------
+  // zeroHoodSequence: the poster child for the v3 rewrite.
+  //   * .andThen chain      ->  straight-line statements
+  //   * beforeStarting/     ->  try/finally
+  //     finallyDo
+  //   * .withTimeout on     ->  still exists; wraps the two inner loops
+  //     inner segments
+  // --------------------------------------------------------------------------
+  public Command zeroHoodSequence() {
+    return launcher.run(coroutine -> {
+      Rebuilt.isZeroingBurst = true;
+      try {
+        // Run hood down for up to 0.75s.
+        coroutine.await(
+            launcher.run(co -> {
+              launcher.runHoodDown();
+              co.yield();
+            }).withTimeout(0.75).named("HoodDown"));
+
+        launcher.stopHood();
+        launcher.zeroHood();
+
+        // Rainbow flash for 0.5s -- keeps running while disabled, same as v2.
+        coroutine.await(
+            Commands.run(co -> {
+              LedStrip.changeSegmentPattern(
+                  LedStrip.ALL_LEDS, LedStrip.getRainbowPattern(50.0));
+              co.yield();
+            }).withTimeout(0.5).ignoringDisable().named("ZeroFlash"));
+      } finally {
+        Rebuilt.isZeroingBurst = false;
+      }
+    }).named("ZeroHoodSequence");
+  }
+}

@@ -202,6 +202,8 @@ public class Constants {
     public static final double INTAKE_CHURN = -0.25;
     public static final double INTAKE_MAX_IN = 0.9;
     public static final double INTAKE_MAX_OUT = -0.9;
+    // Speed to run spintake whenever the hopper is fully deployed
+    public static final double INTAKE_DEPLOYED_SPEED = INTAKE_IN;
     public static final double HOPPER_ANGLE_TOLERANCE = 3;
     public static final double HOPPER_STALL_TIME = 0.3;
     public static final Angle HOPPER_RETRACTED_ANGLE = Degrees.of(120);
@@ -216,6 +218,8 @@ public class Constants {
         -0.2; // duty cycle for first-deploy zeroing nudge
     public static final double HOPPER_DEPLOY_NUDGE_DUTY =
         -0.35; // duty cycle for normal deploy nudge after PID
+    public static final double HOPPER_DEPLOY_NUDGE_TIMEOUT =
+        1.5; // seconds — safety ceiling; nudge should reach the hard stop well before this
 
     // Device construction parameters (transcribed from intake/*.json under deploy/).
     public static class Hopper {
